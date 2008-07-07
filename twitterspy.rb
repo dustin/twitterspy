@@ -42,19 +42,27 @@ def update_status(server)
 end
 
 def process_tracks(server)
-  Track.todo(TwitterSpy::Config::CONF['general'].fetch('watch_freq', 10)).each do |track|
-    puts "Fetching #{track.query} at #{Time.now.to_s}"
-    $stdout.flush
-    TwitterSpy::Threading::IN_QUEUE << Proc.new do
+  TwitterSpy::Threading::IN_QUEUE << Proc.new do
+    outbound=Hash.new { |h,k| h[k] = {}; h[k] }
+    Track.todo(TwitterSpy::Config::CONF['general'].fetch('watch_freq', 10)).each do |track|
+      puts "Fetching #{track.query} at #{Time.now.to_s}"
+      $stdout.flush
       res = Summize.query track.query
       oldid = track.max_seen.to_i
       track.update_attributes(:last_update => DateTime.now, :max_seen => res.max_id)
       totx = oldid == 0 ? Array(res).last(5) : res.select { |x| x.id.to_i > oldid }
       track.users.select{|u| u.available? }.each do |user|
-        puts "Sending #{totx.size} messages to #{user.jid}"
         totx.each do |msg|
-          server.deliver user.jid, "#{msg.from_user}: #{msg.text}"
+          outbound[user.jid][msg.id] = msg
         end
+      end
+    end
+    outbound.each do |jid, msgs|
+      puts "Sending #{msgs.size} messages to #{jid}"
+      $stdout.flush
+      msgs.keys.sort.each do |msgk|
+        msg = msgs[msgk]
+        server.deliver jid, "#{msg.from_user}: #{msg.text}"
       end
     end
   end
