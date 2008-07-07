@@ -54,15 +54,13 @@ class Track
         u.active is not null
         and u.active = ?
         and u.status not in ('dnd', 'offline', 'unavailable')
-        and t.active = ?
         and ( t.last_update is null or t.last_update < ?)
       limit 50
 EOF
-    ids = repository(:default).adapter.query(q, true, true,
+    ids = repository(:default).adapter.query(q, true,
       DateTime.now - Rational(timeout, 1440))
     self.all(:conditions => {:id => ids})
   end
-end
 end
 
 class UserTrack
