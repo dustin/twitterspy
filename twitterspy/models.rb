@@ -33,6 +33,10 @@ class User
     ut = user_tracks.first(:track_id => t.id) or return
     ut.destroy
   end
+
+  def available?
+    self.active && !['offline', 'dnd', 'unavailable'].include?(self.status)
+  end
 end
 
 class Track
@@ -40,6 +44,7 @@ class Track
   property :id, Integer, :serial => true, :unique_index => true
   property :query, String, :nullable => false, :unique_index => true
   property :last_update, DateTime
+  property :max_seen, Integer
 
   has n, :user_tracks
   has n, :users, :through => :user_tracks
