@@ -50,6 +50,21 @@ module TwitterSpy
         send_msg user, help_text.join("\n")
       end
 
+      cmd :track, "Track a topic (summize query string)" do |user, arg|
+        user.track arg.strip
+        send_msg user, "Tracking #{arg}"
+      end
+
+      cmd :untrack, "Stop tracking a topic" do |user, arg|
+        user.untrack arg.strip
+        send_msg user, "Stopped tracking #{arg}"
+      end
+
+      cmd :tracks, "List your tracks." do |user, arg|
+        tracks = user.tracks.map{|t| t.query}
+        send_msg user, "Tracking #{tracks.size} topics\n" + tracks.join("\n")
+      end
+
     end # CommandProcessor
 
   end
