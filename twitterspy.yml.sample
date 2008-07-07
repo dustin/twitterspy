@@ -1,0 +1,9 @@
+general:
+  loop_sleep: 60
+  db: sqlite3:twitterspy.sqlite3
+  nthreads: 2
+  watch_freq: 15
+
+xmpp:
+  jid: mybot@jabber.org/twitterspy
+  pass: password4mybot
