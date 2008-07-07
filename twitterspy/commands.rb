@@ -47,6 +47,8 @@ module TwitterSpy
       cmd :help, "Get help for commands." do |user, arg|
         cmds = self.class.all_cmds()
         help_text = cmds.keys.sort.map {|k| "#{k}\t#{cmds[k]}"}
+        help_text << "\n"
+        help_text << "The search is based on summize.  For options, see http://summize.com/operators"
         send_msg user, help_text.join("\n")
       end
 
