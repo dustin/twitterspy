@@ -50,6 +50,16 @@ module TwitterSpy
         send_msg user, help_text.join("\n")
       end
 
+      cmd :on, "Active updates." do |user, nothing|
+        user.update_attributes(:active => true)
+        send_msg user, "Marked you active."
+      end
+
+      cmd :off, "Disable updates." do |user, nothing|
+        user.update_attributes(:active => false)
+        send_msg user, "Marked you inactive."
+      end
+
       cmd :track, "Track a topic (summize query string)" do |user, arg|
         user.track arg.strip
         send_msg user, "Tracking #{arg}"
