@@ -34,9 +34,10 @@ end
 
 def update_status(server)
   users = User.count
-  puts "Updating status with #{users} users"
+  tracks = Track.count
+  puts "Updating status with #{users} users and #{tracks} tracks"
   $stdout.flush
-  status = "Looking at stuff for #{users} users"
+  status = "Looking at #{tracks} tracks for #{users} users"
   server.send!(Jabber::Presence.new(nil, status,
     TwitterSpy::Config::CONF['xmpp'].fetch('priority', 1).to_i))
 end
