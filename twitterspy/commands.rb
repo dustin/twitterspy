@@ -52,7 +52,7 @@ module TwitterSpy
         send_msg user, help_text.join("\n")
       end
 
-      cmd :on, "Active updates." do |user, nothing|
+      cmd :on, "Activate updates." do |user, nothing|
         user.update_attributes(:active => true)
         send_msg user, "Marked you active."
       end
