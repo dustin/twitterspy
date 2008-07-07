@@ -47,14 +47,18 @@ def process_tracks(server)
     Track.todo(TwitterSpy::Config::CONF['general'].fetch('watch_freq', 10)).each do |track|
       puts "Fetching #{track.query} at #{Time.now.to_s}"
       $stdout.flush
-      res = Summize.query track.query
-      oldid = track.max_seen.to_i
-      track.update_attributes(:last_update => DateTime.now, :max_seen => res.max_id)
-      totx = oldid == 0 ? Array(res).last(5) : res.select { |x| x.id.to_i > oldid }
-      track.users.select{|u| u.available? }.each do |user|
-        totx.each do |msg|
-          outbound[user.jid][msg.id] = msg
+      begin
+        res = Summize.query track.query
+        oldid = track.max_seen.to_i
+        track.update_attributes(:last_update => DateTime.now, :max_seen => res.max_id)
+        totx = oldid == 0 ? Array(res).last(5) : res.select { |x| x.id.to_i > oldid }
+        track.users.select{|u| u.available? }.each do |user|
+          totx.each do |msg|
+            outbound[user.jid][msg.id] = msg
+          end
         end
+      rescue StandardError, Interrupt
+        puts "Error fetching #{track.query}: #{$!}"
       end
     end
     outbound.each do |jid, msgs|
