@@ -43,6 +43,26 @@ class Track
 
   has n, :user_tracks
   has n, :users, :through => :user_tracks
+
+  def self.todo(timeout=10)
+    q=<<EOF
+    select distinct t.id
+      from tracks t
+      join user_tracks ut on (t.id = ut.track_id)
+      join users u on (u.id == ut.user_id)
+      where
+        u.active is not null
+        and u.active = ?
+        and u.status not in ('dnd', 'offline', 'unavailable')
+        and t.active = ?
+        and ( t.last_update is null or t.last_update < ?)
+      limit 50
+EOF
+    ids = repository(:default).adapter.query(q, true, true,
+      DateTime.now - Rational(timeout, 1440))
+    self.all(:conditions => {:id => ids})
+  end
+end
 end
 
 class UserTrack
