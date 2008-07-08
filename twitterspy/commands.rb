@@ -63,20 +63,16 @@ module TwitterSpy
       end
 
       cmd :track, "Track a topic (summize query string)" do |user, arg|
-        if arg.nil? || arg.strip == ""
-          send_msg user, "Please supply a summize query."
-        else
-          user.track arg.strip
-          send_msg user, "Tracking #{arg}"
+        with_arg(user, arg) do |a|
+          user.track a
+          send_msg user, "Tracking #{a}"
         end
       end
 
       cmd :untrack, "Stop tracking a topic" do |user, arg|
-        if arg.nil? || arg.strip == ""
-          send_msg user, "Please supply a summize query."
-        else
-          user.untrack arg.strip
-          send_msg user, "Stopped tracking #{arg}"
+        with_arg(user, arg) do |a|
+          user.untrack a
+          send_msg user, "Stopped tracking #{a}"
         end
       end
 
@@ -86,6 +82,14 @@ module TwitterSpy
       end
 
       private
+
+      def with_arg(user, arg, missing_text="Please supply a summize query")
+        if arg.nil? || arg.strip == ""
+          send_msg user, missing_text
+        else
+          yield arg.strip
+        end
+      end
 
       def change_user_active_state(user, to)
         if user.active != to
