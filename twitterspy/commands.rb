@@ -53,12 +53,12 @@ module TwitterSpy
       end
 
       cmd :on, "Activate updates." do |user, nothing|
-        user.update_attributes(:active => true)
+        change_user_active_state(user, true)
         send_msg user, "Marked you active."
       end
 
       cmd :off, "Disable updates." do |user, nothing|
-        user.update_attributes(:active => false)
+        change_user_active_state(user, false)
         send_msg user, "Marked you inactive."
       end
 
@@ -83,6 +83,16 @@ module TwitterSpy
       cmd :tracks, "List your tracks." do |user, arg|
         tracks = user.tracks.map{|t| t.query}.sort
         send_msg user, "Tracking #{tracks.size} topics\n" + tracks.join("\n")
+      end
+
+      private
+
+      def change_user_active_state(user, to)
+        if user.active != to
+          user.active = to
+          user.availability_changed
+          user.save
+        end
       end
 
     end # CommandProcessor
