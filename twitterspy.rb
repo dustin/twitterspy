@@ -78,6 +78,9 @@ def run_loop(server)
   process_tracks server
   $stdout.flush
   sleep TwitterSpy::Config::LOOP_SLEEP
+  repository(:default).adapter.query(
+    "delete from tracks where id not in (select track_id from user_tracks)"
+  )
 rescue StandardError, Interrupt
   puts "Got exception:  #{$!.inspect}\n#{$!.backtrace.join("\n\t")}"
   $stdout.flush
