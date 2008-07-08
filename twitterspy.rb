@@ -110,7 +110,7 @@ loop do
       process_xmpp_incoming server
       process_message server, message unless message.body.nil?
     rescue StandardError, Interrupt
-      puts "Incoming message error:  #{$!}"
+      puts "Incoming message error:  #{$!}\n" + $!.backtrace.join("\n\t")
       $stdout.flush
       server.deliver message.from, "Error processing your message:  #{$!}"
     end
