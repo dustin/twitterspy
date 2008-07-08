@@ -26,7 +26,7 @@ def process_xmpp_incoming(server)
 end
 
 def process_message(server, msg)
-  cmd, args = msg.body.split(' ', 2)
+  cmd, args = msg.body.gsub('&quot;', '"').split(' ', 2)
   cp = TwitterSpy::Commands::CommandProcessor.new server
   user = User.first(:jid => msg.from.bare.to_s) || User.create(:jid => msg.from.bare.to_s)
   cp.dispatch cmd, user, args
