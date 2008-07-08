@@ -14,6 +14,7 @@ class User
   # min_id holds the minimum ID of any tweet to be delivered to this user.
   # This is an additional constraint over the track-specific max_seen ID.
   property :min_id, Integer, :nullable => false, :default => 0
+  property :language, String, :length => 2
 
   has n, :user_tracks
   has n, :tracks, :through => :user_tracks

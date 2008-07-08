@@ -82,6 +82,18 @@ module TwitterSpy
         send_msg user, "Tracking #{tracks.size} topics\n" + tracks.join("\n")
       end
 
+      cmd :search, "Perform a sample search (but do not track)" do |user, arg|
+        with_arg(user, arg) do |query|
+          summize_client = Summize::Client.new 'twitterspy@jabber.org'
+          res = summize_client.query query, :rpp => 2
+          out = ["Results from your query:"]
+          res.each do |r|
+            out << "#{r.from_user}: #{r.text}"
+          end
+          send_msg user, out.join("\n")
+        end
+      end
+
       private
 
       def with_arg(user, arg, missing_text="Please supply a summize query")

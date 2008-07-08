@@ -54,7 +54,9 @@ def process_tracks(server)
         totx = oldid == 0 ? Array(res).last(5) : res.select { |x| x.id.to_i > oldid }
         track.users.select{|u| u.available? }.each do |user|
           totx.each do |msg|
-            outbound[user.jid][msg.id] = msg if msg.id.to_i > user.min_id
+            if user.language.nil? || msg.language.nil? || user.language == msg.language
+              outbound[user.jid][msg.id] = msg if msg.id.to_i > user.min_id
+            end
           end
         end
       rescue StandardError, Interrupt
