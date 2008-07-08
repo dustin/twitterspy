@@ -11,6 +11,9 @@ class User
   property :password, String
   property :active, Boolean, :nullable => false, :default => true
   property :status, String
+  # min_id holds the minimum ID of any tweet to be delivered to this user.
+  # This is an additional constraint over the track-specific max_seen ID.
+  property :min_id, Integer, :nullable => false, :default => 0
 
   has n, :user_tracks
   has n, :tracks, :through => :user_tracks
@@ -18,9 +21,20 @@ class User
   # Find or create a user and update the status
   def self.update_status(jid, status)
     u = first(:jid => jid) || create!(:jid => jid)
+    was_available = u.available?
     u.status = status
+    u.availability_changed unless u.available? == was_available
     u.save
     u
+  end
+
+  # Callback for when the availability state of a user has changed.
+  # Note:  This is called on an *unsaved* object that will soon be saved.
+  def availability_changed
+    if available?
+      self.min_id = user_tracks.map{|t| t.track.max_seen}.max.to_i + 1
+      puts "#{self.jid} has just become available.  Set min_id to #{self.min_id}"
+    end
   end
 
   def track(query)
