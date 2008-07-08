@@ -94,6 +94,21 @@ module TwitterSpy
         end
       end
 
+      cmd :lang, "Set your language (either 2 letter ISO code or empty for any)" do |user, arg|
+        arg = nil if arg && arg.strip == ""
+        if arg && arg.size != 2
+          send_msg user, "Language should be a 2-digit country code."
+          return
+        end
+
+        user.update_attributes(:language => arg)
+        if arg
+          send_msg user, "Set your language to #{arg}"
+        else
+          send_msg user, "Unset your language."
+        end
+      end
+
       private
 
       def with_arg(user, arg, missing_text="Please supply a summize query")
