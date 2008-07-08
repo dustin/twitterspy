@@ -49,6 +49,7 @@ module TwitterSpy
         help_text = cmds.keys.sort.map {|k| "#{k}\t#{cmds[k]}"}
         help_text << "\n"
         help_text << "The search is based on summize.  For options, see http://summize.com/operators"
+        help_text << "Email questions, suggestions or complaints to dustin@spy.net"
         send_msg user, help_text.join("\n")
       end
 
