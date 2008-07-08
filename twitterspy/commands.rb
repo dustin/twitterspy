@@ -73,7 +73,7 @@ module TwitterSpy
       end
 
       cmd :tracks, "List your tracks." do |user, arg|
-        tracks = user.tracks.map{|t| t.query}
+        tracks = user.tracks.map{|t| t.query}.sort
         send_msg user, "Tracking #{tracks.size} topics\n" + tracks.join("\n")
       end
 
