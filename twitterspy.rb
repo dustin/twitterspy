@@ -36,7 +36,6 @@ def update_status(server)
   users = User.count
   tracks = Track.count
   puts "Updating status with #{users} users and #{tracks} tracks"
-  $stdout.flush
   status = "Tracking #{tracks} topics for #{users} users"
   server.send!(Jabber::Presence.new(nil, status,
     TwitterSpy::Config::CONF['xmpp'].fetch('priority', 1).to_i))
@@ -47,7 +46,6 @@ def process_tracks(server)
     outbound=Hash.new { |h,k| h[k] = {}; h[k] }
     Track.todo(TwitterSpy::Config::CONF['general'].fetch('watch_freq', 10)).each do |track|
       puts "Fetching #{track.query} at #{Time.now.to_s}"
-      $stdout.flush
       summize_client = Summize::Client.new 'twitterspy@jabber.org'
       begin
         oldid = track.max_seen.to_i
@@ -65,7 +63,6 @@ def process_tracks(server)
     end
     outbound.each do |jid, msgs|
       puts "Sending #{msgs.size} messages to #{jid}"
-      $stdout.flush
       msgs.keys.sort.each do |msgk|
         msg = msgs[msgk]
         server.deliver jid, "#{msg.from_user}: #{msg.text}"
@@ -79,6 +76,7 @@ def run_loop(server)
   puts "Processing..."
   update_status server
   process_tracks server
+  $stdout.flush
   sleep TwitterSpy::Config::LOOP_SLEEP
 rescue StandardError, Interrupt
   puts "Got exception:  #{$!.inspect}\n#{$!.backtrace.join("\n\t")}"
