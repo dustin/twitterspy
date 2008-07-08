@@ -48,9 +48,10 @@ def process_tracks(server)
     Track.todo(TwitterSpy::Config::CONF['general'].fetch('watch_freq', 10)).each do |track|
       puts "Fetching #{track.query} at #{Time.now.to_s}"
       $stdout.flush
+      summize_client = Summize::Client.new 'twitterspy@jabber.org'
       begin
-        res = Summize.query track.query
         oldid = track.max_seen.to_i
+        res = summize_client.query track.query, :since_id => oldid
         track.update_attributes(:last_update => DateTime.now, :max_seen => res.max_id)
         totx = oldid == 0 ? Array(res).last(5) : res.select { |x| x.id.to_i > oldid }
         track.users.select{|u| u.available? }.each do |user|
