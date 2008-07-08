@@ -63,13 +63,21 @@ module TwitterSpy
       end
 
       cmd :track, "Track a topic (summize query string)" do |user, arg|
-        user.track arg.strip
-        send_msg user, "Tracking #{arg}"
+        if arg.nil? || arg.strip == ""
+          send_msg user, "Please supply a summize query."
+        else
+          user.track arg.strip
+          send_msg user, "Tracking #{arg}"
+        end
       end
 
       cmd :untrack, "Stop tracking a topic" do |user, arg|
-        user.untrack arg.strip
-        send_msg user, "Stopped tracking #{arg}"
+        if arg.nil? || arg.strip == ""
+          send_msg user, "Please supply a summize query."
+        else
+          user.untrack arg.strip
+          send_msg user, "Stopped tracking #{arg}"
+        end
       end
 
       cmd :tracks, "List your tracks." do |user, arg|
