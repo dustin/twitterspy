@@ -102,8 +102,18 @@ module TwitterSpy
       cmd :twlogin, "Set your twitter username and password (use at your own risk)" do |user, arg|
         with_arg(user, arg, "You must supply a username and password") do |up|
           u, p = up.strip.split(/\s+/, 2)
-          user.update_attributes(:username => u, :password => Base64.encode64(p).strip)
-          send_msg user, "Your credentials have been saved.  Thanks."
+          TwitterSpy::Threading::IN_QUEUE << Proc.new do
+            twitter = Twitter::Base.new u, p
+            begin
+              twitter.verify_credentials
+              user.update_attributes(:username => u, :password => Base64.encode64(p).strip)
+              send_msg user, "Your credentials have been verified and saved.  Thanks."
+            rescue StandardError, Interrupt
+              puts "Unable to verify credentials:  #{$!}\n" + $!.backtrace.join("\n\t")
+              $stdout.flush
+              send_msg user, "Unable to verify your credentials.  They're either wrong or twitter is broken."
+            end
+          end
         end
       end
 
