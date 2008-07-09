@@ -171,7 +171,7 @@ module TwitterSpy
       private
 
       def twitter_call(user, arg, missing_text="Argument needed.", &block)
-        if not_valid(user.username) || not_valid(user.password)
+        if user.username.blank? || user.password.blank?
           send_msg user, "I don't know your username or password.  Use twlogin to set creds."
           return
         end
@@ -185,10 +185,6 @@ module TwitterSpy
             yield twitter, a
           end
         end
-      end
-
-      def not_valid(s)
-        s.nil? || s == ''
       end
 
       def with_arg(user, arg, missing_text="Please supply a summize query")
