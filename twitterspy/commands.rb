@@ -1,4 +1,7 @@
+require 'rubygems'
 require 'base64'
+
+require 'twitter'
 
 module TwitterSpy
   module Commands
@@ -101,6 +104,29 @@ module TwitterSpy
           u, p = up.strip.split(/\s+/, 2)
           user.update_attributes(:username => u, :password => Base64.encode64(p).strip)
           send_msg user, "Your credentials have been saved.  Thanks."
+        end
+      end
+
+      cmd :post, "Post a message to twitter." do |user, arg|
+        if user.username.nil? || user.password.nil?
+          send_msg user, "I don't know your username or password.  Use twlogin to set creds."
+          return
+        end
+
+        with_arg(user, arg, "You need to actually tell me what to post") do |message|
+          TwitterSpy::Threading::IN_QUEUE << Proc.new do
+            begin
+              password = Base64.decode64 user.password
+              twitter = Twitter::Base.new user.username, password
+              rv = twitter.post message
+              url = "http://twitter.com/#{user.username}/statuses/#{rv.id}"
+              send_msg user, ":) Your message has been posted to twitter: " + url
+            rescue StandardError, Interrupt
+              puts "Failed to post to twitter:  #{$!}\n" + $!.backtrace.join("\n\t")
+              $stdout.flush
+              send_msg user, ":( Failed to post your message.  Your password may be wrong, or twitter may be broken."
+            end
+          end
         end
       end
 
