@@ -1,3 +1,5 @@
+require 'base64'
+
 module TwitterSpy
   module Commands
 
@@ -91,6 +93,14 @@ module TwitterSpy
             out << "#{r.from_user}: #{r.text}"
           end
           send_msg user, out.join("\n")
+        end
+      end
+
+      cmd :twlogin, "Set your twitter username and password (use at your own risk)" do |user, arg|
+        with_arg(user, arg, "You must supply a username and password") do |up|
+          u, p = up.strip.split(/\s+/, 2)
+          user.update_attributes(:username => u, :password => Base64.encode64(p).strip)
+          send_msg user, "Your credentials have been saved.  Thanks."
         end
       end
 
