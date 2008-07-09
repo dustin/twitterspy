@@ -33,7 +33,7 @@ class User
   # Note:  This is called on an *unsaved* object that will soon be saved.
   def availability_changed
     if available?
-      self.min_id = user_tracks.map{|t| t.track.max_seen}.max.to_i + 1
+      self.min_id = user_tracks.map{|t| t.track}.compact.map{|t| t.max_seen}.max.to_i + 1
       puts "#{self.jid} has just become available.  Set min_id to #{self.min_id}"
     end
   end
