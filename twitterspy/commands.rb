@@ -95,7 +95,7 @@ module TwitterSpy
           res.each do |r|
             out << "#{r.from_user}: #{r.text}"
           end
-          send_msg user, out.join("\n")
+          send_msg user, out.join("\n\n")
         end
       end
 
