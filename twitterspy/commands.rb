@@ -245,8 +245,12 @@ EOF
 
       private
 
+      def logged_in?(user)
+        !(user.username.blank? || user.password.blank?)
+      end
+
       def twitter_call(user, arg, missing_text="Argument needed.", &block)
-        if user.username.blank? || user.password.blank?
+        if !logged_in?(user)
           send_msg user, "I don't know your username or password.  Use twlogin to set creds."
           return
         end
