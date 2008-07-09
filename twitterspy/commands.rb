@@ -201,6 +201,19 @@ EOF
         send_msg user, "You have been logged out."
       end
 
+      cmd :status, "Find out what you look like to us." do |user, arg|
+        out = ["Jid:  #{user.jid}"]
+        out << "Jabber Status:  #{user.status}"
+        out << "TwitterSpy state:  #{user.active ? 'Active' : 'Not Active'}"
+        if logged_in?(user)
+          out << "Logged in for twitter API services as #{user.username}"
+        else
+          out << "You're not logged in for twitter API services."
+        end
+        out << "You are currently tracking #{user.tracks.size} topics."
+        send_msg user, out.join("\n")
+      end
+
       cmd :post, "Post a message to twitter." do |user, arg|
         twitter_call user, arg, "You need to actually tell me what to post" do |twitter, message|
           begin
