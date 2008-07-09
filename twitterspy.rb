@@ -29,7 +29,7 @@ def process_message(server, msg)
   cmd, args = msg.body.gsub('&quot;', '"').split(' ', 2)
   cp = TwitterSpy::Commands::CommandProcessor.new server
   user = User.first(:jid => msg.from.bare.to_s) || User.create(:jid => msg.from.bare.to_s)
-  cp.dispatch cmd, user, args
+  cp.dispatch cmd.downcase, user, args
 end
 
 def update_status(server)
