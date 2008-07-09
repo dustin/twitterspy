@@ -12,17 +12,22 @@ require 'twitterspy/commands'
 require 'twitterspy/threading'
 
 def process_xmpp_incoming(server)
+  rv = 0
   server.presence_updates do |user, status, message|
     User.update_status user, status
+    rv += 1
   end
   # Called for dequeue side-effect stupidity of jabber:simple
-  server.received_messages
+  rv += server.received_messages.size
   server.new_subscriptions do |from, presence|
     puts "Subscribed by #{from}"
+    rv += 1
   end
   server.subscription_requests do |from, presence|
     puts "Sub req from #{from}"
+    rv += 1
   end
+  rv
 end
 
 def process_message(server, msg)
@@ -74,8 +79,8 @@ def process_tracks(server)
 end
 
 def run_loop(server)
-  process_xmpp_incoming server
-  puts "Processing..."
+  incoming = process_xmpp_incoming server
+  puts "Processing (received #{incoming} messages)..."
   update_status server
   process_tracks server
   $stdout.flush
