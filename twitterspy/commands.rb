@@ -99,6 +99,28 @@ module TwitterSpy
         end
       end
 
+      cmd :whois, "Find out who a particular user is." do |user, arg|
+        twitter_call user, arg, "For whom are you looking?" do |twitter, username|
+          begin
+            u = twitter.user username.strip
+            out = ["#{username} is #{u.name.blank? ? 'Someone' : u.name} from #{u.location.blank? ? 'Somewhere' : u.location}"]
+            out << "Most recent tweets:"
+            summize_client = Summize::Client.new 'twitterspy@jabber.org'
+            res = summize_client.query "from:#{username.strip}", :rpp => 3
+            # Get the first status from the twitter response (in case none is indexed)
+            out << "\n1) #{u.status.text}"
+            res.each_with_index do |r, i|
+              out << "\n#{i+1}) #{r.text}" if i > 0
+            end
+            send_msg user, out.join("\n")
+          rescue StandardError, Interrupt
+            puts "Unable to do a whois:  #{$!}\n" + $!.backtrace.join("\n\t")
+            $stdout.flush
+            send_msg user, "Unable to get information for #{username}"
+          end
+        end
+      end
+
       cmd :twlogin, "Set your twitter username and password (use at your own risk)" do |user, arg|
         with_arg(user, arg, "You must supply a username and password") do |up|
           u, p = up.strip.split(/\s+/, 2)
