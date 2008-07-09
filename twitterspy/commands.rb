@@ -108,24 +108,17 @@ module TwitterSpy
       end
 
       cmd :post, "Post a message to twitter." do |user, arg|
-        if user.username.nil? || user.password.nil?
-          send_msg user, "I don't know your username or password.  Use twlogin to set creds."
-          return
-        end
-
-        with_arg(user, arg, "You need to actually tell me what to post") do |message|
-          TwitterSpy::Threading::IN_QUEUE << Proc.new do
-            begin
-              password = Base64.decode64 user.password
-              twitter = Twitter::Base.new user.username, password
-              rv = twitter.post message
-              url = "http://twitter.com/#{user.username}/statuses/#{rv.id}"
-              send_msg user, ":) Your message has been posted to twitter: " + url
-            rescue StandardError, Interrupt
-              puts "Failed to post to twitter:  #{$!}\n" + $!.backtrace.join("\n\t")
-              $stdout.flush
-              send_msg user, ":( Failed to post your message.  Your password may be wrong, or twitter may be broken."
-            end
+        twitter_call user, arg, "You need to actually tell me what to post" do |message|
+          begin
+            password = Base64.decode64 user.password
+            twitter = Twitter::Base.new user.username, password
+            rv = twitter.post message
+            url = "http://twitter.com/#{user.username}/statuses/#{rv.id}"
+            send_msg user, ":) Your message has been posted to twitter: " + url
+          rescue StandardError, Interrupt
+            puts "Failed to post to twitter:  #{$!}\n" + $!.backtrace.join("\n\t")
+            $stdout.flush
+            send_msg user, ":( Failed to post your message.  Your password may be wrong, or twitter may be broken."
           end
         end
       end
@@ -146,6 +139,25 @@ module TwitterSpy
       end
 
       private
+
+      def twitter_call(user, arg, missing_text="Argument needed.", &block)
+        if not_valid(user.username) || not_valid(user.password)
+          send_msg user, "I don't know your username or password.  Use twlogin to set creds."
+          return
+        end
+
+        password = Base64.decode64 user.password
+
+        with_arg(user, arg, missing_text) do |a|
+          TwitterSpy::Threading::IN_QUEUE << Proc.new do
+            yield a
+          end
+        end
+      end
+
+      def not_valid(s)
+        s.nil? || s == ''
+      end
 
       def with_arg(user, arg, missing_text="Please supply a summize query")
         if arg.nil? || arg.strip == ""
