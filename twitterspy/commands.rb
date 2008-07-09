@@ -6,6 +6,18 @@ require 'twitter'
 module TwitterSpy
   module Commands
 
+    class Help
+      attr_accessor :short_help, :full_help
+
+      def initialize(short_help)
+        @short_help = @full_help = short_help
+      end
+
+      def to_s
+        @short_help
+      end
+    end
+
     module CommandDefiner
 
       def all_cmds
@@ -13,8 +25,12 @@ module TwitterSpy
       end
 
       def cmd(name, help, &block)
-        all_cmds()[name.to_s] = help
+        all_cmds()[name.to_s] = TwitterSpy::Commands::Help.new help
         define_method(name, &block)
+      end
+
+      def help_text(name, text)
+        all_cmds()[name.to_s].full_help = text
       end
 
     end
@@ -51,11 +67,25 @@ module TwitterSpy
 
       cmd :help, "Get help for commands." do |user, arg|
         cmds = self.class.all_cmds()
-        help_text = cmds.keys.sort.map {|k| "#{k}\t#{cmds[k]}"}
-        help_text << "\n"
-        help_text << "The search is based on summize.  For options, see http://summize.com/operators"
-        help_text << "Email questions, suggestions or complaints to dustin@spy.net"
-        send_msg user, help_text.join("\n")
+        if arg.blank?
+          out = ["Available commands:"]
+          out << "Type `help somecmd' for more help on `somecmd'"
+          out << ""
+          out << cmds.keys.sort.map{|k| "#{k}\t#{cmds[k]}"}
+          out << ""
+          out << "The search is based on summize.  For options, see http://summize.com/operators"
+          out << "Email questions, suggestions or complaints to dustin@spy.net"
+          send_msg user, out.join("\n")
+        else
+          h = cmds[arg]
+          if h
+            out = ["Help for `#{arg}'"]
+            out << h.full_help
+            send_msg user, out.join("\n")
+          else
+            send_msg user, "Topic #{arg} is unknown.  Type `help' for known commands."
+          end
+        end
       end
 
       cmd :on, "Activate updates." do |user, nothing|
@@ -74,6 +104,16 @@ module TwitterSpy
           send_msg user, "Tracking #{a}"
         end
       end
+      help_text :track, <<-EOF
+Track gives you all of the power of summize queries periodically delivered to your IM client.
+Example queries:
+
+track iphone
+track iphone OR android
+track iphone android
+
+See http://summize.com/operators for details on what all you can do.
+EOF
 
       cmd :untrack, "Stop tracking a topic" do |user, arg|
         with_arg(user, arg) do |a|
@@ -81,6 +121,14 @@ module TwitterSpy
           send_msg user, "Stopped tracking #{a}"
         end
       end
+      help_text :untrack, <<-EOF
+Untrack tells twitterspy to stop tracking the given query.
+Examples:
+
+untrack iphone
+untrack iphone OR android
+untrack iphone android
+EOF
 
       cmd :tracks, "List your tracks." do |user, arg|
         tracks = user.tracks.map{|t| t.query}.sort
@@ -138,6 +186,13 @@ module TwitterSpy
           end
         end
       end
+      help_text :twlogin, <<-EOF
+Provide login credentials for twitter.
+NOTE: Giving out your credentials is dangerous.  We will try to keep them safe, but we can't make any promises.
+Example usage:
+
+twlogin mytwittername myr4a11yk0mp13xp455w0rd
+EOF
 
       cmd :post, "Post a message to twitter." do |user, arg|
         twitter_call user, arg, "You need to actually tell me what to post" do |twitter, message|
@@ -153,7 +208,7 @@ module TwitterSpy
         end
       end
 
-      cmd :lang, "Set your language (either 2 letter ISO code or empty for any)" do |user, arg|
+      cmd :lang, "Set your language." do |user, arg|
         arg = nil if arg && arg.strip == ""
         if arg && arg.size != 2
           send_msg user, "Language should be a 2-digit country code."
@@ -167,6 +222,19 @@ module TwitterSpy
           send_msg user, "Unset your language."
         end
       end
+      help_text :lang, <<-EOF
+Set or clear your language preference.
+With no argument, your language preference is cleared and you can receive tweets in any language.
+Otherwise, supply a 2 letter ISO country code to restrict tracks to your favorite language.
+
+Example: to set your language to English so only English tweets are returned from tracks:
+
+lang en
+
+Example: to unset your language:
+
+lang
+EOF
 
       private
 
