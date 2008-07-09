@@ -196,6 +196,11 @@ Example usage:
 twlogin mytwittername myr4a11yk0mp13xp455w0rd
 EOF
 
+      cmd :twlogout, "Discard your twitter credentials" do |user, arg|
+        user.update_attributes(:username => nil, :password => nil)
+        send_msg user, "You have been logged out."
+      end
+
       cmd :post, "Post a message to twitter." do |user, arg|
         twitter_call user, arg, "You need to actually tell me what to post" do |twitter, message|
           begin
