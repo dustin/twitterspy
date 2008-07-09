@@ -118,10 +118,8 @@ module TwitterSpy
       end
 
       cmd :post, "Post a message to twitter." do |user, arg|
-        twitter_call user, arg, "You need to actually tell me what to post" do |message|
+        twitter_call user, arg, "You need to actually tell me what to post" do |twitter, message|
           begin
-            password = Base64.decode64 user.password
-            twitter = Twitter::Base.new user.username, password
             rv = twitter.post message
             url = "http://twitter.com/#{user.username}/statuses/#{rv.id}"
             send_msg user, ":) Your message has been posted to twitter: " + url
@@ -160,7 +158,9 @@ module TwitterSpy
 
         with_arg(user, arg, missing_text) do |a|
           TwitterSpy::Threading::IN_QUEUE << Proc.new do
-            yield a
+            password = Base64.decode64 user.password
+            twitter = Twitter::Base.new user.username, password
+            yield twitter, a
           end
         end
       end
