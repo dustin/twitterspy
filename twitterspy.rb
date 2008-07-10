@@ -48,6 +48,39 @@ def update_status(server)
     TwitterSpy::Config::CONF['xmpp'].fetch('priority', 1).to_i))
 end
 
+def user_link(user)
+  linktext=user
+  if user[0] == 64 # Does it start with @?
+    user = user.gsub(/^@(.*)/, '\1')
+  end
+  %Q{<a href="http://twitter.com/#{user}">#{linktext}</a>}
+end
+
+def resolve_users(text)
+  text.gsub(/(@\S+)/) { |u| user_link(u) }
+end
+
+def send_track_message(server, jid, msg)
+  body = "#{msg.from_user}: #{msg.text}"
+  m = Jabber::Message::new(jid, body).set_type(:normal).set_id('1').set_subject("Track Message")
+  h = REXML::Element::new("html")
+  h.add_namespace('http://jabber.org/protocol/xhtml-im')
+
+  # The body part with the correct namespace
+  b = REXML::Element::new("body")
+  b.add_namespace('http://www.w3.org/1999/xhtml')
+
+  # The html itself
+  t = REXML::Text.new("#{user_link(msg.from_user)}: #{resolve_users(msg.text)}",
+    false, nil, true, nil, %r/.^/ )
+
+  b.add t
+  h.add b
+  m.add_element(h)
+
+  server.deliver jid, m
+end
+
 def process_tracks(server)
   TwitterSpy::Threading::IN_QUEUE << Proc.new do
     outbound=Hash.new { |h,k| h[k] = {}; h[k] }
@@ -74,7 +107,7 @@ def process_tracks(server)
       puts "Sending #{msgs.size} messages to #{jid}"
       msgs.keys.sort.each do |msgk|
         msg = msgs[msgk]
-        server.deliver jid, "#{msg.from_user}: #{msg.text}"
+        send_track_message server, jid, msg
       end
     end
   end
