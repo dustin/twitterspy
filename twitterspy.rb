@@ -12,6 +12,8 @@ require 'twitterspy/models'
 require 'twitterspy/commands'
 require 'twitterspy/threading'
 
+public
+
 def process_xmpp_incoming(server)
   rv = 0
   server.presence_updates do |user, status, message|
@@ -135,6 +137,28 @@ def inner_loop(server)
   end
 end
 
+MAIN=self
+
+class Jabber::Simple
+  def client
+    unless connected?
+      connect!()
+      # A lower-level hook to provide more realtime message processing.
+      @client.add_message_callback do |message|
+        begin
+          MAIN.process_xmpp_incoming self
+          MAIN.process_message self, message unless message.body.nil?
+        rescue StandardError, Interrupt
+          puts "Incoming message error:  #{$!}\n" + $!.backtrace.join("\n\t")
+          $stdout.flush
+          deliver message.from, "Error processing your message:  #{$!}"
+        end
+      end
+    end
+    @client
+  end
+end
+
 TwitterSpy::Config::CONF['general'].fetch('nthreads', 1).to_i.times do |t|
   puts "Starting thread #{t}"
   TwitterSpy::Threading.start_worker
@@ -143,20 +167,10 @@ end
 loop do
   puts "Connecting..."
   $stdout.flush
+  # Jabber::debug=true
   server = Jabber::Simple.new(
     TwitterSpy::Config::CONF['xmpp']['jid'],
     TwitterSpy::Config::CONF['xmpp']['pass'])
-  # A lower-level hook to provide more realtime message processing.
-  server.client.add_message_callback do |message|
-    begin
-      process_xmpp_incoming server
-      process_message server, message unless message.body.nil?
-    rescue StandardError, Interrupt
-      puts "Incoming message error:  #{$!}\n" + $!.backtrace.join("\n\t")
-      $stdout.flush
-      server.deliver message.from, "Error processing your message:  #{$!}"
-    end
-  end
 
   update_status(server)
 
