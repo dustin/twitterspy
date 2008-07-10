@@ -32,7 +32,7 @@ def process_xmpp_incoming(server)
 end
 
 def process_message(server, msg)
-  decoded = HTMLEntities.new.decode msg.body
+  decoded = HTMLEntities.new.decode(msg.body).gsub(/&/, '&amp;')
   cmd, args = decoded.split(' ', 2)
   cp = TwitterSpy::Commands::CommandProcessor.new server
   user = User.first(:jid => msg.from.bare.to_s) || User.create(:jid => msg.from.bare.to_s)
