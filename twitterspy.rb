@@ -57,7 +57,7 @@ def user_link(user)
 end
 
 def resolve_users(text)
-  text.gsub(/(@\S+)/) { |u| user_link(u) }
+  text.gsub(/(\W*)(@[\w_]+)/) {|x| $1 + user_link($2)}
 end
 
 def send_track_message(server, jid, msg)
