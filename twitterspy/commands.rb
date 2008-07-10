@@ -228,6 +228,19 @@ EOF
         end
       end
 
+      cmd :follow, "Follow a user" do |user, arg|
+        twitter_call user, arg, "Whom would you like to follow?" do |twitter, username|
+          begin
+            twitter.follow username
+            send_msg user, ":) Now following #{username}"
+          rescue StandardError, Interrupt
+            puts "Failed to follow a user:  #{$!}\n" + $!.backtrace.join("\n\t")
+            $stdout.flush
+            send_msg user, ":( Failed to follow #{username} #{$!}"
+          end
+        end
+      end
+
       cmd :lang, "Set your language." do |user, arg|
         arg = nil if arg && arg.strip == ""
         if arg && arg.size != 2
