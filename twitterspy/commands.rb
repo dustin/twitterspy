@@ -162,6 +162,7 @@ EOF
             res.each_with_index do |r, i|
               out << "\n#{i+1}) #{r.text}" if i > 0
             end
+            out << "\nhttp://twitter.com/#{username.strip}"
             send_msg user, out.join("\n")
           rescue StandardError, Interrupt
             puts "Unable to do a whois:  #{$!}\n" + $!.backtrace.join("\n\t")
