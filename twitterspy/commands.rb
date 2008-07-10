@@ -241,6 +241,19 @@ EOF
         end
       end
 
+      cmd :leave, "Leave (stop following) a user" do |user, arg|
+        twitter_call user, arg, "Whom would you like to leave?" do |twitter, username|
+          begin
+            twitter.leave username
+            send_msg user, ":) No longer following #{username}"
+          rescue StandardError, Interrupt
+            puts "Failed to stop following a user:  #{$!}\n" + $!.backtrace.join("\n\t")
+            $stdout.flush
+            send_msg user, ":( Failed to leave #{username} #{$!}"
+          end
+        end
+      end
+
       cmd :lang, "Set your language." do |user, arg|
         arg = nil if arg && arg.strip == ""
         if arg && arg.size != 2
