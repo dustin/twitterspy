@@ -117,8 +117,11 @@ EOF
 
       cmd :untrack, "Stop tracking a topic" do |user, arg|
         with_arg(user, arg) do |a|
-          user.untrack a
-          send_msg user, "Stopped tracking #{a}"
+          if user.untrack a
+            send_msg user, "Stopped tracking #{a}"
+          else
+            send_msg user, "Didn't stop tracking #{a} (are you sure you were tracking it?)"
+          end
         end
       end
       help_text :untrack, <<-EOF

@@ -48,8 +48,8 @@ class User
   end
 
   def untrack(query)
-    t = Track.first(:query => query) or return
-    ut = user_tracks.first(:track_id => t.id) or return
+    t = Track.first(:query => query) or return false
+    ut = user_tracks.first(:track_id => t.id) or return false
     ut.destroy
   end
 
