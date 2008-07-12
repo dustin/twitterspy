@@ -56,7 +56,7 @@ module TwitterSpy
 
     def send_track_message(jid, msg)
       body = "#{msg.from_user}: #{msg.text}"
-      m = Jabber::Message::new(jid, body).set_type(:headline).set_id('1').set_subject("Track Message")
+      m = Jabber::Message::new(jid, body).set_type(:normal).set_id('1').set_subject("Track Message")
 
       # The html itself
       html = "#{user_link(msg.from_user)}: #{format_body(msg.text)}"
@@ -81,7 +81,7 @@ module TwitterSpy
         $stdout.flush
       end
 
-      @server.deliver jid, m, :headline
+      @server.deliver jid, m
     end
 
     def process_tracks
