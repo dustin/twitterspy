@@ -57,20 +57,29 @@ module TwitterSpy
     def send_track_message(jid, msg)
       body = "#{msg.from_user}: #{msg.text}"
       m = Jabber::Message::new(jid, body).set_type(:normal).set_id('1').set_subject("Track Message")
-      h = REXML::Element::new("html")
-      h.add_namespace('http://jabber.org/protocol/xhtml-im')
-
-      # The body part with the correct namespace
-      b = REXML::Element::new("body")
-      b.add_namespace('http://www.w3.org/1999/xhtml')
 
       # The html itself
-      t = REXML::Text.new("#{user_link(msg.from_user)}: #{format_body(msg.text)}",
-        false, nil, true, nil, %r/.^/ )
+      html = "#{user_link(msg.from_user)}: #{format_body(msg.text)}"
+      begin
+        REXML::Document.new "<html>#{html}</html>"
 
-      b.add t
-      h.add b
-      m.add_element(h)
+        h = REXML::Element::new("html")
+        h.add_namespace('http://jabber.org/protocol/xhtml-im')
+
+        # The body part with the correct namespace
+        b = REXML::Element::new("body")
+        b.add_namespace('http://www.w3.org/1999/xhtml')
+
+        t = REXML::Text.new("#{user_link(msg.from_user)}: #{format_body(msg.text)}",
+          false, nil, true, nil, %r/.^/ )
+
+        b.add t
+        h.add b
+        m.add_element(h)
+      rescue REXML::ParseException
+        puts "Nearly made bad html:  #{$!} (#{html})"
+        $stdout.flush
+      end
 
       @server.deliver jid, m
     end
