@@ -50,8 +50,8 @@ module TwitterSpy
       %Q{<a href="http://twitter.com/#{user}">#{linktext}</a>}
     end
 
-    def resolve_users(text)
-      text.gsub(/(\W*)(@[\w_]+)/) {|x| $1 + user_link($2)}
+    def format_body(text)
+      text.gsub(/(\W*)(@[\w_]+)/) {|x| $1 + user_link($2)}.gsub(/&/, '&amp;')
     end
 
     def send_track_message(jid, msg)
@@ -65,7 +65,7 @@ module TwitterSpy
       b.add_namespace('http://www.w3.org/1999/xhtml')
 
       # The html itself
-      t = REXML::Text.new("#{user_link(msg.from_user)}: #{resolve_users(msg.text)}",
+      t = REXML::Text.new("#{user_link(msg.from_user)}: #{format_body(msg.text)}",
         false, nil, true, nil, %r/.^/ )
 
       b.add t
