@@ -3,6 +3,7 @@ general:
   db: sqlite3:twitterspy.sqlite3
   nthreads: 2
   watch_freq: 15
+  user_agent: mybot@jabber.org
 
 xmpp:
   jid: mybot@jabber.org/twitterspy

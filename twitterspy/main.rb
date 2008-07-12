@@ -89,7 +89,7 @@ module TwitterSpy
         outbound=Hash.new { |h,k| h[k] = {}; h[k] }
         Track.todo(TwitterSpy::Config::WATCH_FREQ).each do |track|
           puts "Fetching #{track.query} at #{Time.now.to_s}"
-          summize_client = Summize::Client.new 'twitterspy@jabber.org'
+          summize_client = Summize::Client.new TwitterSpy::Config::USER_AGENT
           begin
             oldid = track.max_seen.to_i
             res = summize_client.query track.query, :since_id => oldid

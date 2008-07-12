@@ -138,7 +138,7 @@ EOF
       cmd :search, "Perform a sample search (but do not track)" do |user, arg|
         with_arg(user, arg) do |query|
           TwitterSpy::Threading::IN_QUEUE << Proc.new do
-            summize_client = Summize::Client.new 'twitterspy@jabber.org'
+            summize_client = Summize::Client.new TwitterSpy::Config::USER_AGENT
             res = summize_client.query query, :rpp => 2
             out = ["Results from your query:"]
             res.each do |r|
@@ -155,7 +155,7 @@ EOF
             u = twitter.user username.strip
             out = ["#{username} is #{u.name.blank? ? 'Someone' : u.name} from #{u.location.blank? ? 'Somewhere' : u.location}"]
             out << "Most recent tweets:"
-            summize_client = Summize::Client.new 'twitterspy@jabber.org'
+            summize_client = Summize::Client.new TwitterSpy::Config::USER_AGENT
             res = summize_client.query "from:#{username.strip}", :rpp => 3
             # Get the first status from the twitter response (in case none is indexed)
             out << "\n1) #{u.status.text}"
