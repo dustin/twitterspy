@@ -2,7 +2,7 @@ module TwitterSpy
 
   class Main
 
-    def initialize(server)
+    def server=(server)
       @server = server
     end
 
