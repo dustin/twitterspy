@@ -15,6 +15,7 @@ class User
   # This is an additional constraint over the track-specific max_seen ID.
   property :min_id, Integer, :nullable => false, :default => 0
   property :language, String, :length => 2
+  property :auto_post, Boolean, :nullable => false, :default => false
 
   has n, :user_tracks
   has n, :tracks, :through => :user_tracks

@@ -57,7 +57,11 @@ module TwitterSpy
         if self.respond_to? cmd
           self.send cmd.to_sym, user, arg
         else
-          send_msg user, "I don't understand #{cmd}.  Send `help' for what I do know."
+          if user.auto_post
+            post user, arg
+          else
+            send_msg user, "I don't understand #{cmd}.  Send `help' for what I do know."
+          end
         end
       end
 
@@ -103,6 +107,29 @@ module TwitterSpy
         change_user_active_state(user, false)
         send_msg user, "Marked you inactive."
       end
+
+      cmd :autopost, "Enable or disable autopost" do |user, arg|
+        with_arg(user, arg, "Use 'off' or 'on' to disable or enable autoposting") do |a|
+          newval = case arg.downcase
+          when "on"
+            true
+          when "off"
+            false
+          else
+            raise "Autopost must be set to on or off"
+          end
+          user.update_attributes(:auto_post => newval)
+          send_msg user, "Autoposting is now #{newval ? 'on' : 'off'}"
+        end
+      end
+      help_text :autopost, <<-EOF
+Autopost allows you to post by sending any unknown command.
+usage:  'autopost on' or 'autopost off'
+
+When autopost is on, any message that doesn't look like a command is posted.
+Note that the 'post' command still exists in case you want to post something
+that looks like a command.
+EOF
 
       cmd :track, "Track a topic (summize query string)" do |user, arg|
         with_arg(user, arg) do |a|
