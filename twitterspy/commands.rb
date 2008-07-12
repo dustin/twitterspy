@@ -227,7 +227,7 @@ EOF
       cmd :post, "Post a message to twitter." do |user, arg|
         twitter_call user, arg, "You need to actually tell me what to post" do |twitter, message|
           begin
-            rv = twitter.post message
+            rv = twitter.post message, :source => 'TwitterSpy'
             url = "http://twitter.com/#{user.username}/statuses/#{rv.id}"
             send_msg user, ":) Your message has been posted to twitter: " + url
           rescue StandardError, Interrupt
