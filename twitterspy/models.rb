@@ -79,6 +79,7 @@ class Track
         and u.active = ?
         and u.status not in ('dnd', 'offline', 'unavailable')
         and ( t.last_update is null or t.last_update < ?)
+      order by t.last_update
       limit 60
 EOF
     ids = repository(:default).adapter.query(q, true,
