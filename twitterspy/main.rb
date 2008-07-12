@@ -77,7 +77,7 @@ module TwitterSpy
         h.add b
         m.add_element(h)
       rescue REXML::ParseException
-        puts "Nearly made bad html:  #{$!} (#{html})"
+        puts "Nearly made bad html:  #{$!} (#{msg.text})"
         $stdout.flush
       end
 
