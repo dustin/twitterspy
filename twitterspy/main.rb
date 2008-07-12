@@ -81,7 +81,7 @@ module TwitterSpy
         $stdout.flush
       end
 
-      @server.deliver jid, m
+      @server.deliver jid, m, :headline
     end
 
     def process_tracks
