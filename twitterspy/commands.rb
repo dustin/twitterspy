@@ -89,8 +89,7 @@ module TwitterSpy
       end
 
       cmd :version, "Find out what version the bot's running" do |user, nothing|
-        v = `git rev-parse --short HEAD`
-        out = ["Running version #{v}"]
+        out = ["Running version #{TwitterSpy::Config::VERSION}"]
         out << "For the source and more info, see http://github.com/dustin/twitterspy"
         send_msg user, out.join("\n")
       end
