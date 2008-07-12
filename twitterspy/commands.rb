@@ -58,9 +58,9 @@ module TwitterSpy
           self.send cmd.to_sym, user, arg
         else
           if user.auto_post
-            post user, arg
+            post user, "#{cmd} #{arg}"
           else
-            out = ["I don't understand #{cmd}."]
+            out = ["I don't understand '#{cmd}'."]
             out << "Send 'help' for known commands."
             out << "If you intended this to be posted, see 'help autopost'"
             send_msg user, out.join("\n")
