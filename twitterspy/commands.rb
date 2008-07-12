@@ -88,6 +88,13 @@ module TwitterSpy
         end
       end
 
+      cmd :version, "Find out what version the bot's running" do |user, nothing|
+        v = `git rev-parse --short HEAD`
+        out = ["Running version #{v}"]
+        out << "For the source and more info, see http://github.com/dustin/twitterspy"
+        send_msg user, out.join("\n")
+      end
+
       cmd :on, "Activate updates." do |user, nothing|
         change_user_active_state(user, true)
         send_msg user, "Marked you active."
