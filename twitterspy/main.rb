@@ -6,6 +6,25 @@ module TwitterSpy
       @server = server
     end
 
+    def process_xmpp_incoming
+      rv = 0
+      @server.presence_updates do |user, status, message|
+        User.update_status user, status
+        rv += 1
+      end
+      # Called for dequeue side-effect stupidity of jabber:simple
+      rv += @server.received_messages.size
+      @server.new_subscriptions do |from, presence|
+        puts "Subscribed by #{from}"
+        rv += 1
+      end
+      @server.subscription_requests do |from, presence|
+        puts "Sub req from #{from}"
+        rv += 1
+      end
+      rv
+    end
+
     def process_message(msg)
       decoded = HTMLEntities.new.decode(msg.body).gsub(/&/, '&amp;')
       cmd, args = decoded.split(' ', 2)
@@ -90,6 +109,7 @@ module TwitterSpy
 
     def run_loop
       puts "Processing..."
+      process_xmpp_incoming
       update_status
       process_tracks
       $stdout.flush
