@@ -39,7 +39,12 @@ module TwitterSpy
     end
 
     def compute_next_update(track)
-      DateTime.now + Rational(TwitterSpy::Config::WATCH_FREQ, 1440)
+      # Give preference to common tracks.
+      mins = [TwitterSpy::Config::WATCH_FREQ,
+        TwitterSpy::Config::WATCH_FREQ - track.user_tracks.size].min
+      # But keep it above 0.
+      mins = 1 if mins < 1
+      DateTime.now + Rational(mins, 1440)
     end
 
     def user_link(user)
