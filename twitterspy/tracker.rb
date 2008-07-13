@@ -26,7 +26,7 @@ module TwitterSpy
             end
           end
         rescue StandardError, Interrupt
-          puts "Error fetching #{track.query}: #{$!}"
+          puts "Error fetching #{track.query}: #{$!}" + $!.backtrace.join("\n\t")
         end
       end
       outbound.each do |jid, msgs|
@@ -40,12 +40,17 @@ module TwitterSpy
 
     def compute_next_update(track)
       # Give preference to common tracks.
+      # Find the active user count for this track
+      # XXX:  Getting a copy of the track to work around a DM bug.
+      track = track.clone
+      count = track.users(:active => true,
+        :status.not => ['dnd', 'offline', 'unavailable']).size
       mins = [TwitterSpy::Config::WATCH_FREQ,
-        TwitterSpy::Config::WATCH_FREQ - (track.user_tracks.size - 1)].min
+        TwitterSpy::Config::WATCH_FREQ - (count - 1)].min
       # But keep it above 0.
       mins = 1 if mins < 1
       if mins < TwitterSpy::Config::WATCH_FREQ
-        puts "Reduced track freq for #{track.query} to #{mins} for #{track.user_tracks.size} watchers"
+        puts "Reduced track freq for #{track.query} to #{mins} for #{count} active watchers"
       end
       DateTime.now + Rational(mins, 1440)
     end
