@@ -63,16 +63,22 @@ module TwitterSpy
       %Q{<a href="http://twitter.com/#{user}">#{linktext}</a>}
     end
 
-    def format_body(text)
-      text.gsub(/(\W*)(@[\w_]+)/) {|x| $1 + user_link($2)}.gsub(/&/, '&amp;')
+    def format_html_body(msg)
+      user = user_link(msg.from_user)
+      text = msg.text.gsub(/(\W*)(@[\w_]+)/) {|x| $1 + user_link($2)}.gsub(/&/, '&amp;')
+      "#{user}: #{text}"
+    end
+
+    def format_plain_body(msg)
+      "#{msg.from_user}: #{msg.text}"
     end
 
     def send_track_message(jid, msg)
-      body = "#{msg.from_user}: #{msg.text}"
+      body = format_plain_body(msg)
       m = Jabber::Message::new(jid, body).set_type(:chat).set_id('1').set_subject("Track Message")
 
       # The html itself
-      html = "#{user_link(msg.from_user)}: #{format_body(msg.text)}"
+      html = format_html_body(msg)
       begin
         REXML::Document.new "<html>#{html}</html>"
 
@@ -83,8 +89,7 @@ module TwitterSpy
         b = REXML::Element::new("body")
         b.add_namespace('http://www.w3.org/1999/xhtml')
 
-        t = REXML::Text.new("#{user_link(msg.from_user)}: #{format_body(msg.text)}",
-          false, nil, true, nil, %r/.^/ )
+        t = REXML::Text.new(format_html_body(msg), false, nil, true, nil, %r/.^/ )
 
         b.add t
         h.add b
