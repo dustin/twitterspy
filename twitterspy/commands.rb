@@ -134,6 +134,23 @@ Note that the 'post' command still exists in case you want to post something
 that looks like a command.
 EOF
 
+      cmd :top10, "Show the top 10 most tracked topics" do |user, arg|
+        query = <<-EOF
+select t.query, count(*) as watchers
+  from tracks t join user_tracks ut on (t.id = ut.track_id)
+  group by t.query
+  order by watchers desc, query
+  limit 10
+EOF
+        top = repository(:default).adapter.query query
+        out = ["Top 10 most tracked topics:"]
+        out << ""
+        top.each do |row|
+          out << "#{row['t.query']} (#{row['watchers']} watchers)"
+        end
+        send_msg user, out.join("\n")
+      end
+
       cmd :track, "Track a topic (summize query string)" do |user, arg|
         with_arg(user, arg) do |a|
           user.track a
