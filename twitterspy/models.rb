@@ -44,7 +44,7 @@ class User
   end
 
   def track(query)
-    t = Track.first(:query => query) || Track.create(:query => query)
+    t = Track.first(:query => query) || Track.create(:query => query, :next_update => DateTime.now)
     user_tracks.first(:track_id => t.id) || user_tracks.create(:track => t, :user => self)
   end
 
@@ -64,12 +64,13 @@ class Track
   property :id, Integer, :serial => true, :unique_index => true
   property :query, String, :nullable => false, :unique_index => true
   property :last_update, DateTime
+  property :next_update, DateTime, :nullable => false
   property :max_seen, Integer
 
   has n, :user_tracks
   has n, :users, :through => :user_tracks
 
-  def self.todo(timeout=10)
+  def self.todo
     q=<<EOF
     select distinct t.id
       from tracks t
@@ -79,12 +80,11 @@ class Track
         u.active is not null
         and u.active = ?
         and u.status not in ('dnd', 'offline', 'unavailable')
-        and ( t.last_update is null or t.last_update < ?)
+        and ( t.next_update < ? )
       order by t.last_update
       limit 60
 EOF
-    ids = repository(:default).adapter.query(q, true,
-      DateTime.now - Rational(timeout, 1440))
+    ids = repository(:default).adapter.query(q, true, DateTime.now)
     self.all(:conditions => {:id => ids})
   end
 end

@@ -87,13 +87,16 @@ module TwitterSpy
     def process_tracks
       TwitterSpy::Threading::IN_QUEUE << Proc.new do
         outbound=Hash.new { |h,k| h[k] = {}; h[k] }
-        Track.todo(TwitterSpy::Config::WATCH_FREQ).each do |track|
+        Track.todo.each do |track|
           puts "Fetching #{track.query} at #{Time.now.to_s}"
           summize_client = Summize::Client.new TwitterSpy::Config::USER_AGENT
           begin
             oldid = track.max_seen.to_i
             res = summize_client.query track.query, :since_id => oldid
-            track.update_attributes(:last_update => DateTime.now, :max_seen => res.max_id)
+            now = DateTime.now
+            track.update_attributes(:last_update => now,
+              :max_seen => res.max_id,
+              :next_update => now + Rational(TwitterSpy::Config::WATCH_FREQ, 1440))
             totx = oldid == 0 ? Array(res).last(5) : res.select { |x| x.id.to_i > oldid }
             track.users.select{|u| u.available? }.each do |user|
               totx.each do |msg|
@@ -117,7 +120,7 @@ module TwitterSpy
     end
 
     def run_loop
-      puts "Processing..."
+      puts "Processing at #{DateTime.now.to_s}..."
       process_xmpp_incoming
       update_status
       process_tracks
