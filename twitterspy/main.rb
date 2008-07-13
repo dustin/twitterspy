@@ -4,6 +4,11 @@ module TwitterSpy
 
   class Main
 
+    def initialize
+      @users = 0
+      @tracks = 0
+    end
+
     def server=(server)
       @server = server
     end
@@ -38,10 +43,14 @@ module TwitterSpy
     def update_status
       users = User.count
       tracks = Track.count
-      puts "Updating status with #{users} users and #{tracks} tracks"
-      status = "Tracking #{tracks} topics for #{users} users"
-      @server.send!(Jabber::Presence.new(nil, status,
-        TwitterSpy::Config::CONF['xmpp'].fetch('priority', 1).to_i))
+      if users != @users || tracks != @tracks
+        status = "Tracking #{tracks} topics for #{users} users"
+        puts "Updating status:  #{status}"
+        @server.send!(Jabber::Presence.new(nil, status,
+          TwitterSpy::Config::CONF['xmpp'].fetch('priority', 1).to_i))
+        @users = users
+        @tracks = tracks
+      end
     end
 
     def process_tracks
