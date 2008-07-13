@@ -24,8 +24,10 @@ module TwitterSpy
         @@all_cmds ||= {}
       end
 
-      def cmd(name, help, &block)
-        all_cmds()[name.to_s] = TwitterSpy::Commands::Help.new help
+      def cmd(name, help=nil, &block)
+        unless help.nil?
+          all_cmds()[name.to_s] = TwitterSpy::Commands::Help.new help
+        end
         define_method(name, &block)
       end
 
@@ -95,7 +97,7 @@ module TwitterSpy
         end
       end
 
-      cmd :version, "Find out what version the bot's running" do |user, nothing|
+      cmd :version do |user, nothing|
         out = ["Running version #{TwitterSpy::Config::VERSION}"]
         out << "For the source and more info, see http://github.com/dustin/twitterspy"
         send_msg user, out.join("\n")
@@ -134,7 +136,7 @@ Note that the 'post' command still exists in case you want to post something
 that looks like a command.
 EOF
 
-      cmd :top10, "Show the top 10 most tracked topics" do |user, arg|
+      cmd :top10 do |user, arg|
         query = <<-EOF
 select t.query, count(*) as watchers
   from tracks t join user_tracks ut on (t.id = ut.track_id)
@@ -258,7 +260,7 @@ EOF
         send_msg user, "You have been logged out."
       end
 
-      cmd :status, "Find out what you look like to us." do |user, arg|
+      cmd :status do |user, arg|
         out = ["Jid:  #{user.jid}"]
         out << "Jabber Status:  #{user.status}"
         out << "TwitterSpy state:  #{user.active ? 'Active' : 'Not Active'}"
