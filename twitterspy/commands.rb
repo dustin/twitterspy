@@ -290,7 +290,7 @@ EOF
       cmd :follow, "Follow a user" do |user, arg|
         twitter_call user, arg, "Whom would you like to follow?" do |twitter, username|
           begin
-            twitter.follow username
+            twitter.create_friendship username
             send_msg user, ":) Now following #{username}"
           rescue StandardError, Interrupt
             puts "Failed to follow a user:  #{$!}\n" + $!.backtrace.join("\n\t")
@@ -303,7 +303,7 @@ EOF
       cmd :leave, "Leave (stop following) a user" do |user, arg|
         twitter_call user, arg, "Whom would you like to leave?" do |twitter, username|
           begin
-            twitter.leave username
+            twitter.destroy_friendship username
             send_msg user, ":) No longer following #{username}"
           rescue StandardError, Interrupt
             puts "Failed to stop following a user:  #{$!}\n" + $!.backtrace.join("\n\t")
