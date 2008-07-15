@@ -16,6 +16,7 @@ class User
   property :min_id, Integer, :nullable => false, :default => 0
   property :language, String, :length => 2
   property :auto_post, Boolean, :nullable => false, :default => false
+  property :friend_timeline_id, Integer
 
   has n, :user_tracks
   has n, :tracks, :through => :user_tracks
