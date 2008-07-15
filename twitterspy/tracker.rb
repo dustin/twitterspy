@@ -40,6 +40,7 @@ module TwitterSpy
           send_track_message jid, msg
         end
       end
+      $stdout.flush
     end
 
     def send_track_message(jid, msg)
