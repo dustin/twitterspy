@@ -216,9 +216,8 @@ EOF
             summize_client = Summize::Client.new TwitterSpy::Config::USER_AGENT
             res = summize_client.query "from:#{username.strip}", :rpp => 3
             # Get the first status from the twitter response (in case none is indexed)
-            out << "\n1) #{u.status.text}"
             res.each_with_index do |r, i|
-              out << "\n#{i+1}) #{r.text}" if i > 0
+              out << "\n#{i+1}) #{r.text}"
             end
             out << "\nhttp://twitter.com/#{username.strip}"
             send_msg user, out.join("\n")
