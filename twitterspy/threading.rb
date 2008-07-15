@@ -3,12 +3,13 @@ require 'thread'
 module TwitterSpy
   module Threading
     IN_QUEUE = Queue.new
+    TWIT_QUEUE = Queue.new
 
-    def self.start_worker
+    def self.start_worker(queue)
       Thread.new do
         loop do
           begin
-            msg = IN_QUEUE.pop
+            msg = queue.pop
             msg.call
           rescue StandardError, Interrupt
             puts "ERROR!  #{$!}\n#{$!.backtrace.join("\n\t")}"

@@ -233,7 +233,7 @@ EOF
       cmd :twlogin, "Set your twitter username and password (use at your own risk)" do |user, arg|
         with_arg(user, arg, "You must supply a username and password") do |up|
           u, p = up.strip.split(/\s+/, 2)
-          TwitterSpy::Threading::IN_QUEUE << Proc.new do
+          TwitterSpy::Threading::TWIT_QUEUE << Proc.new do
             twitter = Twitter::Base.new u, p
             begin
               twitter.verify_credentials
@@ -389,7 +389,7 @@ EOF
         password = Base64.decode64 user.password
 
         with_arg(user, arg, missing_text) do |a|
-          TwitterSpy::Threading::IN_QUEUE << Proc.new do
+          TwitterSpy::Threading::TWIT_QUEUE << Proc.new do
             password = Base64.decode64 user.password
             twitter = Twitter::Base.new user.username, password
             yield twitter, a

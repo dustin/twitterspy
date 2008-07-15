@@ -20,8 +20,12 @@ def inner_loop(main)
 end
 
 TwitterSpy::Config::CONF['general'].fetch('nthreads', 1).to_i.times do |t|
-  puts "Starting thread #{t}"
-  TwitterSpy::Threading.start_worker
+  puts "Starting general thread #{t}"
+  TwitterSpy::Threading.start_worker TwitterSpy::Threading::IN_QUEUE
+end
+TwitterSpy::Config::CONF['general'].fetch('twitthreads', 1).to_i.times do |t|
+  puts "Starting twitter thread #{t}"
+  TwitterSpy::Threading.start_worker TwitterSpy::Threading::TWIT_QUEUE
 end
 
 class MyClient < Jabber::Simple

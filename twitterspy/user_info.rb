@@ -11,7 +11,7 @@ module TwitterSpy
     end
 
     def update(user)
-      TwitterSpy::Threading::IN_QUEUE << Proc.new do
+      TwitterSpy::Threading::TWIT_QUEUE << Proc.new do
         puts "Processing private stuff for #{user.jid} (@#{user.username})"
         $stdout.flush
 

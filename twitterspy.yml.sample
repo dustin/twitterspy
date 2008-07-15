@@ -2,6 +2,7 @@ general:
   loop_sleep: 60
   db: sqlite3:twitterspy.sqlite3
   nthreads: 2
+  twitthreads: 1
   watch_freq: 15
   personal_freq: 3
   user_agent: mybot@jabber.org
