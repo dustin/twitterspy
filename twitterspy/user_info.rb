@@ -13,10 +13,18 @@ module TwitterSpy
     def update(user)
       TwitterSpy::Threading::IN_QUEUE << Proc.new do
         do_private_messages user
+        do_friend_messages user unless user.friend_timeline_id.nil?
       end
     end
 
     private
+
+    def do_friend_messages(user)
+      twitter = twitter_conn user
+      msgs = twitter.timeline.select{|m| m.id.to_i > user.friend_timeline_id}
+      user.update_attributes(:friend_timeline_id => msgs.first.id.to_i) if msgs.size > 0
+      deliver_messages(:friend, user, 'Friend Message', msgs)
+    end
 
     def do_private_messages(user)
       first_time = user.direct_message_id.nil?
@@ -24,18 +32,19 @@ module TwitterSpy
       # TODO:  Fix the twitter API to let me pass in my direct message ID
       msgs = twitter.direct_messages.select{|m| m.id.to_i > user.direct_message_id}
       user.update_attributes(:direct_message_id => msgs.first.id.to_i) if msgs.size > 0
-      deliver_messages(:private, user, msgs) unless first_time
+      deliver_messages(:private, user, 'Direct Message', msgs) unless first_time
     end
 
-    def deliver_messages(type, user, msgs)
+    def deliver_messages(type, user, subject, msgs)
       msgs.each do |msg|
-        deliver_message(type, user, msg)
+        from = msg.respond_to?(:sender_screen_name) ? msg.sender_screen_name : msg.user.screen_name
+        deliver_message(type, user, subject, from, msg.text)
       end
     end
 
-    def deliver_message(type, user, msg)
+    def deliver_message(type, user, subject, msgfrom, msgtext)
       @server.deliver user.jid, format_msg(user.jid,
-        msg.sender_screen_name, msg.text, "Direct Message", type)
+        msgfrom, msgtext, subject, type)
     end
 
     def twitter_conn(user)
