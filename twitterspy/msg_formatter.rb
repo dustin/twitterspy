@@ -11,7 +11,7 @@ module TwitterSpy
     end
 
     def type_str(type)
-      type.nil? ? '' : "#{type} "
+      type.nil? ? '' : "[#{type}] "
     end
 
     def format_html_body(from, text, type)
