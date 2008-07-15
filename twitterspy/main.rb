@@ -1,4 +1,5 @@
 require 'twitterspy/tracker'
+require 'twitterspy/user_info'
 
 module TwitterSpy
 
@@ -59,11 +60,19 @@ module TwitterSpy
       end
     end
 
+    def process_user_specific
+      User.all(:active => true, :username.not => nil,
+        :status.not => ['dnd', 'offline', 'unavailable']).each do |user|
+        TwitterSpy::UserInfo.new(@server).update(user)
+      end
+    end
+
     def run_loop
       puts "Processing at #{DateTime.now.to_s}..."
       process_xmpp_incoming
       update_status
       process_tracks
+      process_user_specific
       $stdout.flush
       sleep TwitterSpy::Config::LOOP_SLEEP
       repository(:default).adapter.query(
