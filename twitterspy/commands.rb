@@ -313,6 +313,20 @@ EOF
         end
       end
 
+      cmd :watch_friends, "Get IMs when your friends say stuff." do |user, arg|
+        twitter_call user, "x", nil do |twitter, x|
+          begin
+            item = twitter.timeline.first
+            user.update_attributes(:friend_timeline_id => item.id.to_i - 1)
+            send_msg user, "Watching messages from everyone you follow after ``#{item.text}'' from @#{item.user.screen_name}"
+          rescue
+            puts "Failed to do initial friend stuff lookup for user: #{$!}\n" + $!.backtrace.join("\n\t")
+            $stdout.flush
+            send_msg user, ":( Failed to lookup your public timeline"
+          end
+        end
+      end
+
       cmd :lang, "Set your language." do |user, arg|
         arg = nil if arg && arg.strip == ""
         if arg && arg.size != 2
