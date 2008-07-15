@@ -1,6 +1,10 @@
+require 'twitterspy/user_info'
+
 module TwitterSpy
 
   class UserInfo
+
+    include MsgFormatter
 
     def initialize(server)
       @server = server
@@ -26,7 +30,8 @@ module TwitterSpy
     end
 
     def deliver_message(type, user, msg)
-      @server.deliver user.jid, "#{type} message from @#{msg.sender_screen_name}: #{msg.text}"
+      @server.deliver user.jid, format_msg(user.jid,
+        msg.sender_screen_name, msg.text, "Direct Message", :private)
     end
 
     def twitter_conn(user)
