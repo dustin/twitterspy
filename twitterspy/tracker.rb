@@ -1,6 +1,10 @@
+require 'twitterspy/msg_formatter'
+
 module TwitterSpy
 
   class Tracker
+
+    include TwitterSpy::MsgFormatter
 
     def initialize(server)
       @server=server
@@ -38,6 +42,10 @@ module TwitterSpy
       end
     end
 
+    def send_track_message(jid, msg)
+      @server.deliver jid, format_msg(jid, msg.from_user, msg.text, "Track Message")
+    end
+
     def compute_next_update(track)
       # Give preference to common tracks.
       # Find the active user count for this track
@@ -53,53 +61,6 @@ module TwitterSpy
         puts "Reduced track freq for #{track.query} to #{mins} for #{count} active watchers"
       end
       DateTime.now + Rational(mins, 1440)
-    end
-
-    def user_link(user)
-      linktext=user
-      if user[0] == 64 # Does it start with @?
-        user = user.gsub(/^@(.*)/, '\1')
-      end
-      %Q{<a href="http://twitter.com/#{user}">#{linktext}</a>}
-    end
-
-    def format_html_body(msg)
-      user = user_link(msg.from_user)
-      text = msg.text.gsub(/(\W*)(@[\w_]+)/) {|x| $1 + user_link($2)}.gsub(/&/, '&amp;')
-      "#{user}: #{text}"
-    end
-
-    def format_plain_body(msg)
-      "#{msg.from_user}: #{msg.text}"
-    end
-
-    def send_track_message(jid, msg)
-      body = format_plain_body(msg)
-      m = Jabber::Message::new(jid, body).set_type(:chat).set_id('1').set_subject("Track Message")
-
-      # The html itself
-      html = format_html_body(msg)
-      begin
-        REXML::Document.new "<html>#{html}</html>"
-
-        h = REXML::Element::new("html")
-        h.add_namespace('http://jabber.org/protocol/xhtml-im')
-
-        # The body part with the correct namespace
-        b = REXML::Element::new("body")
-        b.add_namespace('http://www.w3.org/1999/xhtml')
-
-        t = REXML::Text.new(format_html_body(msg), false, nil, true, nil, %r/.^/ )
-
-        b.add t
-        h.add b
-        m.add_element(h)
-      rescue REXML::ParseException
-        puts "Nearly made bad html:  #{$!} (#{msg.text})"
-        $stdout.flush
-      end
-
-      @server.deliver jid, m
     end
 
   end
