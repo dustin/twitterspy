@@ -35,7 +35,7 @@ module TwitterSpy
 
     def deliver_message(type, user, msg)
       @server.deliver user.jid, format_msg(user.jid,
-        msg.sender_screen_name, msg.text, "Direct Message", :private)
+        msg.sender_screen_name, msg.text, "Direct Message", type)
     end
 
     def twitter_conn(user)
