@@ -62,7 +62,8 @@ module TwitterSpy
 
     def process_user_specific
       User.all(:active => true, :username.not => nil,
-        :status.not => ['dnd', 'offline', 'unavailable']).each do |user|
+        :status.not => ['dnd', 'offline', 'unavailable'],
+        :next_scan.lt => DateTime.now).each do |user|
         TwitterSpy::UserInfo.new(@server).update(user)
       end
     end

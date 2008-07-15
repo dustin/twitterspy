@@ -12,8 +12,13 @@ module TwitterSpy
 
     def update(user)
       TwitterSpy::Threading::IN_QUEUE << Proc.new do
+        puts "Processing private stuff for #{user.jid} (@#{user.username})"
+        $stdout.flush
+
         do_private_messages user
         do_friend_messages user unless user.friend_timeline_id.nil?
+        user.update_attributes(
+          :next_scan => (DateTime.now + Rational(TwitterSpy::Config::PERSONAL_FREQ, 1440)))
       end
     end
 
@@ -30,7 +35,7 @@ module TwitterSpy
       first_time = user.direct_message_id.nil?
       twitter = twitter_conn user
       # TODO:  Fix the twitter API to let me pass in my direct message ID
-      msgs = twitter.direct_messages.select{|m| m.id.to_i > user.direct_message_id}
+      msgs = twitter.direct_messages.select{|m| m.id.to_i > user.direct_message_id.to_i}
       user.update_attributes(:direct_message_id => msgs.first.id.to_i) if msgs.size > 0
       deliver_messages(:private, user, 'Direct Message', msgs) unless first_time
     end

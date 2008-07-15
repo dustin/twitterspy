@@ -237,7 +237,7 @@ EOF
             twitter = Twitter::Base.new u, p
             begin
               twitter.verify_credentials
-              user.update_attributes(:username => u, :password => Base64.encode64(p).strip)
+              user.update_attributes(:username => u, :password => Base64.encode64(p).strip, :next_scan => DateTime.now)
               send_msg user, "Your credentials have been verified and saved.  Thanks."
             rescue StandardError, Interrupt
               puts "Unable to verify credentials:  #{$!}\n" + $!.backtrace.join("\n\t")

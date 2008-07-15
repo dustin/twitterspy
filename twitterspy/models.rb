@@ -18,6 +18,7 @@ class User
   property :auto_post, Boolean, :nullable => false, :default => false
   property :friend_timeline_id, Integer
   property :direct_message_id, Integer
+  property :next_scan, DateTime
 
   has n, :user_tracks
   has n, :tracks, :through => :user_tracks
