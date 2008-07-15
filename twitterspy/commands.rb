@@ -313,19 +313,38 @@ EOF
         end
       end
 
-      cmd :watch_friends, "Get IMs when your friends say stuff." do |user, arg|
-        twitter_call user, "x", nil do |twitter, x|
-          begin
-            item = twitter.timeline.first
-            user.update_attributes(:friend_timeline_id => item.id.to_i - 1)
-            send_msg user, "Watching messages from everyone you follow after ``#{item.text}'' from @#{item.user.screen_name}"
-          rescue
-            puts "Failed to do initial friend stuff lookup for user: #{$!}\n" + $!.backtrace.join("\n\t")
-            $stdout.flush
-            send_msg user, ":( Failed to lookup your public timeline"
+      cmd :watch_friends, "Enable or disable watching friends." do |user, arg|
+        twitter_call user, arg, "Please specify 'on' or 'off'" do |twitter, val|
+          case val
+          when "on"
+            begin
+              item = twitter.timeline.first
+              user.update_attributes(:friend_timeline_id => item.id.to_i)
+              send_msg user, "Watching messages from everyone you follow after ``#{item.text}'' from @#{item.user.screen_name}"
+            rescue
+              puts "Failed to do initial friend stuff lookup for user: #{$!}\n" + $!.backtrace.join("\n\t")
+              $stdout.flush
+              send_msg user, ":( Failed to lookup your public timeline"
+            end
+          when "off"
+            user.update_attributes(:friend_timeline_id => nil)
+            send_msg user, "No longer watching your friends."
+          else
+            send_msg user, "Watch value must be 'off' or 'on'"
           end
         end
       end
+      help_text :watch_friends, <<-EOF
+Enable or disable watching friends.
+
+  watch_friends on
+
+floods you with IMs as people you're following tweet.
+
+  watch_friends off
+
+gives you a more relaxing day.
+EOF
 
       cmd :lang, "Set your language." do |user, arg|
         arg = nil if arg && arg.strip == ""
