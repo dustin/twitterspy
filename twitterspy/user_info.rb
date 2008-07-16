@@ -28,7 +28,7 @@ module TwitterSpy
       twitter = twitter_conn user
       msgs = twitter.timeline.select{|m| m.id.to_i > user.friend_timeline_id}
       user.update_attributes(:friend_timeline_id => msgs.first.id.to_i) if msgs.size > 0
-      deliver_messages(:friend, user, 'Friend Message', msgs)
+      deliver_messages(:friend, user, 'Friend Message')
     end
 
     def do_private_messages(user)
@@ -43,13 +43,13 @@ module TwitterSpy
     def deliver_messages(type, user, subject, msgs)
       msgs.each do |msg|
         from = msg.respond_to?(:sender_screen_name) ? msg.sender_screen_name : msg.user.screen_name
-        deliver_message(type, user, subject, from, msg.text)
+        deliver_message(type, user, subject, from, msg.text, msg.id.to_i)
       end
     end
 
-    def deliver_message(type, user, subject, msgfrom, msgtext)
+    def deliver_message(type, user, subject, msgfrom, msgtext, msgid)
       @server.deliver user.jid, format_msg(user.jid,
-        msgfrom, msgtext, subject, type)
+        msgfrom, msgtext, subject, type), msgid
     end
 
     def twitter_conn(user)

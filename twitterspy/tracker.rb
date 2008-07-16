@@ -43,7 +43,7 @@ module TwitterSpy
     end
 
     def send_track_message(jid, msg)
-      @server.deliver jid, format_msg(jid, msg.from_user, msg.text, "Track Message")
+      @server.deliver jid, format_msg(jid, msg.from_user, msg.text, "Track Message"), msg.id.to_i
     end
 
     def compute_next_update(track)

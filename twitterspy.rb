@@ -6,6 +6,7 @@ require 'date'
 require 'xmpp4r-simple'
 require 'summize'
 require 'htmlentities'
+require 'memcache'
 
 require 'twitterspy/config'
 require 'twitterspy/models'
@@ -34,6 +35,8 @@ class MyClient < Jabber::Simple
     super(jid, pass)
     @main = main
     setup_callback
+    @cache = MemCache.new([TwitterSpy::Config::CONF['general'].fetch(
+      'memcache', 'localhost:11211')])
   end
 
   def reconnect
@@ -41,6 +44,26 @@ class MyClient < Jabber::Simple
     $stdout.flush
     super
     setup_callback
+  end
+
+  def deliver(recipient, msg, dedupid=nil)
+    unless(duplicate?(recipient, dedupid))
+      super(recipient, msg)
+    end
+  end
+
+  def duplicate?(recipient, dedupid)
+    if !dedupid.nil?
+      key = "#{recipient}/#{dedupid}"
+      if @cache.get(key)
+        puts "Suppressing send of #{dedupid} to #{recipient}"
+        $stdout.flush
+        true
+      else
+        @cache.set key, '1', (20*60)
+        false
+      end
+    end
   end
 
   def setup_callback
