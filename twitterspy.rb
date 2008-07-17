@@ -64,6 +64,10 @@ class MyClient < Jabber::Simple
         false
       end
     end
+  rescue
+    puts "Error in duplicate checking code:  #{$!}" + $!.backtrace.join("\n\t")
+    $stdout.flush
+    false
   end
 
   def setup_callback
