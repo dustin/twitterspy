@@ -41,7 +41,7 @@ module TwitterSpy
     end
 
     def deliver_messages(type, user, subject, msgs)
-      msgs.each do |msg|
+      msgs.sort_by{|m| m.id.to_i}.each do |msg|
         from = msg.respond_to?(:sender_screen_name) ? msg.sender_screen_name : msg.user.screen_name
         deliver_message(type, user, subject, from, msg.text, msg.id.to_i)
       end
