@@ -24,9 +24,13 @@ TwitterSpy::Config::CONF['general'].fetch('nthreads', 1).to_i.times do |t|
   puts "Starting general thread #{t}"
   TwitterSpy::Threading.start_worker TwitterSpy::Threading::IN_QUEUE
 end
-TwitterSpy::Config::CONF['general'].fetch('twitthreads', 1).to_i.times do |t|
-  puts "Starting twitter thread #{t}"
-  TwitterSpy::Threading.start_worker TwitterSpy::Threading::TWIT_QUEUE
+TwitterSpy::Config::CONF['general'].fetch('twitrthreads', 1).to_i.times do |t|
+  puts "Starting twitter read thread #{t}"
+  TwitterSpy::Threading.start_worker TwitterSpy::Threading::TWIT_R_QUEUE
+end
+TwitterSpy::Config::CONF['general'].fetch('twitwthreads', 1).to_i.times do |t|
+  puts "Starting twitter write thread #{t}"
+  TwitterSpy::Threading.start_worker TwitterSpy::Threading::TWIT_W_QUEUE
 end
 
 class MyClient < Jabber::Simple

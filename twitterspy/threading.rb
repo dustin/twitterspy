@@ -3,7 +3,8 @@ require 'thread'
 module TwitterSpy
   module Threading
     IN_QUEUE = Queue.new
-    TWIT_QUEUE = Queue.new
+    TWIT_R_QUEUE = Queue.new
+    TWIT_W_QUEUE = Queue.new
 
     def self.start_worker(queue)
       Thread.new do
