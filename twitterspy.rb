@@ -35,6 +35,6 @@ end
 loop do
   puts "Connecting..."
   $stdout.flush
-  Jabber::debug=true
+  # Jabber::debug=true
   inner_loop TwitterSpy::Main.new
 end
