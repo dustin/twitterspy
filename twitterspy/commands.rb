@@ -3,6 +3,8 @@ require 'base64'
 
 require 'twitter'
 
+require 'twitterspy/delivery_helper'
+
 module TwitterSpy
   module Commands
 
@@ -40,13 +42,14 @@ module TwitterSpy
     class CommandProcessor
 
       extend CommandDefiner
+      include TwitterSpy::DeliveryHelper
 
       def initialize(conn)
-        @jabber = conn
+        @client = conn
       end
 
       def typing_notification(user)
-        @jabber.client.send("<message
+        @client.send("<message
             from='#{Config::SCREEN_NAME}'
             to='#{user.jid}'>
             <x xmlns='jabber:x:event'>
@@ -71,7 +74,7 @@ module TwitterSpy
       end
 
       def send_msg(user, text)
-        @jabber.deliver user.jid, text
+        deliver user.jid, text
       end
 
       cmd :help, "Get help for commands." do |user, arg|

@@ -5,9 +5,10 @@ module TwitterSpy
   class UserInfo
 
     include MsgFormatter
+    include TwitterSpy::DeliveryHelper
 
-    def initialize(server)
-      @server = server
+    def initialize(client)
+      @client = client
     end
 
     def update(user)
@@ -48,7 +49,7 @@ module TwitterSpy
     end
 
     def deliver_message(type, user, subject, msgfrom, msgtext, msgid)
-      @server.deliver user.jid, format_msg(user.jid,
+      deliver user.jid, format_msg(user.jid,
         msgfrom, msgtext, subject, type), msgid
     end
 

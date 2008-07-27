@@ -1,42 +1,56 @@
+require 'xmpp4r'
+require 'xmpp4r/roster'
+
 require 'twitterspy/tracker'
 require 'twitterspy/user_info'
+require 'twitterspy/delivery_helper'
 
 module TwitterSpy
 
   class Main
 
+    include TwitterSpy::DeliveryHelper
+
     def initialize
       @users = 0
       @tracks = 0
+
+      jid = Jabber::JID.new(TwitterSpy::Config::CONF['xmpp']['jid'])
+      @client = Jabber::Client.new(jid)
+      @client.connect
+      @client.auth(TwitterSpy::Config::CONF['xmpp']['pass'])
+      register_callbacks
+
+      update_status
     end
 
-    def server=(server)
-      @server = server
-    end
+    def register_callbacks
+      @roster = Jabber::Roster::Helper.new(@client)
 
-    def process_xmpp_incoming
-      rv = 0
-      @server.presence_updates do |user, status, message|
+      @roster.add_subscription_request_callback do |roster_item, presence|
+        @roster.accept_subscription(presence.from)
+      end
+
+      @client.add_presence_callback do |presence|
+        status = presence.type.nil? ? :available : presence.type
         User.update_status user, status
-        rv += 1
       end
-      # Called for dequeue side-effect stupidity of jabber:simple
-      rv += @server.received_messages.size
-      @server.new_subscriptions do |from, presence|
-        puts "Subscribed by #{from}"
-        rv += 1
+
+      @client.add_message_callback do |message|
+        begin
+          process_message message unless message.body.nil?
+        rescue StandardError, Interrupt
+          puts "Incoming message error:  #{$!}\n" + $!.backtrace.join("\n\t")
+          $stdout.flush
+          deliver message.from, "Error processing your message:  #{$!}"
+        end
       end
-      @server.subscription_requests do |from, presence|
-        puts "Sub req from #{from}"
-        rv += 1
-      end
-      rv
     end
 
     def process_message(msg)
       decoded = HTMLEntities.new.decode(msg.body).gsub(/&/, '&amp;')
       cmd, args = decoded.split(' ', 2)
-      cp = TwitterSpy::Commands::CommandProcessor.new @server
+      cp = TwitterSpy::Commands::CommandProcessor.new @client
       user = User.first(:jid => msg.from.bare.to_s) || User.create(:jid => msg.from.bare.to_s)
       cp.dispatch cmd.downcase, user, args
     end
@@ -47,7 +61,7 @@ module TwitterSpy
       if users != @users || tracks != @tracks
         status = "Tracking #{tracks} topics for #{users} users"
         puts "Updating status:  #{status}"
-        @server.send!(Jabber::Presence.new(nil, status,
+        @client.send(Jabber::Presence.new(nil, status,
           TwitterSpy::Config::CONF['xmpp'].fetch('priority', 1).to_i))
         @users = users
         @tracks = tracks
@@ -56,7 +70,7 @@ module TwitterSpy
 
     def process_tracks
       TwitterSpy::Threading::IN_QUEUE << Proc.new do
-        TwitterSpy::Tracker.new(@server).update
+        TwitterSpy::Tracker.new(@client).update
       end
     end
 
@@ -64,13 +78,12 @@ module TwitterSpy
       User.all(:active => true, :username.not => nil,
         :status.not => ['dnd', 'offline', 'unavailable'],
         :next_scan.lt => DateTime.now).each do |user|
-        TwitterSpy::UserInfo.new(@server).update(user)
+        TwitterSpy::UserInfo.new(@client).update(user)
       end
     end
 
     def run_loop
       puts "Processing at #{DateTime.now.to_s}..."
-      process_xmpp_incoming
       update_status
       process_tracks
       process_user_specific
