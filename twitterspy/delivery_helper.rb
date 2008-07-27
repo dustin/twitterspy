@@ -2,8 +2,8 @@ require 'memcache'
 
 module TwitterSpy
   module DeliveryHelper
-    def deliver(recipient, msg, dedupid=nil, type=:chat)
-      unless(duplicate?(recipient, dedupid))
+    def deliver(jid, message, dedupid=nil, type=:chat)
+      unless(duplicate?(jid, dedupid))
         if message.kind_of?(Jabber::Message)
           msg = message
           msg.to = jid
@@ -16,8 +16,14 @@ module TwitterSpy
       end
     end
 
+    def init_cache
+      MemCache.new([TwitterSpy::Config::CONF['general'].fetch(
+        'memcache', 'localhost:11211')])
+    end
+
     def duplicate?(recipient, dedupid)
       if !dedupid.nil?
+        @cache ||= init_cache
         key = "#{recipient}/#{dedupid}"
         if @cache.get(key)
           puts "Suppressing send of #{dedupid} to #{recipient}"
