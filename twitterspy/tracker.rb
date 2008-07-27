@@ -54,7 +54,7 @@ module TwitterSpy
       # XXX:  Getting a copy of the track to work around a DM bug.
       track = track.clone
       count = track.users(:active => true,
-        :status.not => ['dnd', 'offline', 'unavailable']).size
+        :status.not => ['dnd', 'offline', 'unavailable', 'unsubscribe']).size
       mins = [TwitterSpy::Config::WATCH_FREQ,
         TwitterSpy::Config::WATCH_FREQ - (count - 1)].min
       # But keep it above 0.
