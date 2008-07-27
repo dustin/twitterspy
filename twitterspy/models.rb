@@ -30,6 +30,7 @@ class User
     u.status = status
     u.availability_changed unless u.available? == was_available
     u.save
+    puts "Status of #{jid} -> #{status}"
     u
   end
 

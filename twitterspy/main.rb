@@ -33,7 +33,7 @@ module TwitterSpy
 
       @client.add_presence_callback do |presence|
         status = presence.type.nil? ? :available : presence.type
-        User.update_status user, status
+        User.update_status presence.from.bare.to_s, status
       end
 
       @client.add_message_callback do |message|
