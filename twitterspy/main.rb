@@ -28,6 +28,7 @@ module TwitterSpy
       @roster = Jabber::Roster::Helper.new(@client)
 
       @roster.add_subscription_request_callback do |roster_item, presence|
+        puts "Accepting subscription request from #{presence.from}"
         @roster.accept_subscription(presence.from)
       end
 
