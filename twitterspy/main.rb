@@ -38,6 +38,12 @@ module TwitterSpy
     end
 
     def register_callbacks
+
+      @client.on_exception do |e, stream, symbol|
+        puts "Exception in #{symbol}: #{e}" + e.backtrace.join("\n\t")
+        $stdout.flush
+      end
+
       @roster = Jabber::Roster::Helper.new(@client)
 
       @roster.add_subscription_request_callback do |roster_item, presence|
