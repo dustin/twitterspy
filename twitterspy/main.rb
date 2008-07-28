@@ -20,8 +20,21 @@ module TwitterSpy
       @client.connect
       @client.auth(TwitterSpy::Config::CONF['xmpp']['pass'])
       register_callbacks
+      subscribe_to_unknown
 
       update_status
+    end
+
+    def subscribe_to(jid)
+      puts "Sending subscription request to #{jid}"
+      req = Jabber::Presence.new.set_type(:subscribe)
+      req.to = jid
+      @client.send req
+    end
+
+    def subscribe_to_unknown
+      User.all(:status => nil).each {|u| subscribe_to u.jid}
+      $stdout.flush
     end
 
     def register_callbacks
