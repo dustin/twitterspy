@@ -49,6 +49,7 @@ module TwitterSpy
       @roster.add_subscription_request_callback do |roster_item, presence|
         puts "Accepting subscription request from #{presence.from}"
         @roster.accept_subscription(presence.from)
+        subscribe_to presence.from.bare.to_s
       end
 
       @client.add_presence_callback do |presence|
