@@ -3,6 +3,9 @@ gem 'dm-core'
 require 'dm-core'
 
 module TwitterSpy
+
+  IGNORED_STATII=['dnd', 'offline', 'unavailable', 'unsubscribe', 'error']
+
   module Config
     CONF = ::YAML.load_file 'twitterspy.yml'
     LOOP_SLEEP = CONF['general'].fetch('loop_sleep', 60).to_i

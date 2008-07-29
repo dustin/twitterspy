@@ -83,12 +83,12 @@ class Track
       where
         u.active is not null
         and u.active = ?
-        and u.status not in ('dnd', 'offline', 'unavailable', 'unsubscribe', 'error')
+        and u.status not in ?
         and ( t.next_update < ? )
       order by t.last_update
       limit 60
 EOF
-    ids = repository(:default).adapter.query(q, true, DateTime.now)
+    ids = repository(:default).adapter.query(q, true, TwitterSpy::IGNORED_STATII, DateTime.now)
     self.all(:conditions => {:id => ids})
   end
 end
