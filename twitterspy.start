@@ -6,6 +6,9 @@
 exec > twitterspy.log
 exec 2>&1
 
+ulimit -v 100000
+ulimit -m 100000
+
 while :
 do
 	ruby twitterspy.rb
