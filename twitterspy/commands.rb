@@ -58,6 +58,8 @@ module TwitterSpy
       end
 
       def dispatch(cmd, user, arg)
+        # I have a bunch of these guys in error state beating up my bot.
+        return if user.status == 'error'
         typing_notification user
         if self.respond_to? cmd
           self.send cmd.to_sym, user, arg
