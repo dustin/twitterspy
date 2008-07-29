@@ -83,7 +83,7 @@ class Track
       where
         u.active is not null
         and u.active = ?
-        and u.status not in ('dnd', 'offline', 'unavailable', 'unsubscribe')
+        and u.status not in ('dnd', 'offline', 'unavailable', 'unsubscribe', 'error')
         and ( t.next_update < ? )
       order by t.last_update
       limit 60
