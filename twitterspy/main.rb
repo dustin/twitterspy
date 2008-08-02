@@ -63,7 +63,15 @@ module TwitterSpy
 
       @client.add_message_callback do |message|
         begin
-          process_message message unless message.body.nil?
+          puts "Receiving a message from #{message.from.to_s}: #{message.type.inspect} #{message.body} #{message.to_s}"
+          $stdout.flush
+          if message.body.nil? || message.type == :error
+            puts "Ignored message from #{message.from.to_s}"
+          else
+            process_message message
+            puts "Processed message from #{message.from.to_s}"
+          end
+          $stdout.flush
         rescue StandardError, Interrupt
           puts "Incoming message error:  #{$!}\n" + $!.backtrace.join("\n\t")
           $stdout.flush
