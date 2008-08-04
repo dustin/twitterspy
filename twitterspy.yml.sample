@@ -19,3 +19,6 @@ general:
 xmpp:
   jid: mybot@jabber.org/twitterspy
   pass: password4mybot
+
+admins:
+- dustin@sallings.org

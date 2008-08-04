@@ -50,6 +50,9 @@ module TwitterSpy
         puts "Accepting subscription request from #{presence.from}"
         @roster.accept_subscription(presence.from)
         subscribe_to presence.from.bare.to_s
+        TwitterSpy::Config::CONF['admins'].each do |admin|
+          deliver admin, "Registered new user: #{presence.from.bare.to_s}"
+        end
       end
 
       @client.add_presence_callback do |presence|
