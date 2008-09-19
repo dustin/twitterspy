@@ -19,6 +19,7 @@ module TwitterSpy
       @client = Jabber::Client.new(jid)
       @client.connect
       @client.auth(TwitterSpy::Config::CONF['xmpp']['pass'])
+      @client.send Jabber::Presence.new
       register_callbacks
       subscribe_to_unknown
 
