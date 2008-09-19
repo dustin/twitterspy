@@ -5,5 +5,5 @@ one used to do, and a few things it doesn't.
 
 # Usage
 
-IM `help` to [twitterspy@jabber.org](xmpp://twitterspy@jabber.org) to see what
+IM `help` to [twitterspy@jabber.org](xmpp:twitterspy@jabber.org) to see what
 you can do.
