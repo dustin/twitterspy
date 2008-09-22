@@ -1,5 +1,6 @@
 require 'xmpp4r'
 require 'xmpp4r/roster'
+require 'xmpp4r/version'
 
 require 'twitterspy/tracker'
 require 'twitterspy/user_info'
@@ -44,6 +45,9 @@ module TwitterSpy
         puts "Exception in #{symbol}: #{e}" + e.backtrace.join("\n\t")
         $stdout.flush
       end
+
+      Jabber::Version::SimpleResponder.new(@client,
+        'TwitterSpy', TwitterSpy::Config::VERSION, 'Linux')
 
       @roster = Jabber::Roster::Helper.new(@client)
 
