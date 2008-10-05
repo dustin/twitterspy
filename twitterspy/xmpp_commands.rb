@@ -178,7 +178,7 @@ module TwitterSpy
         form.instructions = 'Set various basic twitterspy preferences.'
 
         add_field form, 'autopost', 'Autopost', user.auto_post, :boolean
-        add_field form, 'watch_friends', 'Watch friends', !user.friend_timeline_id.nil?, :boolean
+        add_field form, 'watch_friends', 'Watch friends', user.tracking_friends?, :boolean
         add_field form, 'language', 'Language (e.g. en)', user.language
       end
 
