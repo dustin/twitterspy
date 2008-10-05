@@ -67,6 +67,10 @@ class User
   def available?
     self.active && !['offline', 'dnd', 'unavailable'].include?(self.status)
   end
+
+  def logged_in?
+    !(self.username.blank? || self.password.blank?)
+  end
 end
 
 class Track
