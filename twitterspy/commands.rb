@@ -270,6 +270,7 @@ EOF
         out << "TwitterSpy state:  #{user.active ? 'Active' : 'Not Active'}"
         if logged_in?(user)
           out << "Logged in for twitter API services as #{user.username}"
+          out << "And tracking your friends." unless user.friend_timeline_id.nil?
         else
           out << "You're not logged in for twitter API services."
         end
