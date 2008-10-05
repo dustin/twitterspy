@@ -107,6 +107,47 @@ module TwitterSpy
 
     end
 
+    class TWLogin < MultiBase
+      def initialize
+        super('twlogin', 'Login to Twitter', 'Set twitter credentials.')
+      end
+
+      def add_form(user, iq, com)
+        next_actions com, 'execute', 'complete'
+
+        form = com.add_element(Jabber::Dataforms::XData.new)
+        form.title = "Login to Twitter"
+        form.instructions = 'Logging into twitter allows posting, following, and other such commands to work.'
+        ufield = form.add_element(Jabber::Dataforms::XDataField.new('login', :text_single))
+        ufield.label = 'Username'
+        pfield = form.add_element(Jabber::Dataforms::XDataField.new('password', :text_private))
+        pfield.label = 'Password'
+      end
+
+      def complete(conn, user, iq, args)
+        h=Hash[*args.fields.map {|f| [f.var, f.value]}.flatten]
+        u=h['login']
+        p=h['password']
+        TwitterSpy::Threading::TWIT_W_QUEUE << Proc.new do
+          twitter = Twitter::Base.new u, p
+          begin
+            twitter.verify_credentials
+            user.update_attributes(:username => u, :password => Base64.encode64(p).strip, :next_scan => DateTime.now)
+            send_result conn, iq
+          rescue StandardError, Interrupt
+            puts "Unable to verify credentials:  #{$!}\n" + $!.backtrace.join("\n\t")
+            $stdout.flush
+            send_result(conn, iq) do |com|
+              note = com.add_element('note')
+              note.attributes['type'] = 'error'
+              note.add_text('Unable to verify your credentials.')
+              error = com.add_element(Jabber::ErrorResponse.new('bad-request'))
+            end
+          end
+        end
+      end
+    end
+
     def self.commands
       constants.map{|c| const_get c}.select {|c| c != Base && c != MultiBase }
     end
