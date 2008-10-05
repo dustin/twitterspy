@@ -115,7 +115,13 @@ module TwitterSpy
         cmd_node = iq.command.attributes['node']
         user = User.first(:jid => iq.from.bare.to_s) || User.create(:jid => iq.from.bare.to_s)
         puts "Executing xmpp command #{cmd_node} for #{user.jid}"
-        @commands[cmd_node].execute(@client, user, iq)
+        begin
+          @commands[cmd_node].execute(@client, user, iq)
+        rescue StandardError
+          puts "Got exception:  #{$!.inspect}\n" + $!.backtrace.join("\n\t")
+          $stdout.flush
+        end
+        puts "Finished #{cmd_node} for #{user.jid}"
       end
 
     end
