@@ -125,10 +125,9 @@ module TwitterSpy
         form = com.add_element(Jabber::Dataforms::XData.new)
         form.title = "Login to Twitter"
         form.instructions = 'Logging into twitter allows posting, following, and other such commands to work.'
-        ufield = form.add_element(Jabber::Dataforms::XDataField.new('login', :text_single))
-        ufield.label = 'Username'
-        pfield = form.add_element(Jabber::Dataforms::XDataField.new('password', :text_private))
-        pfield.label = 'Password'
+
+        add_field form, 'login', 'Username'
+        add_field form, 'password', 'Password', nil, :text_private
       end
 
       def complete(conn, user, iq, args)
