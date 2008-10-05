@@ -268,7 +268,7 @@ EOF
         out = ["Jid:  #{user.jid}"]
         out << "Jabber Status:  #{user.status}"
         out << "TwitterSpy state:  #{user.active ? 'Active' : 'Not Active'}"
-        if logged_in?(user)
+        if user.logged_in?
           out << "Logged in for twitter API services as #{user.username}"
           out << "And tracking your friends." unless user.friend_timeline_id.nil?
         else
@@ -381,12 +381,8 @@ EOF
 
       private
 
-      def logged_in?(user)
-        !(user.username.blank? || user.password.blank?)
-      end
-
       def twitter_call(user, arg, missing_text="Argument needed.", &block)
-        if !logged_in?(user)
+        if !user.logged_in?
           send_msg user, "I don't know your username or password.  Use twlogin to set creds."
           return
         end
