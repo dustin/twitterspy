@@ -68,6 +68,8 @@ module TwitterSpy
           end
         end
       rescue
+        puts "Error executing command (#{@node}): #{$!}" + $!.backtrace.join("\n\t")
+        $stdout.flush
         send_result(conn, iq) do |com|
           note = com.add_element('note')
           note.attributes['type'] = 'error'
