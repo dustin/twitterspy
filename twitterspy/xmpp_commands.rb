@@ -37,6 +37,13 @@ module TwitterSpy
         actions.each {|a| ael.add_element a}
       end
 
+      def add_field(form, name, label, value=nil, type=:text_single)
+        ufield = form.add_element(Jabber::Dataforms::XDataField.new(name, type))
+        ufield.label = label
+        ufield.value = value.to_s unless value.nil?
+        ufield
+      end
+
       def execute(conn, user, iq)
         case iq.command.action
         when :cancel
