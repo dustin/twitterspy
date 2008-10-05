@@ -71,6 +71,10 @@ class User
   def logged_in?
     !(self.username.blank? || self.password.blank?)
   end
+
+  def tracking_friends?
+    !self.friend_timeline_id.nil?
+  end
 end
 
 class Track
