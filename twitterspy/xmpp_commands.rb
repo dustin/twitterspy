@@ -98,9 +98,9 @@ module TwitterSpy
         form = com.add_element(Jabber::Dataforms::XData.new)
         form.title = 'Untrack one or more current tracks.'
         form.instructions = "Select the queries to stop tracking and submit."
-        field = form.add_element(Jabber::Dataforms::XDataField.new('torm', :list_multi))
-        field.label = 'Tracks'
-        field.options = user.tracks.sort_by{|t| t.query}.map{|t| [t.id, t.query]}
+
+        f=add_field(form, 'torm', 'Tracks', nil, :list_multi)
+        f.options = user.tracks.sort_by{|t| t.query}.map{|t| [t.id, t.query]}
       end
 
       def complete(conn, user, iq, args)
