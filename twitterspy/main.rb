@@ -1,10 +1,14 @@
 require 'xmpp4r'
 require 'xmpp4r/roster'
 require 'xmpp4r/version'
+require 'xmpp4r/discovery'
+require 'xmpp4r/command/iq/command'
+require 'xmpp4r/command/helper/responder'
 
 require 'twitterspy/tracker'
 require 'twitterspy/user_info'
 require 'twitterspy/delivery_helper'
+require 'twitterspy/xmpp_commands'
 
 module TwitterSpy
 
@@ -37,6 +41,10 @@ module TwitterSpy
     def subscribe_to_unknown
       User.all(:status => nil).each {|u| subscribe_to u.jid}
       $stdout.flush
+    end
+
+    def initialize_commands
+      @commands = Hash[*TwitterSpy::XMPPCommands.commands.map{|cn| c=cn.new; [c.node, c]}.flatten]
     end
 
     def register_callbacks
@@ -86,6 +94,30 @@ module TwitterSpy
           deliver message.from, "Error processing your message:  #{$!}"
         end
       end
+
+      @cmd_helper = Jabber::Command::Responder.new(@client)
+      initialize_commands
+
+      @cmd_helper.add_commands_disco_callback do |iq|
+        i = Jabber::Iq::new(:result, iq.from)
+        i.from = TwitterSpy::Config::SCREEN_NAME
+        i.id = iq.id
+        i.query = Jabber::Discovery::IqQueryDiscoItems::new
+        i.query.node='http://jabber.org/protocol/commands'
+        @commands.each_pair do |node, command|
+          i.query.add(Jabber::Discovery::Item::new(
+            TwitterSpy::Config::SCREEN_NAME, command.name, command.node))
+        end
+        @client.send(i)
+      end
+
+      @cmd_helper.add_commands_exec_callback do |iq|
+        cmd_node = iq.command.attributes['node']
+        user = User.first(:jid => iq.from.bare.to_s) || User.create(:jid => iq.from.bare.to_s)
+        puts "Executing xmpp command #{cmd_node} for #{user.jid}"
+        @commands[cmd_node].execute(@client, user, iq)
+      end
+
     end
 
     def process_message(msg)
