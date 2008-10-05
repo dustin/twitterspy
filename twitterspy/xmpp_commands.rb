@@ -1,3 +1,6 @@
+require 'rubygems'
+require 'base64'
+
 require 'twitterspy/models'
 
 module TwitterSpy
@@ -27,6 +30,12 @@ module TwitterSpy
         yield com if block_given?
         conn.send i
       end
+
+      def get_twitter(user)
+        password = Base64.decode64 user.password
+        Twitter::Base.new user.username, password
+      end
+
     end
 
     class MultiBase < Base
@@ -150,6 +159,58 @@ module TwitterSpy
               error = com.add_element(Jabber::ErrorResponse.new('bad-request'))
             end
           end
+        end
+      end
+    end
+
+    class Preferences < MultiBase
+      def initialize
+        super("preferences", "Set Preferences", "Set various TwitterSpy preferences.")
+      end
+
+      def add_form(user, iq, com)
+        next_actions com, 'execute', 'complete'
+
+        form = com.add_element(Jabber::Dataforms::XData.new)
+        form.title = "Set TwitterSpy Preferences"
+        form.instructions = 'Set various basic twitterspy preferences.'
+
+        add_field form, 'autopost', 'Autopost', user.auto_post, :boolean
+        add_field form, 'watch_friends', 'Watch friends', !user.friend_timeline_id.nil?, :boolean
+        add_field form, 'language', 'Language (e.g. en)', user.language
+      end
+
+      def complete(conn, user, iq, args)
+        h=Hash[*args.fields.map {|f| [f.var, f.value]}.flatten]
+        user.auto_post = h['autopost'] == '1'
+        user.language = h['language']
+
+        # this processes asynchronously.
+        if h['watch_friends'] == '1' && user.logged_in?
+          puts "...Enabling friend watching"
+          twitter = get_twitter user
+          TwitterSpy::Threading::TWIT_W_QUEUE << Proc.new do
+            begin
+              item = twitter.timeline.first
+              user.friend_timeline_id = item.id.to_i
+              user.save
+              send_result conn, iq
+            rescue
+              puts "Failed to do initial friend stuff lookup for user: #{$!}\n" + $!.backtrace.join("\n\t")
+              $stdout.flush
+              send_result(conn, iq) do |com|
+                note = com.add_element('note')
+                note.attributes['type'] = 'error'
+                note.add_text('error getting initial friend list: ' + $!.to_s)
+                error = com.add_element(Jabber::ErrorResponse.new('bad-request'))
+              end
+            end
+          end
+        else
+          puts "... disabling friend watching."
+          user.friend_timeline_id = nil
+          user.save
+          send_result conn, iq
         end
       end
     end
