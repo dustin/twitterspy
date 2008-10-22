@@ -13,7 +13,7 @@ module TwitterSpy
     PERSONAL_FREQ = CONF['general'].fetch('personal_freq', 3).to_i
     SCREEN_NAME = CONF['xmpp']['jid']
     USER_AGENT = CONF['general']['user_agent'] || SCREEN_NAME
-    VERSION = `git describe --always`.strip
+    VERSION = `git describe`.strip
 
     DataMapper.setup(:default, CONF['general']['db'])
   end
