@@ -47,6 +47,17 @@ module TwitterSpy
       @commands = Hash[*TwitterSpy::XMPPCommands.commands.map{|cn| c=cn.new; [c.node, c]}.flatten]
     end
 
+    def greet(jid)
+      msg=<<-EOF
+Welcome to twitterspy.
+
+Here you can use your normal IM client to post to twitter, track topics, watch your friends, make new ones, and more.
+
+Type "help" to get started.
+EOF
+      deliver jid, msg
+    end
+
     def register_callbacks
 
       @client.on_exception do |e, stream, symbol|
@@ -65,6 +76,7 @@ module TwitterSpy
         subscribe_to presence.from.bare.to_s
         msg="Registered new user: #{presence.from.bare.to_s} (#{User.count})"
         TwitterSpy::Config::CONF['admins'].each { |admin| deliver admin, msg }
+        greet presence.from
       end
 
       @client.add_presence_callback do |presence|
