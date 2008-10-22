@@ -88,7 +88,7 @@ module TwitterSpy
           out << cmds.keys.sort.map{|k| "#{k}\t#{cmds[k]}"}
           out << ""
           out << "The search is based on summize.  For options, see http://summize.com/operators"
-          out << "Email questions, suggestions or complaints to dustin@sallings.org"
+          out << "Email questions, suggestions or complaints to dustin@spy.net"
           send_msg user, out.join("\n")
         else
           h = cmds[arg]
