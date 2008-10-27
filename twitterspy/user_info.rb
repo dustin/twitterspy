@@ -28,8 +28,13 @@ module TwitterSpy
     def do_friend_messages(user)
       twitter = twitter_conn user
       msgs = twitter.timeline.select{|m| m.id.to_i > user.friend_timeline_id}
-      user.update_attributes(:friend_timeline_id => msgs.first.id.to_i) if msgs.size > 0
-      deliver_messages(:friend, user, 'Friend Message', msgs)
+      if msgs.size > 0
+        if user.update_attributes(:friend_timeline_id => msgs.first.id.to_i)
+          deliver_messages(:friend, user, 'Friend Message', msgs)
+        else
+          puts "Problem updating #{user.jid} friend_timeline_id to #{msg.first.id}"
+        end
+      end
     end
 
     def do_private_messages(user)
@@ -37,8 +42,13 @@ module TwitterSpy
       twitter = twitter_conn user
       # TODO:  Fix the twitter API to let me pass in my direct message ID
       msgs = twitter.direct_messages.select{|m| m.id.to_i > user.direct_message_id.to_i}
-      user.update_attributes(:direct_message_id => msgs.first.id.to_i) if msgs.size > 0
-      deliver_messages(:private, user, 'Direct Message', msgs) unless first_time
+      if msgs.size > 0
+        if user.update_attributes(:direct_message_id => msgs.first.id.to_i)
+          deliver_messages(:private, user, 'Direct Message', msgs) unless first_time
+        else
+          puts "Problem updating #{user.jid} direct_message_id to #{msg.first.id}"
+        end
+      end
     end
 
     def deliver_messages(type, user, subject, msgs)
