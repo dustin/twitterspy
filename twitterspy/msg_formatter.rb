@@ -16,7 +16,7 @@ module TwitterSpy
 
     def format_html_body(from, text, type)
       user = user_link(from)
-      text = text.gsub(/(\W*)(@[\w_]+)/) {|x| $1 + user_link($2)}.gsub(/&/, '&amp;')
+      text = text.gsub(/(\W*)(@[\w_]+)/) {|x| $1 + user_link($2)}
       "#{type_str(type)}#{user}: #{text}"
     end
 
