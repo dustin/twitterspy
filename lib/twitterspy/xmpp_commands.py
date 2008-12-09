@@ -13,6 +13,8 @@ from sqlalchemy.orm import exc
 
 import models
 
+import twitter
+
 all_commands={}
 
 class CountingFile(object):
@@ -120,6 +122,22 @@ class OffCommand(BaseCommand):
     def __call__(self, user, prot, args, session):
         user.active=False
         prot.send_plain(user.jid, "Disabled tracks.")
+
+class SearchCommand(ArgRequired):
+
+    def __init__(self):
+        super(SearchCommand, self).__init__('search',
+            'Perform a search query (but do not track).')
+
+    def process(self, user, prot, args, session):
+        rv = []
+        def gotResult(entry):
+            rv.append(entry.author.name.split()[0] + ": " + entry.title)
+        jid = user.jid
+        twitter.search(args, gotResult, {'rpp': '3'}).addCallback(
+            lambda x: prot.send_plain(jid, "Results\n\n"
+                + "\n\n".join(rv))).addErrback(
+            lambda x: prot.send_plain(jid, "Problem performing search"))
 
 for __t in (t for t in globals().values() if isinstance(type, type(t))):
     if BaseCommand in __t.__mro__:
