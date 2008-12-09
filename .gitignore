@@ -1,4 +1,4 @@
 twitterspy.log
-twitterspy.yml
+twitterspy.conf
 *.sqlite3
 *.pyc
