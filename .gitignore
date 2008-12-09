@@ -1,3 +1,4 @@
 twitterspy.log
 twitterspy.yml
 *.sqlite3
+*.pyc
