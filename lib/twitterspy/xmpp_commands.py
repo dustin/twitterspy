@@ -139,6 +139,42 @@ class SearchCommand(ArgRequired):
                 + "\n\n".join(rv))).addErrback(
             lambda x: prot.send_plain(jid, "Problem performing search"))
 
+class TWLoginCommand(ArgRequired):
+
+    def __init__(self):
+        super(TWLoginCommand, self).__init__('twlogin',
+            'Set your twitter username and password (use at your own risk)')
+
+    def process(self, user, prot, args, session):
+        args = args.replace(">", "").replace("<", "")
+        username, password=args.split(' ', 1)
+        jid = user.jid
+        twitter.Twitter(username, password).verify_credentials().addCallback(
+            self.__credsVerified(prot, jid, username, password)).addErrback(
+            self.__credsRefused(prot, jid))
+
+    def __credsRefused(self, prot, jid):
+        def f(e):
+            print "Failed to verify creds for %s: %s" % (jid, e)
+            prot.send_plain(jid,
+                ":( Your credentials were refused. "
+                    "Please try again: twlogin username password")
+        return f
+
+    def __credsVerified(self, prot, jid, username, password):
+        def f(x):
+            session = models.Session()
+            try:
+                user = models.User.by_jid(jid, session)
+                user.username = username
+                user.password = password
+                session.commit()
+                prot.send_plain(user.jid, "Added credentials for %s"
+                    % user.username)
+            finally:
+                session.close()
+        return f
+
 for __t in (t for t in globals().values() if isinstance(type, type(t))):
     if BaseCommand in __t.__mro__:
         try:
