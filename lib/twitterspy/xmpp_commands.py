@@ -175,6 +175,15 @@ class TWLoginCommand(ArgRequired):
                 session.close()
         return f
 
+class TWLogoutCommand(BaseCommand):
+
+    def __init__(self):
+        super(TWLogoutCommand, self).__init__('twlogout',
+            "Discard your twitter credentials.")
+
+    def __call__(self, user, prot, args, session):
+        prot.send_plain(user.jid, "You have been logged out.")
+
 for __t in (t for t in globals().values() if isinstance(type, type(t))):
     if BaseCommand in __t.__mro__:
         try:
