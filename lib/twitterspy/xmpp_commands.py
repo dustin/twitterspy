@@ -134,7 +134,7 @@ class SearchCommand(ArgRequired):
         def gotResult(entry):
             rv.append(entry.author.name.split()[0] + ": " + entry.title)
         jid = user.jid
-        twitter.search(args, gotResult, {'rpp': '3'}).addCallback(
+        twitter.Twitter().search(args, gotResult, {'rpp': '3'}).addCallback(
             lambda x: prot.send_plain(jid, "Results\n\n"
                 + "\n\n".join(rv))).addErrback(
             lambda x: prot.send_plain(jid, "Problem performing search"))
