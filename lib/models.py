@@ -1,7 +1,7 @@
 import datetime
 
 from sqlalchemy import *
-from sqlalchemy.orm import sessionmaker, mapper, relation, backref, exc
+from sqlalchemy.orm import sessionmaker, mapper, relation, backref, exc, join
 
 from twitterspy import config
 
@@ -48,6 +48,28 @@ class User(object):
         finally:
             if not session:
                 s.close()
+
+    def track(self, query, session):
+        try:
+            return session.query(Track).join(User.tracks).filter(
+                User.id == self.id).filter(Track.query == query).one()
+        except exc.NoResultFound, e:
+            try:
+                track = session.query(Track).filter_by(query=query).one()
+            except exc.NoResultFound, e:
+                track = Track()
+                track.query = query
+            self.tracks.append(track)
+
+    def untrack(self, query, session):
+        try:
+            t = session.query(UserTrack).select_from(
+                join(UserTrack, Track)).filter(
+                UserTrack.user_id == self.id).filter(Track.query == query).one()
+            session.delete(t)
+            return True
+        except exc.NoResultFound, e:
+            return False
 
 class Track(object):
 

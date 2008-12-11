@@ -184,6 +184,28 @@ class TWLogoutCommand(BaseCommand):
     def __call__(self, user, prot, args, session):
         prot.send_plain(user.jid, "You have been logged out.")
 
+class TrackCommand(ArgRequired):
+
+    def __init__(self):
+        super(TrackCommand, self).__init__('track', "Start tracking a topic.")
+
+    def process(self, user, prot, args, session):
+        user.track(args, session)
+        prot.send_plain(user.jid, "Tracking %s" % args)
+
+class UnTrackCommand(ArgRequired):
+
+    def __init__(self):
+        super(UnTrackCommand, self).__init__('untrack',
+            "Stop tracking a topic.")
+
+    def process(self, user, prot, args, session):
+        if user.untrack(args, session):
+            prot.send_plain(user.jid, "Stopped tracking %s" % args)
+        else:
+            prot.send_plain(user.jid,
+                "Didn't tracking %s (sure you were tracking it?)" % args)
+
 for __t in (t for t in globals().values() if isinstance(type, type(t))):
     if BaseCommand in __t.__mro__:
         try:
