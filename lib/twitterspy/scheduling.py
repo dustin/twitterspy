@@ -1,6 +1,7 @@
 from twisted.internet import task
 
 import twitter
+import protocol
 
 class Query(set):
 
@@ -15,11 +16,22 @@ class Query(set):
         eid = int(entry.id.split(':')[-1])
         self.last_id = max(self.last_id, eid)
         print "Result:", entry.title
+        conn = protocol.current_conn
+        u = entry.author.name.split(' ')[0]
+        plain=u + ": " + entry.title
+        hcontent=entry.content.replace("&lt;", "<").replace("&gt;", ">")
+        html="<a href='%s'>%s</a>: %s" % (entry.author.uri, u, hcontent)
+        for jid in self:
+            conn.send_html(jid, plain, html)
 
     def __call__(self):
-        twitter.Twitter().search(self.query,
-            self._gotResult, {'since_id': str(self.last_id)})
-        print "Searching", self.query
+        # Don't bother if we're not connected...
+        if protocol.current_conn:
+            print "Searching", self.query
+            params = {}
+            if self.last_id > 0:
+                params['since_id'] = str(self.last_id)
+            twitter.Twitter().search(self.query, self._gotResult, params)
 
     def stop(self):
         print "Stopping", self.query
