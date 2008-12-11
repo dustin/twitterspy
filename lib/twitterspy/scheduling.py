@@ -1,5 +1,7 @@
 from twisted.internet import task
 
+import twitter
+
 class Query(set):
 
     def __init__(self, query):
@@ -9,7 +11,14 @@ class Query(set):
         self.loop = task.LoopingCall(self)
         self.loop.start(15)
 
+    def _gotResult(self, entry):
+        eid = int(entry.id.split(':')[-1])
+        self.last_id = max(self.last_id, eid)
+        print "Result:", entry.title
+
     def __call__(self):
+        twitter.Twitter().search(self.query,
+            self._gotResult, {'since_id': str(self.last_id)})
         print "Searching", self.query
 
     def stop(self):
