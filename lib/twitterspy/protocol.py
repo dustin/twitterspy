@@ -12,6 +12,8 @@ import config
 import models
 import scheduling
 
+current_conn = None
+
 class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
 
     def __init__(self):
@@ -34,6 +36,9 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
         self._users=-1
         self.update_presence()
 
+        global current_conn
+        current_conn = self
+
     def update_presence(self):
         session=models.Session()
         try:
@@ -49,6 +54,8 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
 
     def connectionLost(self, reason):
         print "Disconnected!"
+        global current_conn
+        current_conn = None
 
     def typing_notification(self, jid):
         """Send a typing notification to the given jid."""
