@@ -14,6 +14,7 @@ from sqlalchemy.orm import exc
 import models
 
 import twitter
+import scheduling
 
 all_commands={}
 
@@ -191,6 +192,7 @@ class TrackCommand(ArgRequired):
 
     def process(self, user, prot, args, session):
         user.track(args, session)
+        scheduling.queries.add(user.jid, args)
         prot.send_plain(user.jid, "Tracking %s" % args)
 
 class UnTrackCommand(ArgRequired):
@@ -201,6 +203,7 @@ class UnTrackCommand(ArgRequired):
 
     def process(self, user, prot, args, session):
         if user.untrack(args, session):
+            scheduling.queries.untracked(user, args)
             prot.send_plain(user.jid, "Stopped tracking %s" % args)
         else:
             prot.send_plain(user.jid,

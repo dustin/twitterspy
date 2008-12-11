@@ -27,13 +27,16 @@ class QueryRegistry(object):
             self.queries[query_str] = Query(query_str)
         self.queries[query_str].add(user)
 
+    def untracked(self, user, query):
+        q = self.queries[query]
+        q.discard(user)
+        if not q:
+            q.stop()
+            del self.queries[query]
+
     def remove(self, user):
         print "Removing", user
         for k in list(self.queries.keys()):
-            q = self.queries[k]
-            q.discard(user)
-            if not q:
-                q.stop()
-                del self.queries[k]
+            self.untracked(user, k)
 
 queries = QueryRegistry()
