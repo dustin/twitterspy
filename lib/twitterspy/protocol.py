@@ -10,6 +10,7 @@ from wokkel.client import XMPPHandler
 import xmpp_commands
 import config
 import models
+import scheduling
 
 class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
 
@@ -111,6 +112,7 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
     def unavailableReceived(self, entity, statuses=None):
         print "Unavailable from %s" % entity.userhost()
         models.User.update_status(entity.userhost(), 'unavailable')
+        scheduling.queries.remove(entity.full())
 
     def subscribedReceived(self, entity):
         print "Subscribe received from %s" % (entity.userhost())
