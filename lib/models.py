@@ -104,11 +104,10 @@ _usertrack_table = Table('user_tracks', _metadata,
 )
 
 mapper(User, _users_table, properties={
-    'tracks': relation(Track, secondary=_usertrack_table, backref='tracks',
-        cascade="all, delete, delete-orphan")
+    'tracks': relation(Track, secondary=_usertrack_table, backref='tracks')
     })
 mapper(UserTrack, _usertrack_table, properties={
     'user': relation(User),
-    'track': relation(Track, cascade="all, delete-orphan")
+    'track': relation(Track)
     })
 mapper(Track, _tracks_table, properties={})
