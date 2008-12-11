@@ -206,6 +206,18 @@ class UnTrackCommand(ArgRequired):
             prot.send_plain(user.jid,
                 "Didn't tracking %s (sure you were tracking it?)" % args)
 
+class TracksCommand(BaseCommand):
+
+    def __init__(self):
+        super(TracksCommand, self).__init__('tracks',
+            "List the topics you're tracking.")
+
+    def __call__(self, user, prot, args, session):
+        rv = ["Currently tracking:\n"]
+        for t in user.tracks:
+            rv.append(t.query)
+        prot.send_plain(user.jid, "\n".join(rv))
+
 for __t in (t for t in globals().values() if isinstance(type, type(t))):
     if BaseCommand in __t.__mro__:
         try:
