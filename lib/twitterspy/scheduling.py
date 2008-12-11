@@ -5,12 +5,14 @@ import protocol
 
 class Query(set):
 
+    loop_time = 15 * 60
+
     def __init__(self, query):
         super(Query, self).__init__()
         self.query = query
         self.last_id = 0
         self.loop = task.LoopingCall(self)
-        self.loop.start(15)
+        self.loop.start(self.loop_time)
 
     def _gotResult(self, entry):
         eid = int(entry.id.split(':')[-1])
