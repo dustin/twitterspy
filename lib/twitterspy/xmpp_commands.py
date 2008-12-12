@@ -221,6 +221,34 @@ class TracksCommand(BaseCommand):
             rv.append(t.query)
         prot.send_plain(user.jid, "\n".join(rv))
 
+class PostCommand(ArgRequired):
+
+    def __init__(self):
+        super(PostCommand, self).__init__('post',
+            "Post a message to twitter.")
+
+    def _posted(self, jid, username, prot):
+        def f(id):
+            url = "http://twitter.com/%s/statuses/%s" % (username, id)
+            prot.send_plain(jid, ":) Your message has been posted: %s" % url)
+        return f
+
+    def _failed(self, jid, prot):
+        def f(e):
+            prot.send_plain(jid, ":( Failed to post your message. "
+                "Your password may be wrong, or twitter may be broken.")
+        return f
+
+    def process(self, user, prot, args, session):
+        if user.has_credentials():
+            jid = user.jid
+            twitter.Twitter(user.username, user.password).update(
+                args, 'twitterspy'
+                ).addCallback(self._posted(jid, user.username, prot)
+                ).addErrback(self._failed(jid, prot))
+        else:
+            prot.send_plain(user.jid, "You must twlogin before you can post.")
+
 for __t in (t for t in globals().values() if isinstance(type, type(t))):
     if BaseCommand in __t.__mro__:
         try:
