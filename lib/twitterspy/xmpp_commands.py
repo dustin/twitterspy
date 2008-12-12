@@ -262,6 +262,38 @@ class AutopostCommand(ArgRequired):
         user.auto_post = (args.lower() == "on")
         prot.send_plain(user.jid, "Autoposting is now %s." % (args.lower()))
 
+class WatchFriendsCommand(AutopostCommand):
+
+    def __init__(self):
+        super(WatchFriendsCommand, self).__init__('watch_friends',
+            "Enable or disable watching friends.")
+
+    def _gotFriendStatus(self, jid):
+        def f(entry):
+            session = models.Session()
+            try:
+                user = models.User.by_jid(jid, session)
+                user.friend_timeline_id = entry.id
+            finally:
+                session.close()
+        return f
+
+    def process(self, user, prot, args, session):
+        if not user.has_credentials():
+            prot.send_plain(user.jid,
+                "You must twlogin before you can watch friends.")
+            return
+
+        args = args.lower()
+        if args == 'on':
+            twitter.Twitter(user.username, user.password).friends(
+                self._gotFriendStatus(user.jid), params={'count': 1})
+        elif args == 'off':
+            user.friend_timeline_id = None
+            prot.send_plain(user.jid, "No longer watching your friends.")
+        else:
+            prot.send_plain(user.jid, "Watch must be 'on' or 'off'.")
+
 for __t in (t for t in globals().values() if isinstance(type, type(t))):
     if BaseCommand in __t.__mro__:
         try:
