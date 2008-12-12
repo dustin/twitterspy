@@ -71,6 +71,9 @@ class User(object):
         except exc.NoResultFound, e:
             return False
 
+    def has_credentials(self):
+        return self.username and self.password
+
 class Track(object):
 
     @staticmethod
