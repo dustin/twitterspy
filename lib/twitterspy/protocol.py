@@ -101,19 +101,24 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
         if msg["type"] == 'chat' and hasattr(msg, "body") and msg.body:
             self.typing_notification(msg['from'])
             a=unicode(msg.body).split(' ', 1)
-            args = None
-            if len(a) > 1:
-                args=a[1]
-            if self.commands.has_key(a[0].lower()):
-                session=models.Session()
-                try:
-                    self.commands[a[0].lower()](self.get_user(msg, session),
-                        self, args, session)
-                    session.commit()
-                finally:
-                    session.close()
-            else:
-                self.send_plain(msg['from'], 'No such command: ' + a[0])
+            args = a[1] if len(a) > 1 else None
+            session=models.Session()
+            try:
+                user = self.get_user(msg, session)
+                d = self.commands['post'] if user.auto_post else None
+                cmd = self.commands.get(a[0].lower(), d)
+                if cmd:
+                    cmd(user, self, args, session)
+                else:
+                    self.send_plain(msg['from'],
+                        "No such command: %s\n"
+                        "Send 'help' for known commands\n"
+                        "If you intended to post your message, please start "
+                        "your message with 'post', or see 'help autopost'" %
+                        a[0])
+                session.commit()
+            finally:
+                session.close()
             self.update_presence()
 
     # presence stuff
