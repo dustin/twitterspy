@@ -249,6 +249,19 @@ class PostCommand(ArgRequired):
         else:
             prot.send_plain(user.jid, "You must twlogin before you can post.")
 
+class AutopostCommand(ArgRequired):
+
+    def __init__(self):
+        super(AutopostCommand, self).__init__('autopost',
+            "Enable or disable autopost.")
+
+    def has_valid_args(self, args):
+        return args and args.lower() in ["on", "off"]
+
+    def process(self, user, prot, args, session):
+        user.auto_post = (args.lower() == "on")
+        prot.send_plain(user.jid, "Autoposting is now %s." % (args.lower()))
+
 for __t in (t for t in globals().values() if isinstance(type, type(t))):
     if BaseCommand in __t.__mro__:
         try:
