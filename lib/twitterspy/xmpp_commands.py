@@ -192,7 +192,7 @@ class TrackCommand(ArgRequired):
 
     def process(self, user, prot, args, session):
         user.track(args, session)
-        scheduling.queries.add(user.jid, args)
+        scheduling.queries.add(user.jid, args, 0)
         prot.send_plain(user.jid, "Tracking %s" % args)
 
 class UnTrackCommand(ArgRequired):

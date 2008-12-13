@@ -1,4 +1,1 @@
 * Need deduplication in outgoing messages.
-
-* Must keep up with where tracks are so we don't bombard users with the same
-  data on a restart.

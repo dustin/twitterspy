@@ -9,10 +9,10 @@ class Query(set):
 
     loop_time = 15 * 60
 
-    def __init__(self, query):
+    def __init__(self, query, last_id):
         super(Query, self).__init__()
         self.query = query
-        self.last_id = 0
+        self.last_id = last_id
         self.loop = task.LoopingCall(self)
         self.loop.start(self.loop_time)
 
@@ -28,6 +28,19 @@ class Query(set):
         for jid in self:
             conn.send_html(jid, plain, html)
 
+    def _save_track_id(self, old_id):
+        def f(x):
+            if old_id != self.last_id:
+                session = models.Session()
+                try:
+                    t=session.query(models.Track).filter_by(
+                        query=self.query).one()
+                    t.max_seen = self.last_id
+                    session.commit()
+                finally:
+                    session.close()
+        return f
+
     def __call__(self):
         # Don't bother if we're not connected...
         if protocol.current_conn:
@@ -35,7 +48,8 @@ class Query(set):
             params = {}
             if self.last_id > 0:
                 params['since_id'] = str(self.last_id)
-            twitter.Twitter().search(self.query, self._gotResult, params)
+            twitter.Twitter().search(self.query, self._gotResult, params
+                ).addCallback(self._save_track_id(self.last_id))
 
     def stop(self):
         print "Stopping", self.query
@@ -46,10 +60,10 @@ class QueryRegistry(object):
     def __init__(self):
         self.queries = {}
 
-    def add(self, user, query_str):
+    def add(self, user, query_str, last_id):
         print "Adding", user, ":", query_str
         if not self.queries.has_key(query_str):
-            self.queries[query_str] = Query(query_str)
+            self.queries[query_str] = Query(query_str, last_id)
         self.queries[query_str].add(user)
 
     def untracked(self, user, query):

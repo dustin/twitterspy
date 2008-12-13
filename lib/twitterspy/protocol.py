@@ -131,7 +131,7 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
             session = models.Session()
             u = models.User.update_status(entity.userhost(), show, session)
             for t in u.tracks:
-                scheduling.queries.add(entity.full(), t.query)
+                scheduling.queries.add(entity.full(), t.query, t.max_seen)
             scheduling.users.add(entity.userhost(), entity.full(),
                 u.username, u.password, u.friend_timeline_id,
                 u.direct_message_id)
