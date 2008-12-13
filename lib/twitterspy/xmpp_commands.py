@@ -238,6 +238,7 @@ class PostCommand(ArgRequired):
 
     def _failed(self, jid, prot):
         def f(e):
+            print "Error updating for %s:  %s" % (jid, str(e))
             prot.send_plain(jid, ":( Failed to post your message. "
                 "Your password may be wrong, or twitter may be broken.")
         return f
