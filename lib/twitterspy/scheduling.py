@@ -265,7 +265,7 @@ def enable_user(entity):
     available_sem.run(process)
 
 def disable_user(jid):
-    queries.remove_user(jid, users.users[jid])
+    queries.remove_user(jid, users.users.get(jid, []))
     users.set_creds(jid, None, None)
 
 def available_user(entity):
