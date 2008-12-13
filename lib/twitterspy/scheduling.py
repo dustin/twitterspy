@@ -66,7 +66,7 @@ class QueryRegistry(object):
 
 class UserStuff(set):
 
-    loop_time = 2 * 10
+    loop_time = 2 * 60
 
     def __init__(self, short_jid, username, password, friends_id, dm_id):
         super(UserStuff, self).__init__()
