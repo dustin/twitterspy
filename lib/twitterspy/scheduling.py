@@ -108,7 +108,6 @@ class QueryRegistry(object):
     def remove_user(self, user, jids):
         for k in list(self.queries.keys()):
             for j in jids:
-                print "Removing", j, "from", k
                 self.untracked(j, k)
 
 class UserStuff(set):
