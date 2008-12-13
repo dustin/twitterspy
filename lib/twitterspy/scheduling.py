@@ -18,12 +18,11 @@ class Query(set):
         super(Query, self).__init__()
         self.query = query
         self.last_id = last_id
-        self.loop = task.LoopingCall(self)
 
         r=random.Random()
         then = r.randint(1, min(60, self.loop_time / 2))
         print "Starting %s in %ds" % (self.query, then)
-        reactor.callLater(then, self.loop.start, self.loop_time)
+        reactor.callLater(then, self.start)
 
     def _gotResult(self, entry):
         eid = int(entry.id.split(':')[-1])
@@ -71,9 +70,15 @@ class Query(set):
             ).addCallback(self._save_track_id(self.last_id)).addErrback(
             self._reportError)
 
+    def start(self):
+        self.loop = task.LoopingCall(self)
+        self.loop.start(self.loop_time)
+
     def stop(self):
         print "Stopping", self.query
-        self.loop.stop()
+        if self.loop:
+            self.loop.stop()
+            self.loop = None
 
 class QueryRegistry(object):
 
