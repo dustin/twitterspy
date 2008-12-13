@@ -145,6 +145,9 @@ class UserStuff(set):
             global private_semaphore
             private_semaphore.run(self._get_user_stuff)
 
+    def _reportError(self, e):
+        print "Error getting user data for %s: %s" % (self.short_jid, str(e))
+
     def _get_user_stuff(self):
         print "Getting privates for", self.short_jid
         params = {}
@@ -152,13 +155,15 @@ class UserStuff(set):
             params['since_id'] = str(self.last_dm_id)
         tw = twitter.Twitter(self.username, self.password)
         tw.direct_messages(self._gotDMResult, params).addCallback(
-            self._maybe_update_prop('last_dm_id', 'direct_message_id'))
+            self._maybe_update_prop('last_dm_id', 'direct_message_id')
+            ).addErrback(self._reportError)
 
         if self.last_friend_id is not None:
             tw.friends(self._gotFriendsResult,
                 {'since_id': str(self.last_friend_id)}).addCallback(
                     self._maybe_update_prop(
-                        'last_friend_id', 'friend_timeline_id'))
+                        'last_friend_id', 'friend_timeline_id')
+                ).addErrback(self._reportError)
 
     def start(self):
         print "Starting", self.short_jid
