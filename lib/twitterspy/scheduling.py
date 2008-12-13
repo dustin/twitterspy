@@ -50,13 +50,17 @@ class Query(set):
             global search_semaphore
             search_semaphore.run(self._do_search)
 
+    def _reportError(self, e):
+        print "Error in search %s: %s" % (self.query, str(e))
+
     def _do_search(self):
         print "Searching", self.query
         params = {}
         if self.last_id > 0:
             params['since_id'] = str(self.last_id)
-        twitter.Twitter().search(self.query, self._gotResult, params
-            ).addCallback(self._save_track_id(self.last_id))
+        return twitter.Twitter().search(self.query, self._gotResult, params
+            ).addCallback(self._save_track_id(self.last_id)).addErrback(
+            self._reportError)
 
     def stop(self):
         print "Stopping", self.query
