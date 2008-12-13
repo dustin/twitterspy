@@ -132,6 +132,8 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
             u = models.User.update_status(entity.userhost(), show, session)
             for t in u.tracks:
                 scheduling.queries.add(entity.full(), t.query)
+            scheduling.users.add(entity.userhost(), entity.full(),
+                u.username, u.password)
         finally:
             session.close()
 
@@ -139,6 +141,7 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
         print "Unavailable from %s" % entity.userhost()
         models.User.update_status(entity.userhost(), 'unavailable')
         scheduling.queries.remove(entity.full())
+        scheduling.users.remove(entity.userhost(), entity.full())
 
     def subscribedReceived(self, entity):
         print "Subscribe received from %s" % (entity.userhost())
