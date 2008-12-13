@@ -83,16 +83,15 @@ class UserStuff(set):
 
     loop_time = 2 * 60
 
-    def __init__(self, short_jid, username, password, friends_id, dm_id):
+    def __init__(self, short_jid, friends_id, dm_id):
         super(UserStuff, self).__init__()
         self.short_jid = short_jid
-        self.username = username
-        self.password = password
         self.last_friend_id = friends_id
-
         self.last_dm_id = dm_id
-        self.loop = task.LoopingCall(self)
-        self.loop.start(self.loop_time)
+
+        self.username = None
+        self.password = None
+        self.loop = None
 
     def _deliver_message(self, type, entry):
         s = getattr(entry, 'sender', None)
@@ -146,21 +145,37 @@ class UserStuff(set):
                         self._maybe_update_prop(
                             'last_friend_id', 'friend_timeline_id'))
 
+    def start(self):
+        print "Starting", self.short_jid
+        self.loop = task.LoopingCall(self)
+        self.loop.start(self.loop_time)
+
     def stop(self):
-        print "Stopping", self.short_jid
-        self.loop.stop()
+        if self.loop:
+            print "Stopping", self.short_jid
+            self.loop.stop()
+            self.loop = None
 
 class UserRegistry(object):
 
     def __init__(self):
         self.users = {}
 
-    def add(self, short_jid, full_jid, un, pw, friends_id, dm_id):
+    def add(self, short_jid, full_jid, friends_id, dm_id):
         print "Adding %s as %s" % (short_jid, full_jid)
         if not self.users.has_key(short_jid):
-            self.users[short_jid] = UserStuff(short_jid, un, pw,
-                friends_id, dm_id)
+            self.users[short_jid] = UserStuff(short_jid, friends_id, dm_id)
         self.users[short_jid].add(full_jid)
+
+    def set_creds(self, short_jid, un, pw):
+        u=self.users[short_jid]
+        u.username = un
+        u.password = pw
+        available = un and pw
+        if available and not u.loop:
+            u.start()
+        elif u.loop and not available:
+            u.stop()
 
     def remove(self, short_jid, full_jid):
         q = self.users[short_jid]

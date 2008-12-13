@@ -161,9 +161,11 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
             u = models.User.update_status(entity.userhost(), show, session)
             for t in u.tracks:
                 scheduling.queries.add(entity.full(), t.query, t.max_seen)
-            p=base64.decodestring(u.password) if u.password else None
             scheduling.users.add(entity.userhost(), entity.full(),
-                u.username, p, u.friend_timeline_id, u.direct_message_id)
+                u.friend_timeline_id, u.direct_message_id)
+            # Start the loop (maybe)
+            p=base64.decodestring(u.password) if u.password else None
+            scheduling.users.set_creds(entity.userhost(), u.username, p)
         finally:
             session.close()
 

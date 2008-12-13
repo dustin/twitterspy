@@ -173,8 +173,7 @@ class TWLoginCommand(ArgRequired):
                 session.commit()
                 prot.send_plain(user.jid, "Added credentials for %s"
                     % user.username)
-                scheduling.users.users[jid].username = username
-                scheduling.users.users[jid].password = password
+                scheduling.users.set_creds(jid, username, password)
             finally:
                 session.close()
         return f
@@ -189,8 +188,7 @@ class TWLogoutCommand(BaseCommand):
         user.username = None
         user.password = None
         prot.send_plain(user.jid, "You have been logged out.")
-        scheduling.users.users[user.jid].username = None
-        scheduling.users.users[user.jid].password = None
+        scheduling.users.set_creds(user.jid, None, None)
 
 class TrackCommand(ArgRequired):
 
