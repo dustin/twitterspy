@@ -105,17 +105,20 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
             session=models.Session()
             try:
                 user = self.get_user(msg, session)
-                d = self.commands['post'] if user.auto_post else None
-                cmd = self.commands.get(a[0].lower(), d)
+                cmd = self.commands.get(a[0].lower())
                 if cmd:
                     cmd(user, self, args, session)
                 else:
-                    self.send_plain(msg['from'],
-                        "No such command: %s\n"
-                        "Send 'help' for known commands\n"
-                        "If you intended to post your message, please start "
-                        "your message with 'post', or see 'help autopost'" %
-                        a[0])
+                    d = self.commands['post'] if user.auto_post else None
+                    if d:
+                        d(user, self, unicode(msg.body), session)
+                    else:
+                        self.send_plain(msg['from'],
+                            "No such command: %s\n"
+                            "Send 'help' for known commands\n"
+                            "If you intended to post your message, "
+                            "please start your message with 'post', or see "
+                            "'help autopost'" % a[0])
                 session.commit()
             finally:
                 session.close()
