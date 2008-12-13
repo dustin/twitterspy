@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 
-from twisted.internet import task
+from twisted.internet import task, protocol, reactor
 from twisted.words.xish import domish
 from twisted.words.protocols.jabber.jid import JID
+from twisted.protocols import memcache
+
 from wokkel.xmppim import MessageProtocol, PresenceClientProtocol
 from wokkel.xmppim import AvailablePresence
 from wokkel.client import XMPPHandler
@@ -13,6 +15,16 @@ import models
 import scheduling
 
 current_conn = None
+mc = None
+
+class MemcacheFactory(protocol.ReconnectingClientFactory):
+
+    def buildProtocol(self, addr):
+        global mc
+        self.resetDelay()
+        print "Connected to memcached."
+        mc = memcache.MemCacheProtocol()
+        return mc
 
 class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
 
@@ -20,6 +32,7 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
         super(TwitterspyProtocol, self).__init__()
         self._tracking=-1
         self._users=-1
+        self.__connectMemcached()
 
     def connectionInitialized(self):
         MessageProtocol.connectionInitialized(self)
@@ -38,6 +51,10 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
 
         global current_conn
         current_conn = self
+
+    def __connectMemcached(self):
+        reactor.connectTCP('localhost', memcache.DEFAULT_PORT,
+            MemcacheFactory())
 
     def update_presence(self):
         session=models.Session()
@@ -86,6 +103,16 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
         msg.addRawXml(unicode(html))
 
         self.send(msg)
+
+    def send_html_deduped(self, jid, body, html, key):
+        def checkedSend(is_new, jid, body, html):
+            if is_new:
+                print "Sending", key
+                self.send_html(jid, body, html)
+            else:
+                print "Skipping", key
+        global mc
+        mc.add(str(key), "x").addCallback(checkedSend, jid, body, html)
 
     def get_user(self, msg, session):
         jid=JID(msg['from'])

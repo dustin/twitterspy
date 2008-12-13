@@ -26,7 +26,8 @@ class Query(set):
         hcontent=entry.content.replace("&lt;", "<").replace("&gt;", ">")
         html="<a href='%s'>%s</a>: %s" % (entry.author.uri, u, hcontent)
         for jid in self:
-            conn.send_html(jid, plain, html)
+            key = jid + "@" + str(eid)
+            conn.send_html_deduped(jid, plain, html, key)
 
     def _save_track_id(self, old_id):
         def f(x):
@@ -103,7 +104,8 @@ class UserStuff(set):
         html="[%s] <a href='%s'>%s</a>: %s" % (type, aurl, u, entry.text)
         conn = protocol.current_conn
         for jid in self:
-            conn.send_html(jid, plain, html)
+            key = jid + "@" + str(entry.id)
+            conn.send_html_deduped(jid, plain, html, key)
 
     def _gotDMResult(self, entry):
         self.last_dm_id = max(self.last_dm_id, int(entry.id))
