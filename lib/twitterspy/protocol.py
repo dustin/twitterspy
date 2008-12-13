@@ -13,6 +13,7 @@ import xmpp_commands
 import config
 import models
 import scheduling
+import string
 
 current_conn = None
 mc = None
@@ -33,6 +34,15 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
         self._tracking=-1
         self._users=-1
         self.__connectMemcached()
+
+        goodChars=string.letters + string.digits + "/=,_+.-~@"
+        self.jidtrans = self._buildGoodSet(goodChars)
+
+    def _buildGoodSet(self, goodChars, badChar='_'):
+        allChars=string.maketrans("", "")
+        badchars=string.translate(allChars, allChars, goodChars)
+        rv=string.maketrans(badchars, badChar * len(badchars))
+        return rv
 
     def connectionInitialized(self):
         MessageProtocol.connectionInitialized(self)
@@ -105,6 +115,7 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
         self.send(msg)
 
     def send_html_deduped(self, jid, body, html, key):
+        key = string.translate(str(key), self.jidtrans)[0:128]
         def checkedSend(is_new, jid, body, html):
             if is_new:
                 print "Sending", key
@@ -112,7 +123,7 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
             else:
                 print "Skipping", key
         global mc
-        mc.add(str(key), "x").addCallback(checkedSend, jid, body, html)
+        mc.add(key, "x").addCallback(checkedSend, jid, body, html)
 
     def get_user(self, msg, session):
         jid=JID(msg['from'])
