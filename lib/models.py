@@ -75,25 +75,7 @@ class User(object):
         return self.username and self.password
 
 class Track(object):
-
-    @staticmethod
-    def todo(session, timeout=10):
-        """Get the items to do."""
-        ID_QUERY="""select t.*
-              from tracks t
-              join user_tracks ut on (t.id = ut.track_id)
-              join users u on (u.id == ut.user_id)
-              where
-                u.active is not null
-                and u.active = :uactive
-                and u.status not in ('dnd', 'offline', 'unavailable')
-                and ( t.next_update < :last_update )
-              order by t.last_update
-          limit 60
-          """
-        then=datetime.datetime.now() - datetime.timedelta(minutes=timeout)
-        return session.query(Track).from_statement(ID_QUERY).params(
-            uactive=True, last_update=then)
+    pass
 
 class UserTrack(object):
     pass
