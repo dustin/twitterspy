@@ -36,7 +36,7 @@ class Query(set):
         hcontent=entry.content.replace("&lt;", "<").replace("&gt;", ">")
         html="<a href='%s'>%s</a>: %s" % (entry.author.uri, u, hcontent)
         for jid in self:
-            key = jid + "@" + str(eid)
+            key = str(eid) + "@" + jid
             conn.send_html_deduped(jid, plain, html, key)
 
     def _deferred_write(self, theId):
@@ -135,7 +135,7 @@ class UserStuff(set):
         html="[%s] <a href='%s'>%s</a>: %s" % (type, aurl, u, entry.text)
         conn = protocol.current_conn
         for jid in self:
-            key = jid + "@" + str(entry.id)
+            key = str(entry.id) + "@" + jid
             conn.send_html_deduped(jid, plain, html, key)
 
     def _gotDMResult(self, entry):
