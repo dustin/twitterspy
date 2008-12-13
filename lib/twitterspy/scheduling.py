@@ -1,6 +1,6 @@
 import random
 
-from twisted.internet import task, defer, reactor
+from twisted.internet import task, defer, reactor, threads
 
 import twitter
 import protocol
@@ -38,17 +38,19 @@ class Query(set):
             key = jid + "@" + str(eid)
             conn.send_html_deduped(jid, plain, html, key)
 
+    def _deferred_write(self, theId):
+        session = models.Session()
+        try:
+            t=session.query(models.Track).filter_by(query=self.query).one()
+            t.max_seen = theId
+            session.commit()
+        finally:
+            session.close()
+
     def _save_track_id(self, old_id):
         def f(x):
             if old_id != self.last_id:
-                session = models.Session()
-                try:
-                    t=session.query(models.Track).filter_by(
-                        query=self.query).one()
-                    t.max_seen = self.last_id
-                    session.commit()
-                finally:
-                    session.close()
+                threads.deferToThread(self._deferred_write, self.last_id)
         return f
 
     def __call__(self):
@@ -131,19 +133,22 @@ class UserStuff(set):
         self.last_friend_id = max(self.last_friend_id, int(entry.id))
         self._deliver_message('friend', entry)
 
+    def _deferred_write(self, jid, mprop, new_val):
+        session = models.Session()
+        try:
+            u = models.User.by_jid(jid, session)
+            setattr(u, mprop, new_val)
+            session.commit()
+        finally:
+            session.close()
+
     def _maybe_update_prop(self, prop, mprop):
         old_val = getattr(self, prop)
         def f(x):
             new_val = getattr(self, prop)
             if old_val != new_val:
-                session = models.Session()
-                try:
-                    u = models.User.by_jid(self.short_jid, session)
-                    setattr(u, mprop, new_val)
-                    session.add(u)
-                    session.commit()
-                finally:
-                    session.close()
+                threads.deferToThread(
+                    self._deferred_write, self.short_jid, mprop, new_val)
         return f
 
     def __call__(self):
