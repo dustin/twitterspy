@@ -240,7 +240,7 @@ def _entity_to_jid(entity):
 def _load_user(entity):
     try:
         session = models.Session()
-        u = models.User.by_jid(_entity_to_jid(entity), session)
+        u = models.User.update_status(_entity_to_jid(entity), None, session)
         rv = None
         if u.active:
             tracks = [(t.query, t.max_seen) for t in u.tracks]
