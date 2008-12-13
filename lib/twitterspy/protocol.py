@@ -133,7 +133,8 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
             for t in u.tracks:
                 scheduling.queries.add(entity.full(), t.query)
             scheduling.users.add(entity.userhost(), entity.full(),
-                u.username, u.password)
+                u.username, u.password, u.friend_timeline_id,
+                u.direct_message_id)
         finally:
             session.close()
 
