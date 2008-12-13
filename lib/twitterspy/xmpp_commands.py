@@ -245,7 +245,7 @@ class PostCommand(ArgRequired):
     def process(self, user, prot, args, session):
         if user.has_credentials():
             jid = user.jid
-            twitter.Twitter(user.username, user.password).update(
+            twitter.Twitter(user.username, user.decoded_password()).update(
                 args, 'twitterspy'
                 ).addCallback(self._posted(jid, user.username, prot)
                 ).addErrback(self._failed(jid, prot))
@@ -291,7 +291,7 @@ class WatchFriendsCommand(OnOffCommand):
 
         args = args.lower()
         if args == 'on':
-            twitter.Twitter(user.username, user.password).friends(
+            twitter.Twitter(user.username, user.decoded_password()).friends(
                 self._gotFriendStatus(user.jid), params={'count': 1})
         elif args == 'off':
             user.friend_timeline_id = None

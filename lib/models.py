@@ -1,4 +1,5 @@
 import datetime
+import base64
 
 from sqlalchemy import *
 from sqlalchemy.orm import sessionmaker, mapper, relation, backref, exc, join
@@ -73,6 +74,9 @@ class User(object):
 
     def has_credentials(self):
         return self.username and self.password
+
+    def decoded_password(self):
+        return base64.decodestring(self.password) if self.password else None
 
 class Track(object):
     pass
