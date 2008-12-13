@@ -33,7 +33,8 @@ class Query(set):
         conn = protocol.current_conn
         u = entry.author.name.split(' ')[0]
         plain=u + ": " + entry.title
-        hcontent=entry.content.replace("&lt;", "<").replace("&gt;", ">")
+        hcontent=entry.content.replace("&lt;", "<").replace("&gt;", ">"
+            ).replace('&amp;', '&')
         html="<a href='%s'>%s</a>: %s" % (entry.author.uri, u, hcontent)
         for jid in self:
             key = str(eid) + "@" + jid
