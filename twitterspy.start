@@ -8,7 +8,7 @@ ulimit -m 150000
 
 while :
 do
-	twistd -l twitterspy.log -ny twitterspy.tac
+	twistd -l log/twitterspy.log -ny twitterspy.tac
 	sleep 5
 done
 
