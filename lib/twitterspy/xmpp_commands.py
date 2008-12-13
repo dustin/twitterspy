@@ -230,26 +230,22 @@ class PostCommand(ArgRequired):
         super(PostCommand, self).__init__('post',
             "Post a message to twitter.")
 
-    def _posted(self, jid, username, prot):
-        def f(id):
-            url = "http://twitter.com/%s/statuses/%s" % (username, id)
-            prot.send_plain(jid, ":) Your message has been posted: %s" % url)
-        return f
+    def _posted(self, id, jid, username, prot):
+        url = "http://twitter.com/%s/statuses/%s" % (username, id)
+        prot.send_plain(jid, ":) Your message has been posted: %s" % url)
 
-    def _failed(self, jid, prot):
-        def f(e):
-            print "Error updating for %s:  %s" % (jid, str(e))
-            prot.send_plain(jid, ":( Failed to post your message. "
-                "Your password may be wrong, or twitter may be broken.")
-        return f
+    def _failed(self, e, jid, prot):
+        print "Error updating for %s:  %s" % (jid, str(e))
+        prot.send_plain(jid, ":( Failed to post your message. "
+            "Your password may be wrong, or twitter may be broken.")
 
     def process(self, user, prot, args, session):
         if user.has_credentials():
             jid = user.jid
             twitter.Twitter(user.username, user.decoded_password()).update(
                 args, 'twitterspy'
-                ).addCallback(self._posted(jid, user.username, prot)
-                ).addErrback(self._failed(jid, prot))
+                ).addCallback(self._posted, jid, user.username, prot
+                ).addErrback(self._failed, jid, prot)
         else:
             prot.send_plain(user.jid, "You must twlogin before you can post.")
 
