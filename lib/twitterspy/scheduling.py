@@ -184,7 +184,9 @@ class UserRegistry(object):
             u.stop()
 
     def remove(self, short_jid, full_jid):
-        q = self.users[short_jid]
+        q = self.users.get(short_jid)
+        if not q:
+            return
         q.discard(full_jid)
         if not q:
             q.stop()
