@@ -213,7 +213,7 @@ class UnTrackCommand(ArgRequired):
 
     def process(self, user, prot, args, session):
         if user.untrack(args, session):
-            scheduling.queries.untracked(user, args)
+            scheduling.queries.untracked(user.jid, args)
             prot.send_plain(user.jid, "Stopped tracking %s" % args)
         else:
             prot.send_plain(user.jid,
