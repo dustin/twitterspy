@@ -255,6 +255,50 @@ class PostCommand(ArgRequired):
         else:
             prot.send_plain(user.jid, "You must twlogin before you can post.")
 
+class FollowCommand(ArgRequired):
+
+    def __init__(self):
+        super(FollowCommand, self).__init__('follow',
+            "Begin following a user.")
+
+    def _following(self, e, jid, prot, user):
+        prot.send_plain(jid, ":) Now following %s" % user)
+
+    def _failed(self, e, jid, prot, user):
+        print "Failed a follow request", e
+        prot.send_plain(jid, ":( Failed to follow %s" % user)
+
+    def process(self, user, prot, args, session):
+        if user.has_credentials():
+            twitter.Twitter(user.username, user.decoded_password()).follow(
+                str(args)).addCallback(self._following, user.jid, prot, args
+                ).addErrback(self._failed, user.jid, prot, args)
+        else:
+            prot.send_plain(jid, "You must twlogin before you can follow.")
+
+class LeaveUser(ArgRequired):
+
+    def __init__(self):
+        super(LeaveUser, self).__init__('leave',
+            "Stop following a user.")
+
+    def _left(self, e, jid, prot, user):
+        prot.send_plain(jid, ":) No longer following %s" % user)
+
+    def _failed(self, e, jid, prot, user):
+        print "Failed an unfollow request", e
+        prot.send_plain(jid, ":( Failed to follow %s" % user)
+        prot.send_plain(jid, ":( Failed to stop following %s" % user)
+
+    def process(self, user, prot, args, session):
+        if user.has_credentials():
+            twitter.Twitter(user.username, user.decoded_password()).leave(
+                str(args)).addCallback(self._left, user.jid, prot, args
+                ).addErrback(self._failed, user.jid, prot, args)
+        else:
+            prot.send_plain(jid,
+                "You must twlogin before you can stop following.")
+
 class OnOffCommand(ArgRequired):
 
     def has_valid_args(self, args):
