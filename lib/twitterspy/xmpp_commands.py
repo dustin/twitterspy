@@ -220,8 +220,7 @@ class TracksCommand(BaseCommand):
 
     def __call__(self, user, prot, args, session):
         rv = ["Currently tracking:\n"]
-        for t in user.tracks:
-            rv.append(t.query)
+        rv.extend(sorted([t.query for t in user.tracks]))
         prot.send_plain(user.jid, "\n".join(rv))
 
 class PostCommand(ArgRequired):
