@@ -184,6 +184,8 @@ class TWLogoutCommand(BaseCommand):
             "Discard your twitter credentials.")
 
     def __call__(self, user, prot, args, session):
+        user.username = None
+        user.password = None
         prot.send_plain(user.jid, "You have been logged out.")
 
 class TrackCommand(ArgRequired):
