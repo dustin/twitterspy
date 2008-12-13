@@ -102,8 +102,6 @@ _users_table = Table('users', _metadata,
 _tracks_table = Table('tracks', _metadata,
     Column('id', Integer, primary_key=True, index=True, unique=True),
     Column('query', String, index=True, unique=True),
-    Column('last_update', DateTime),
-    Column('next_update', DateTime),
     Column('max_seen', Integer),
 )
 
