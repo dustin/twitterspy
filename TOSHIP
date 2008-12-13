@@ -1,5 +1,3 @@
-* friend watching needs to actually go.
-
 * Need deduplication in outgoing messages.
 
 * Must keep up with where tracks are so we don't bombard users with the same
