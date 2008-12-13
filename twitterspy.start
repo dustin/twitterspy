@@ -3,14 +3,12 @@
 # Shell script for running the jabber bot.  I'd rather use something like
 # launchd, but that's unavailable to me on my servers.
 
-exec > twitterspy.log
-exec 2>&1
-
-ulimit -v 100000
-ulimit -m 100000
+ulimit -v 120000
+ulimit -m 120000
 
 while :
 do
-	ruby twitterspy.rb
+	twistd -l twitterspy.log -ny twitterspy.tac
 	sleep 5
 done
+
