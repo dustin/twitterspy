@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from twisted.internet import task, protocol, reactor, threads
+from twisted.internet import task, protocol, reactor, threads, defer
 from twisted.words.xish import domish
 from twisted.words.protocols.jabber.jid import JID
 from twisted.protocols import memcache
@@ -33,6 +33,7 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
         self._tracking=-1
         self._users=-1
         self.__connectMemcached()
+        self.available_sem = defer.DeferredSemaphore(tokens=2)
 
     def connectionInitialized(self):
         MessageProtocol.connectionInitialized(self)
@@ -171,8 +172,10 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
     # presence stuff
     def availableReceived(self, entity, show=None, statuses=None, priority=0):
         print "Available from %s (%s, %s)" % (entity.full(), show, statuses)
-        threads.deferToThread(self._load_user, entity).addCallback(
-            self._init_user, entity)
+        def process():
+            return threads.deferToThread(self._load_user, entity).addCallback(
+                self._init_user, entity)
+        self.available_sem.run(process)
 
     def unavailableReceived(self, entity, statuses=None):
         print "Unavailable from %s" % entity.userhost()
