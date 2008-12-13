@@ -23,6 +23,7 @@ class Query(set):
         r=random.Random()
         then = r.randint(1, min(60, self.loop_time / 2))
         print "Starting %s in %ds" % (self.query, then)
+        self.loop = None
         reactor.callLater(then, self.start)
 
     def _gotResult(self, entry):
@@ -248,18 +249,18 @@ def _load_user(entity):
     finally:
         session.close()
 
-def _init_user(stuff, entity):
+def _init_user(stuff, short_jid, full_jids):
     if stuff:
-        users.add(entity.userhost(), entity.full(),
-            stuff[0][2], stuff[0][3])
-        for q, id in stuff[1]:
-            queries.add(entity.full(), q, id)
-        users.set_creds(entity.userhost(), stuff[0][0], stuff[0][1])
+        for j in full_jids:
+            users.add(short_jid, j, stuff[0][2], stuff[0][3])
+            for q, id in stuff[1]:
+                queries.add(j, q, id)
+        users.set_creds(short_jid, stuff[0][0], stuff[0][1])
 
-def enable_user(entity):
+def enable_user(jid):
     def process():
-        return threads.deferToThread(_load_user, entity).addCallback(
-            _init_user, entity)
+        return threads.deferToThread(_load_user, jid).addCallback(
+            _init_user, jid, users.users.get(jid, []))
     global available_sem
     available_sem.run(process)
 
@@ -268,7 +269,11 @@ def disable_user(jid):
     users.set_creds(jid, None, None)
 
 def available_user(entity):
-    enable_user(entity)
+    def process():
+        return threads.deferToThread(_load_user, entity).addCallback(
+            _init_user, entity.userhost(), [entity.full()])
+    global available_sem
+    available_sem.run(process)
 
 def unavailable_user(entity):
     queries.remove(entity.full())
