@@ -85,9 +85,11 @@ class StatusCommand(BaseCommand):
         rv=[]
         rv.append("Jid:  %s" % user.jid)
         rv.append("Jabber status:  %s" % user.status)
-        rv.append("Twitterspy status:  %s"
-            % {True: 'Active', False: 'Inactive'}[user.active])
         rv.append("You are currently tracking %d topics." % len(user.tracks))
+        if user.has_credentials():
+            rv.append("You're logged in to twitter as %s" % (user.username))
+        if user.friend_timeline_id is not None:
+            rv.append("Friend tracking is enabled.")
         prot.send_plain(user.jid, "\n".join(rv))
 
 class HelpCommand(BaseCommand):
