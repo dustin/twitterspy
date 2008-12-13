@@ -1,9 +1,11 @@
-from twisted.internet import task
+from twisted.internet import task, defer
 
 import twitter
 import protocol
 
 import models
+
+search_semaphore = defer.DeferredSemaphore(tokens=5)
 
 class Query(set):
 
@@ -45,12 +47,16 @@ class Query(set):
     def __call__(self):
         # Don't bother if we're not connected...
         if protocol.current_conn:
-            print "Searching", self.query
-            params = {}
-            if self.last_id > 0:
-                params['since_id'] = str(self.last_id)
-            twitter.Twitter().search(self.query, self._gotResult, params
-                ).addCallback(self._save_track_id(self.last_id))
+            global search_semaphore
+            search_semaphore.run(self._do_search)
+
+    def _do_search(self):
+        print "Searching", self.query
+        params = {}
+        if self.last_id > 0:
+            params['since_id'] = str(self.last_id)
+        twitter.Twitter().search(self.query, self._gotResult, params
+            ).addCallback(self._save_track_id(self.last_id))
 
     def stop(self):
         print "Stopping", self.query
