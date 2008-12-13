@@ -154,31 +154,27 @@ class TWLoginCommand(ArgRequired):
         username, password=args.split(' ', 1)
         jid = user.jid
         twitter.Twitter(username, password).verify_credentials().addCallback(
-            self.__credsVerified(prot, jid, username, password)).addErrback(
-            self.__credsRefused(prot, jid))
+            self.__credsVerified, prot, jid, username, password).addErrback(
+            self.__credsRefused, prot, jid)
 
-    def __credsRefused(self, prot, jid):
-        def f(e):
-            print "Failed to verify creds for %s: %s" % (jid, e)
-            prot.send_plain(jid,
-                ":( Your credentials were refused. "
-                    "Please try again: twlogin username password")
-        return f
+    def __credsRefused(self, e, prot, jid):
+        print "Failed to verify creds for %s: %s" % (jid, e)
+        prot.send_plain(jid,
+            ":( Your credentials were refused. "
+                "Please try again: twlogin username password")
 
-    def __credsVerified(self, prot, jid, username, password):
-        def f(x):
-            session = models.Session()
-            try:
-                user = models.User.by_jid(jid, session)
-                user.username = username
-                user.password = base64.encodestring(password)
-                session.commit()
-                prot.send_plain(user.jid, "Added credentials for %s"
-                    % user.username)
-                scheduling.users.set_creds(jid, username, password)
-            finally:
-                session.close()
-        return f
+    def __credsVerified(self, x, prot, jid, username, password):
+        session = models.Session()
+        try:
+            user = models.User.by_jid(jid, session)
+            user.username = username
+            user.password = base64.encodestring(password)
+            session.commit()
+            prot.send_plain(user.jid, "Added credentials for %s"
+                % user.username)
+            scheduling.users.set_creds(jid, username, password)
+        finally:
+            session.close()
 
 class TWLogoutCommand(BaseCommand):
 
