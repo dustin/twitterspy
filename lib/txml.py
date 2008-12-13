@@ -14,11 +14,11 @@ class BaseXMLHandler(object):
 
     SIMPLE_PROPS = []
     COMPLEX_PROPS = {}
-    tag_name = None
 
-    def __init__(self):
+    def __init__(self, n):
         self.done = False
         self.current_ob = None
+        self.tag_name = n
         for p in self.SIMPLE_PROPS:
             self.__dict__[p] = None
 
@@ -26,10 +26,11 @@ class BaseXMLHandler(object):
         if self.current_ob:
             self.current_ob.gotTagStart(name, attrs)
         elif name in self.COMPLEX_PROPS:
-            self.current_ob = self.COMPLEX_PROPS[name]()
+            self.current_ob = self.COMPLEX_PROPS[name](name)
         elif name in self.SIMPLE_PROPS:
             pass
         else:
+            print "Got unknown tag", name, "in", self.__class__
             self.current_ob = NoopParser(name)
 
     def gotTagEnd(self, name, data):
@@ -51,14 +52,11 @@ class BaseXMLHandler(object):
 class Author(BaseXMLHandler):
 
     SIMPLE_PROPS = [ 'name', 'uri' ]
-    tag_name = 'author'
 
 class Entry(BaseXMLHandler):
 
-    SIMPLE_PROPS = ['id', 'published', 'title', 'content', 'link']
+    SIMPLE_PROPS = ['id', 'published', 'title', 'content', 'link', 'updated' ]
     COMPLEX_PROPS = {'author': Author}
-
-    tag_name = 'entry'
 
     def gotTagStart(self, name, attrs):
         super(Entry, self).gotTagStart(name, attrs)
@@ -73,13 +71,18 @@ class Entry(BaseXMLHandler):
 class Status(BaseXMLHandler):
 
     SIMPLE_PROPS = ['created_at', 'id', 'text', 'source', 'truncated',
-        'in_reply_to_status_id', 'in_reply_to_user_id', 'favorited']
+        'in_reply_to_status_id', 'in_reply_to_screen_name',
+        'in_reply_to_user_id', 'favorited']
 
 class User(BaseXMLHandler):
 
     SIMPLE_PROPS = ['id', 'name', 'screen_name', 'location', 'description',
         'profile_image_url', 'url', 'protected', 'followers_count']
     COMPLEX_PROPS = {'status': Status}
+
+# Hack to patch this in...
+
+Status.COMPLEX_PROPS = {'user': User}
 
 class Parser(sux.XMLParser):
 
@@ -106,7 +109,7 @@ class Parser(sux.XMLParser):
     def gotTagStart(self, name, attrs):
         self.data=[]
         if name ==  self.toplevel_tag:
-            self.currentEntry = self.toplevel_type()
+            self.currentEntry = self.toplevel_type(name)
         elif self.currentEntry:
             self.currentEntry.gotTagStart(name, attrs)
 
@@ -126,8 +129,16 @@ class Parser(sux.XMLParser):
         e = {'quot': '"', 'lt': '&lt;', 'gt': '&gt;', 'amp': '&amp;'}
         if e.has_key(data):
             self.data.append(e[data])
+        elif data[0] == '#':
+            self.data.append('&' + data + ';')
         else:
             print "Unhandled entity reference: ", data
+
+class DirectMessage(BaseXMLHandler):
+
+    SIMPLE_PROPS = ['id', 'sender_id', 'text', 'recipient_id', 'created_at',
+        'sender_screen_name', 'recipient_screen_name']
+    COMPLEX_PROPS = {'sender': User, 'recipient': User}
 
 class Feed(Parser):
 
@@ -138,6 +149,16 @@ class Users(Parser):
 
     toplevel_tag = 'user'
     toplevel_type = User
+
+class Direct(Parser):
+
+    toplevel_tag = 'direct_message'
+    toplevel_type = DirectMessage
+
+class StatusList(Parser):
+
+    toplevel_tag = 'status'
+    toplevel_type = Status
 
 def parseXML(xml):
     return microdom.parseXMLString(xml)
