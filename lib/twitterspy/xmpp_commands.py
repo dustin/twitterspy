@@ -84,7 +84,8 @@ class StatusCommand(BaseCommand):
     def __call__(self, user, prot, args, session):
         rv=[]
         rv.append("Jid:  %s" % user.jid)
-        rv.append("Jabber status:  %s" % user.status)
+        rv.append("Twitterspy status:  %s"
+            % {True: 'Active', False: 'Inactive'}[user.active])
         rv.append("You are currently tracking %d topics." % len(user.tracks))
         if user.has_credentials():
             rv.append("You're logged in to twitter as %s" % (user.username))
