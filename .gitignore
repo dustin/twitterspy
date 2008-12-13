@@ -1,5 +1,6 @@
 twitterspy.log
 twitterspy.conf
 *.sqlite3
+*.sqlite3-journal
 *.pyc
 log
