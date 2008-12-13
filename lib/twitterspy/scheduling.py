@@ -73,22 +73,22 @@ class UserStuff(set):
         self.password = password
 
         self.last_dm_id = 0
+        self.last_friend_id = 0
         self.loop = task.LoopingCall(self)
         self.loop.start(self.loop_time)
 
-    def _gotResult(self, type):
-        def f(entry):
-            eid = int(entry.id)
-            self.last_dm_id = max(self.last_dm_id, eid)
-            print "Result:", entry.id, entry.text
-            conn = protocol.current_conn
-            u = entry.sender_screen_name
-            plain="[%s] %s: %s" % (type, u, entry.text)
-            aurl = "http://twitter.com/" + u
-            html="[%s] <a href='%s'>%s</a>: %s" % (type, aurl, u, entry.text)
-            for jid in self:
-                conn.send_html(jid, plain, html)
-        return f
+    def _deliver_message(self, type, entry):
+        u = entry.sender.screen_name
+        plain="[%s] %s: %s" % (type, u, entry.text)
+        aurl = "http://twitter.com/" + u
+        html="[%s] <a href='%s'>%s</a>: %s" % (type, aurl, u, entry.text)
+        conn = protocol.current_conn
+        for jid in self:
+            conn.send_html(jid, plain, html)
+
+    def _gotDMResult(self, entry):
+        self.last_dm_id = max(self.last_dm_id, int(entry.id))
+        self._deliver_message('direct', entry)
 
     def __call__(self):
         if self.username and self.password and protocol.current_conn:
@@ -97,7 +97,7 @@ class UserStuff(set):
             if self.last_dm_id > 0:
                 params['since_id'] = str(self.last_dm_id)
             tw = twitter.Twitter(self.username, self.password)
-            tw.direct_messages(self._gotResult("direct"), params)
+            tw.direct_messages(self._gotDMResult, params)
 
     def stop(self):
         print "Stopping", self.short_jid
