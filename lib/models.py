@@ -20,7 +20,7 @@ class User(object):
         if not s:
             s=Session()
         try:
-            return session.query(User).filter_by(jid=jid).one()
+            return s.query(User).filter_by(jid=jid).one()
         finally:
             if not session:
                 s.close()
