@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from twisted.internet import task, protocol, reactor, threads, defer
+from twisted.internet import task, protocol, reactor
 from twisted.words.xish import domish
 from twisted.words.protocols.jabber.jid import JID
 from twisted.protocols import memcache
@@ -33,7 +33,6 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
         self._tracking=-1
         self._users=-1
         self.__connectMemcached()
-        self.available_sem = defer.DeferredSemaphore(tokens=2)
 
     def connectionInitialized(self):
         MessageProtocol.connectionInitialized(self)
@@ -152,35 +151,14 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
                 session.close()
             self.update_presence()
 
-    def _load_user(self, entity):
-        try:
-            session = models.Session()
-            u = models.User.by_jid(entity.userhost(), session)
-            tracks = [(t.query, t.max_seen) for t in u.tracks]
-            return (u.username, u.decoded_password(),
-                u.friend_timeline_id, u.direct_message_id), tracks
-        finally:
-            session.close()
-
-    def _init_user(self, stuff, entity):
-        scheduling.users.add(entity.userhost(), entity.full(),
-            stuff[0][2], stuff[0][3])
-        for q, id in stuff[1]:
-            scheduling.queries.add(entity.full(), q, id)
-        scheduling.users.set_creds(entity.userhost(), stuff[0][0], stuff[0][1])
-
     # presence stuff
     def availableReceived(self, entity, show=None, statuses=None, priority=0):
         print "Available from %s (%s, %s)" % (entity.full(), show, statuses)
-        def process():
-            return threads.deferToThread(self._load_user, entity).addCallback(
-                self._init_user, entity)
-        self.available_sem.run(process)
+        scheduling.available_user(entity)
 
     def unavailableReceived(self, entity, statuses=None):
         print "Unavailable from %s" % entity.userhost()
-        scheduling.queries.remove(entity.full())
-        scheduling.users.remove(entity.userhost(), entity.full())
+        scheduling.unavailable_user(entity)
 
     def subscribedReceived(self, entity):
         print "Subscribe received from %s" % (entity.userhost())

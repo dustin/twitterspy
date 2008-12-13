@@ -9,6 +9,7 @@ import models
 
 search_semaphore = defer.DeferredSemaphore(tokens=5)
 private_semaphore = defer.DeferredSemaphore(tokens=20)
+available_sem = defer.DeferredSemaphore(tokens=2)
 
 class Query(set):
 
@@ -92,16 +93,23 @@ class QueryRegistry(object):
         self.queries[query_str].add(user)
 
     def untracked(self, user, query):
-        q = self.queries[query]
-        q.discard(user)
-        if not q:
-            q.stop()
-            del self.queries[query]
+        q = self.queries.get(query)
+        if q:
+            q.discard(user)
+            if not q:
+                q.stop()
+                del self.queries[query]
 
     def remove(self, user):
         print "Removing", user
         for k in list(self.queries.keys()):
             self.untracked(user, k)
+
+    def remove_user(self, user, jids):
+        for k in list(self.queries.keys()):
+            for j in jids:
+                print "Removing", j, "from", k
+                self.untracked(j, k)
 
 class UserStuff(set):
 
@@ -213,7 +221,7 @@ class UserRegistry(object):
         elif u.loop and not available:
             u.stop()
 
-    def remove(self, short_jid, full_jid):
+    def remove(self, short_jid, full_jid=None):
         q = self.users.get(short_jid)
         if not q:
             return
@@ -224,3 +232,45 @@ class UserRegistry(object):
 
 queries = QueryRegistry()
 users = UserRegistry()
+
+def _entity_to_jid(entity):
+    return entity if isinstance(entity, basestring) else entity.userhost()
+
+def _load_user(entity):
+    try:
+        session = models.Session()
+        u = models.User.by_jid(_entity_to_jid(entity), session)
+        rv = None
+        if u.active:
+            tracks = [(t.query, t.max_seen) for t in u.tracks]
+            rv = ((u.username, u.decoded_password(),
+                u.friend_timeline_id, u.direct_message_id), tracks)
+        return rv
+    finally:
+        session.close()
+
+def _init_user(stuff, entity):
+    if stuff:
+        users.add(entity.userhost(), entity.full(),
+            stuff[0][2], stuff[0][3])
+        for q, id in stuff[1]:
+            queries.add(entity.full(), q, id)
+        users.set_creds(entity.userhost(), stuff[0][0], stuff[0][1])
+
+def enable_user(entity):
+    def process():
+        return threads.deferToThread(_load_user, entity).addCallback(
+            _init_user, entity)
+    global available_sem
+    available_sem.run(process)
+
+def disable_user(jid):
+    queries.remove_user(jid, users.users[jid])
+    users.set_creds(jid, None, None)
+
+def available_user(entity):
+    enable_user(entity)
+
+def unavailable_user(entity):
+    queries.remove(entity.full())
+    users.remove(entity.userhost())

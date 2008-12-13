@@ -117,6 +117,7 @@ class OnCommand(BaseCommand):
 
     def __call__(self, user, prot, args, session):
         user.active=True
+        scheduling.enable_user(user.jid)
         prot.send_plain(user.jid, "Enabled tracks.")
 
 class OffCommand(BaseCommand):
@@ -125,6 +126,7 @@ class OffCommand(BaseCommand):
 
     def __call__(self, user, prot, args, session):
         user.active=False
+        scheduling.disable_user(user.jid)
         prot.send_plain(user.jid, "Disabled tracks.")
 
 class SearchCommand(ArgRequired):
@@ -195,8 +197,12 @@ class TrackCommand(ArgRequired):
 
     def process(self, user, prot, args, session):
         user.track(args, session)
-        scheduling.queries.add(user.jid, args, 0)
-        prot.send_plain(user.jid, "Tracking %s" % args)
+        if user.active:
+            scheduling.queries.add(user.jid, args, 0)
+            rv = "Tracking %s" % args
+        else:
+            rv = "Will track %s as soon as you activate again." % args
+        prot.send_plain(user.jid, rv)
 
 class UnTrackCommand(ArgRequired):
 
