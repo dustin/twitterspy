@@ -4,3 +4,4 @@ twitterspy.conf
 *.sqlite3-journal
 *.pyc
 log
+twistd.pid
