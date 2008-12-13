@@ -249,20 +249,22 @@ class PostCommand(ArgRequired):
         else:
             prot.send_plain(user.jid, "You must twlogin before you can post.")
 
-class AutopostCommand(ArgRequired):
+class OnOffCommand(ArgRequired):
+
+    def has_valid_args(self, args):
+        return args and args.lower() in ["on", "off"]
+
+class AutopostCommand(OnOffCommand):
 
     def __init__(self):
         super(AutopostCommand, self).__init__('autopost',
             "Enable or disable autopost.")
 
-    def has_valid_args(self, args):
-        return args and args.lower() in ["on", "off"]
-
     def process(self, user, prot, args, session):
         user.auto_post = (args.lower() == "on")
         prot.send_plain(user.jid, "Autoposting is now %s." % (args.lower()))
 
-class WatchFriendsCommand(AutopostCommand):
+class WatchFriendsCommand(OnOffCommand):
 
     def __init__(self):
         super(WatchFriendsCommand, self).__init__('watch_friends',
