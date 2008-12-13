@@ -29,7 +29,6 @@ class Query(set):
     def _gotResult(self, entry):
         eid = int(entry.id.split(':')[-1])
         self.last_id = max(self.last_id, eid)
-        print "Result:", entry.title
         conn = protocol.current_conn
         u = entry.author.name.split(' ')[0]
         plain=u + ": " + entry.title
