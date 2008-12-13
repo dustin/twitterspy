@@ -301,6 +301,7 @@ for __t in (t for t in globals().values() if isinstance(type, type(t))):
         try:
             i = __t()
             all_commands[i.name] = i
-        except TypeError:
+        except TypeError, e:
             # Ignore abstract bases
+            print "Error loading %s: %s" % (__t.__name__, str(e))
             pass
