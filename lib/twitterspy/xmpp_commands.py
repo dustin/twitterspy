@@ -1,10 +1,11 @@
+import re
 import sys
 import time
 import types
+import base64
 import datetime
-import re
-import sre_constants
 import urlparse
+import sre_constants
 
 from twisted.words.xish import domish
 from twisted.web import client
@@ -168,7 +169,7 @@ class TWLoginCommand(ArgRequired):
             try:
                 user = models.User.by_jid(jid, session)
                 user.username = username
-                user.password = password
+                user.password = base64.encodestring(password)
                 session.commit()
                 prot.send_plain(user.jid, "Added credentials for %s"
                     % user.username)

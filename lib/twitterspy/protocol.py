@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import base64
+
 from twisted.internet import task, protocol, reactor
 from twisted.words.xish import domish
 from twisted.words.protocols.jabber.jid import JID
@@ -159,9 +161,9 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
             u = models.User.update_status(entity.userhost(), show, session)
             for t in u.tracks:
                 scheduling.queries.add(entity.full(), t.query, t.max_seen)
+            p=base64.decodestring(u.password) if u.password else None
             scheduling.users.add(entity.userhost(), entity.full(),
-                u.username, u.password, u.friend_timeline_id,
-                u.direct_message_id)
+                u.username, p, u.friend_timeline_id, u.direct_message_id)
         finally:
             session.close()
 
