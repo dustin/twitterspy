@@ -20,19 +20,6 @@ import scheduling
 
 all_commands={}
 
-class CountingFile(object):
-    """A file-like object that just counts what's written to it."""
-    def __init__(self):
-        self.written=0
-    def write(self, b):
-        self.written += len(b)
-    def close(self):
-        pass
-    def open(self):
-        pass
-    def read(self):
-        return None
-
 class BaseCommand(object):
     """Base class for command processors."""
 
