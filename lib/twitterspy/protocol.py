@@ -181,7 +181,7 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
             scheduling.unavailable_user(entity)
 
     def unavailableReceived(self, entity, statuses=None):
-        log.msg("Unavailable from %s" % entity.userhost())
+        log.msg("Unavailable from %s" % entity.full())
         scheduling.unavailable_user(entity)
 
     def subscribedReceived(self, entity):

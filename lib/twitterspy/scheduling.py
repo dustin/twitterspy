@@ -78,7 +78,7 @@ class Query(set):
         self.loop.start(self.loop_time)
 
     def stop(self):
-        log.msg("Stopping %s" % self.query)
+        log.msg("Stopping query %s" % self.query)
         if self.loop:
             self.loop.stop()
             self.loop = None
@@ -97,6 +97,7 @@ class QueryRegistry(object):
     def untracked(self, user, query):
         q = self.queries.get(query)
         if q:
+            log.msg("Users of %s: %s" % (query, q))
             q.discard(user)
             if not q:
                 q.stop()
@@ -197,7 +198,7 @@ class UserStuff(set):
 
     def stop(self):
         if self.loop:
-            log.msg("Stopping %s" % self.short_jid)
+            log.msg("Stopping user %s" % self.short_jid)
             self.loop.stop()
             self.loop = None
 
