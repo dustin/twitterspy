@@ -347,6 +347,40 @@ class WatchFriendsCommand(OnOffCommand):
         else:
             prot.send_plain(user.jid, "Watch must be 'on' or 'off'.")
 
+class WhoisCommand(ArgRequired):
+
+    def __init__(self):
+        super(WhoisCommand, self).__init__('whois',
+            'Find out who a user is.')
+
+    def _fail(self, e, prot, jid, u):
+        prot.send_plain(user.jid, "Couldn't get info for %s" % u)
+
+    def _gotUser(self, u, prot, jid):
+        html="""Whois <a
+  href="http://twitter.com/%(screen_name)s">%(screen_name)s</a><br/><br/>
+Name:  %(name)s<br/>
+Home:  %(url)s<br/>
+Where: %(location)s<br/>
+Friends: <a
+  href="http://twitter.com/%(screen_name)s/friends">%(friends_count)s</a><br/>
+Followers: <a
+  href="http://twitter.com/%(screen_name)s/followers">%(followers_count)s</a><br/>
+Recently:<br/>
+        %(status_text)s
+"""
+        params = dict(u.__dict__)
+        params['status_text'] = u.status.text
+        prot.send_html(jid, "(no plain text yet)", html % params)
+
+    def process(self, user, prot, args, session):
+        if user.has_credentials():
+            twitter.Twitter(user.username, user.decoded_password()).show_user(
+                str(args)).addErrback(self._fail, prot, user.jid, args
+                ).addCallback(self._gotUser, prot, user.jid)
+        else:
+            prot.send_plain(user.jid, "You must twlogin before doing a whois.")
+
 for __t in (t for t in globals().values() if isinstance(type, type(t))):
     if BaseCommand in __t.__mro__:
         try:
