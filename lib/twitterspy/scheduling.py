@@ -278,3 +278,21 @@ def available_user(entity):
 def unavailable_user(entity):
     queries.remove(entity.full())
     users.remove(entity.userhost())
+
+def _reset_all():
+    global queries
+    global users
+    for q in queries.queries.values():
+        q.clear()
+        q.stop()
+    for u in users.users.values():
+        u.clear()
+        u.stop()
+    queries = QueryRegistry()
+    users = UserRegistry()
+
+def connected():
+    _reset_all()
+
+def disconnected():
+    _reset_all()

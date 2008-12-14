@@ -54,6 +54,9 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
         self.commands=xmpp_commands.all_commands
         print "Loaded commands: ", `self.commands.keys()`
 
+        # Let the scheduler know we connected.
+        scheduling.connected()
+
         # send initial presence
         self._tracking=-1
         self._users=-1
@@ -83,6 +86,7 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
         print "Disconnected!"
         global current_conn
         current_conn = None
+        scheduling.disconnected()
 
     def typing_notification(self, jid):
         """Send a typing notification to the given jid."""
