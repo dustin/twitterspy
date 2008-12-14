@@ -310,7 +310,7 @@ class WatchFriendsCommand(BaseCommand):
         super(WatchFriendsCommand, self).__init__('watch_friends',
             "Enable or disable watching friends.")
 
-    def _gotFriendStatus(self, jid):
+    def _gotFriendStatus(self, jid, prot):
         def f(entry):
             session = models.Session()
             try:
@@ -318,6 +318,7 @@ class WatchFriendsCommand(BaseCommand):
                 user.friend_timeline_id = entry.id
             finally:
                 session.close()
+            prot.send_plain(jid, ":) Starting to watch friends.")
         return f
 
     @arg_required(must_be_on_or_off)
@@ -330,10 +331,10 @@ class WatchFriendsCommand(BaseCommand):
         args = args.lower()
         if args == 'on':
             twitter.Twitter(user.username, user.decoded_password).friends(
-                self._gotFriendStatus(user.jid), params={'count': 1})
+                self._gotFriendStatus(user.jid, prot), params={'count': '1'})
         elif args == 'off':
             user.friend_timeline_id = None
-            prot.send_plain(user.jid, "No longer watching your friends.")
+            prot.send_plain(user.jid, ":) No longer watching your friends.")
         else:
             prot.send_plain(user.jid, "Watch must be 'on' or 'off'.")
 
