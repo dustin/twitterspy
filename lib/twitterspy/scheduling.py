@@ -278,7 +278,7 @@ def available_user(entity):
 
 def unavailable_user(entity):
     queries.remove(entity.full())
-    users.remove(entity.userhost())
+    users.remove(entity.userhost(), entity.full())
 
 def _reset_all():
     global queries
