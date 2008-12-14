@@ -20,6 +20,17 @@ import scheduling
 
 all_commands={}
 
+def arg_required(validator=lambda n: n):
+    def f(orig):
+        def every(self, user, prot, args, session):
+            if validator(args):
+                orig(self, user, prot, args, session)
+            else:
+                prot.send_plain(user.jid, "Arguments required for %s:\n%s"
+                    % (self.name, self.extended_help))
+        return every
+    return f
+
 class BaseCommand(object):
     """Base class for command processors."""
 
@@ -48,21 +59,6 @@ class BaseCommand(object):
             return parsed.scheme in ['http', 'https'] and parsed.netloc
         except:
             return False
-
-class ArgRequired(BaseCommand):
-
-    def __call__(self, user, prot, args, session):
-        if self.has_valid_args(args):
-            self.process(user, prot, args, session)
-        else:
-            prot.send_plain(user.jid, "Arguments required for %s:\n%s"
-                % (self.name, self.extended_help))
-
-    def has_valid_args(self, args):
-        return args
-
-    def process(self, user, prot, args, session):
-        raise NotImplementedError()
 
 class StatusCommand(BaseCommand):
 
@@ -118,13 +114,14 @@ class OffCommand(BaseCommand):
         scheduling.disable_user(user.jid)
         prot.send_plain(user.jid, "Disabled tracks.")
 
-class SearchCommand(ArgRequired):
+class SearchCommand(BaseCommand):
 
     def __init__(self):
         super(SearchCommand, self).__init__('search',
             'Perform a search query (but do not track).')
 
-    def process(self, user, prot, args, session):
+    @arg_required()
+    def __call__(self, user, prot, args, session):
         rv = []
         def gotResult(entry):
             rv.append(entry.author.name.split()[0] + ": " + entry.title)
@@ -134,13 +131,14 @@ class SearchCommand(ArgRequired):
                 + "\n\n".join(rv))).addErrback(
             lambda x: prot.send_plain(jid, "Problem performing search"))
 
-class TWLoginCommand(ArgRequired):
+class TWLoginCommand(BaseCommand):
 
     def __init__(self):
         super(TWLoginCommand, self).__init__('twlogin',
             'Set your twitter username and password (use at your own risk)')
 
-    def process(self, user, prot, args, session):
+    @arg_required()
+    def __call__(self, user, prot, args, session):
         args = args.replace(">", "").replace("<", "")
         username, password=args.split(' ', 1)
         jid = user.jid
@@ -179,12 +177,13 @@ class TWLogoutCommand(BaseCommand):
         prot.send_plain(user.jid, "You have been logged out.")
         scheduling.users.set_creds(user.jid, None, None)
 
-class TrackCommand(ArgRequired):
+class TrackCommand(BaseCommand):
 
     def __init__(self):
         super(TrackCommand, self).__init__('track', "Start tracking a topic.")
 
-    def process(self, user, prot, args, session):
+    @arg_required()
+    def __call__(self, user, prot, args, session):
         user.track(args, session)
         if user.active:
             scheduling.queries.add(user.jid, args, 0)
@@ -193,13 +192,14 @@ class TrackCommand(ArgRequired):
             rv = "Will track %s as soon as you activate again." % args
         prot.send_plain(user.jid, rv)
 
-class UnTrackCommand(ArgRequired):
+class UnTrackCommand(BaseCommand):
 
     def __init__(self):
         super(UnTrackCommand, self).__init__('untrack',
             "Stop tracking a topic.")
 
-    def process(self, user, prot, args, session):
+    @arg_required()
+    def __call__(self, user, prot, args, session):
         if user.untrack(args, session):
             scheduling.queries.untracked(user.jid, args)
             prot.send_plain(user.jid, "Stopped tracking %s" % args)
@@ -218,7 +218,7 @@ class TracksCommand(BaseCommand):
         rv.extend(sorted([t.query for t in user.tracks]))
         prot.send_plain(user.jid, "\n".join(rv))
 
-class PostCommand(ArgRequired):
+class PostCommand(BaseCommand):
 
     def __init__(self):
         super(PostCommand, self).__init__('post',
@@ -233,7 +233,8 @@ class PostCommand(ArgRequired):
         prot.send_plain(jid, ":( Failed to post your message. "
             "Your password may be wrong, or twitter may be broken.")
 
-    def process(self, user, prot, args, session):
+    @arg_required()
+    def __call__(self, user, prot, args, session):
         if user.has_credentials:
             jid = user.jid
             twitter.Twitter(user.username, user.decoded_password).update(
@@ -243,7 +244,7 @@ class PostCommand(ArgRequired):
         else:
             prot.send_plain(user.jid, "You must twlogin before you can post.")
 
-class FollowCommand(ArgRequired):
+class FollowCommand(BaseCommand):
 
     def __init__(self):
         super(FollowCommand, self).__init__('follow',
@@ -256,7 +257,8 @@ class FollowCommand(ArgRequired):
         log.msg("Failed a follow request %s" % repr(e))
         prot.send_plain(jid, ":( Failed to follow %s" % user)
 
-    def process(self, user, prot, args, session):
+    @arg_required()
+    def __call__(self, user, prot, args, session):
         if user.has_credentials:
             twitter.Twitter(user.username, user.decoded_password).follow(
                 str(args)).addCallback(self._following, user.jid, prot, args
@@ -264,7 +266,7 @@ class FollowCommand(ArgRequired):
         else:
             prot.send_plain(jid, "You must twlogin before you can follow.")
 
-class LeaveUser(ArgRequired):
+class LeaveUser(BaseCommand):
 
     def __init__(self):
         super(LeaveUser, self).__init__('leave',
@@ -278,7 +280,8 @@ class LeaveUser(ArgRequired):
         prot.send_plain(jid, ":( Failed to follow %s" % user)
         prot.send_plain(jid, ":( Failed to stop following %s" % user)
 
-    def process(self, user, prot, args, session):
+    @arg_required()
+    def __call__(self, user, prot, args, session):
         if user.has_credentials:
             twitter.Twitter(user.username, user.decoded_password).leave(
                 str(args)).addCallback(self._left, user.jid, prot, args
@@ -287,22 +290,21 @@ class LeaveUser(ArgRequired):
             prot.send_plain(jid,
                 "You must twlogin before you can stop following.")
 
-class OnOffCommand(ArgRequired):
+def must_be_on_or_off(args):
+    return args and args.lower() in ["on", "off"]
 
-    def has_valid_args(self, args):
-        return args and args.lower() in ["on", "off"]
-
-class AutopostCommand(OnOffCommand):
+class AutopostCommand(BaseCommand):
 
     def __init__(self):
         super(AutopostCommand, self).__init__('autopost',
             "Enable or disable autopost.")
 
-    def process(self, user, prot, args, session):
+    @arg_required(must_be_on_or_off)
+    def __call__(self, user, prot, args, session):
         user.auto_post = (args.lower() == "on")
         prot.send_plain(user.jid, "Autoposting is now %s." % (args.lower()))
 
-class WatchFriendsCommand(OnOffCommand):
+class WatchFriendsCommand(BaseCommand):
 
     def __init__(self):
         super(WatchFriendsCommand, self).__init__('watch_friends',
@@ -318,7 +320,8 @@ class WatchFriendsCommand(OnOffCommand):
                 session.close()
         return f
 
-    def process(self, user, prot, args, session):
+    @arg_required(must_be_on_or_off)
+    def __call__(self, user, prot, args, session):
         if not user.has_credentials:
             prot.send_plain(user.jid,
                 "You must twlogin before you can watch friends.")
@@ -334,7 +337,7 @@ class WatchFriendsCommand(OnOffCommand):
         else:
             prot.send_plain(user.jid, "Watch must be 'on' or 'off'.")
 
-class WhoisCommand(ArgRequired):
+class WhoisCommand(BaseCommand):
 
     def __init__(self):
         super(WhoisCommand, self).__init__('whois',
@@ -360,7 +363,8 @@ Recently:<br/>
         params['status_text'] = u.status.text
         prot.send_html(jid, "(no plain text yet)", html % params)
 
-    def process(self, user, prot, args, session):
+    @arg_required()
+    def __call__(self, user, prot, args, session):
         if user.has_credentials:
             twitter.Twitter(user.username, user.decoded_password).show_user(
                 str(args)).addErrback(self._fail, prot, user.jid, args
