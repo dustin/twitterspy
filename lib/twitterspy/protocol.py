@@ -165,6 +165,8 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
             finally:
                 session.close()
             self.update_presence()
+        else:
+            print "Non-chat/body message:", msg.toXml()
 
     # presence stuff
     def availableReceived(self, entity, show=None, statuses=None, priority=0):
