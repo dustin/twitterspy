@@ -244,7 +244,7 @@ def _load_user(entity):
         rv = None
         if u.active:
             tracks = [(t.query, t.max_seen) for t in u.tracks]
-            rv = ((u.username, u.decoded_password(),
+            rv = ((u.username, u.decoded_password,
                 u.friend_timeline_id, u.direct_message_id), tracks)
         return rv
     finally:

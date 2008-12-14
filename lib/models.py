@@ -72,9 +72,11 @@ class User(object):
         except exc.NoResultFound, e:
             return False
 
+    @property
     def has_credentials(self):
         return self.username and self.password
 
+    @property
     def decoded_password(self):
         return base64.decodestring(self.password) if self.password else None
 

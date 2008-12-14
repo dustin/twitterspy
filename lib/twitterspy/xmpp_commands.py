@@ -88,7 +88,7 @@ class StatusCommand(BaseCommand):
         rv.append("Twitterspy status:  %s"
             % {True: 'Active', False: 'Inactive'}[user.active])
         rv.append("You are currently tracking %d topics." % len(user.tracks))
-        if user.has_credentials():
+        if user.has_credentials:
             rv.append("You're logged in to twitter as %s" % (user.username))
         if user.friend_timeline_id is not None:
             rv.append("Friend tracking is enabled.")
@@ -247,9 +247,9 @@ class PostCommand(ArgRequired):
             "Your password may be wrong, or twitter may be broken.")
 
     def process(self, user, prot, args, session):
-        if user.has_credentials():
+        if user.has_credentials:
             jid = user.jid
-            twitter.Twitter(user.username, user.decoded_password()).update(
+            twitter.Twitter(user.username, user.decoded_password).update(
                 args, 'twitterspy'
                 ).addCallback(self._posted, jid, user.username, prot
                 ).addErrback(self._failed, jid, prot)
@@ -270,8 +270,8 @@ class FollowCommand(ArgRequired):
         prot.send_plain(jid, ":( Failed to follow %s" % user)
 
     def process(self, user, prot, args, session):
-        if user.has_credentials():
-            twitter.Twitter(user.username, user.decoded_password()).follow(
+        if user.has_credentials:
+            twitter.Twitter(user.username, user.decoded_password).follow(
                 str(args)).addCallback(self._following, user.jid, prot, args
                 ).addErrback(self._failed, user.jid, prot, args)
         else:
@@ -292,8 +292,8 @@ class LeaveUser(ArgRequired):
         prot.send_plain(jid, ":( Failed to stop following %s" % user)
 
     def process(self, user, prot, args, session):
-        if user.has_credentials():
-            twitter.Twitter(user.username, user.decoded_password()).leave(
+        if user.has_credentials:
+            twitter.Twitter(user.username, user.decoded_password).leave(
                 str(args)).addCallback(self._left, user.jid, prot, args
                 ).addErrback(self._failed, user.jid, prot, args)
         else:
@@ -332,14 +332,14 @@ class WatchFriendsCommand(OnOffCommand):
         return f
 
     def process(self, user, prot, args, session):
-        if not user.has_credentials():
+        if not user.has_credentials:
             prot.send_plain(user.jid,
                 "You must twlogin before you can watch friends.")
             return
 
         args = args.lower()
         if args == 'on':
-            twitter.Twitter(user.username, user.decoded_password()).friends(
+            twitter.Twitter(user.username, user.decoded_password).friends(
                 self._gotFriendStatus(user.jid), params={'count': 1})
         elif args == 'off':
             user.friend_timeline_id = None
@@ -374,8 +374,8 @@ Recently:<br/>
         prot.send_html(jid, "(no plain text yet)", html % params)
 
     def process(self, user, prot, args, session):
-        if user.has_credentials():
-            twitter.Twitter(user.username, user.decoded_password()).show_user(
+        if user.has_credentials:
+            twitter.Twitter(user.username, user.decoded_password).show_user(
                 str(args)).addErrback(self._fail, prot, user.jid, args
                 ).addCallback(self._gotUser, prot, user.jid)
         else:
