@@ -31,6 +31,15 @@ def arg_required(validator=lambda n: n):
         return every
     return f
 
+def login_required(orig):
+    def every(self, user, prot, args, session):
+        if user.has_credentials:
+            orig(self, user, prot, args, session)
+        else:
+            prot.send_plain(user.jid, "You must twlogin before calling %s"
+                % self.name)
+    return every
+
 class BaseCommand(object):
     """Base class for command processors."""
 
@@ -258,13 +267,11 @@ class FollowCommand(BaseCommand):
         prot.send_plain(jid, ":( Failed to follow %s" % user)
 
     @arg_required()
+    @login_required
     def __call__(self, user, prot, args, session):
-        if user.has_credentials:
-            twitter.Twitter(user.username, user.decoded_password).follow(
-                str(args)).addCallback(self._following, user.jid, prot, args
-                ).addErrback(self._failed, user.jid, prot, args)
-        else:
-            prot.send_plain(jid, "You must twlogin before you can follow.")
+        twitter.Twitter(user.username, user.decoded_password).follow(
+            str(args)).addCallback(self._following, user.jid, prot, args
+            ).addErrback(self._failed, user.jid, prot, args)
 
 class LeaveUser(BaseCommand):
 
@@ -281,14 +288,11 @@ class LeaveUser(BaseCommand):
         prot.send_plain(jid, ":( Failed to stop following %s" % user)
 
     @arg_required()
+    @login_required
     def __call__(self, user, prot, args, session):
-        if user.has_credentials:
-            twitter.Twitter(user.username, user.decoded_password).leave(
-                str(args)).addCallback(self._left, user.jid, prot, args
-                ).addErrback(self._failed, user.jid, prot, args)
-        else:
-            prot.send_plain(jid,
-                "You must twlogin before you can stop following.")
+        twitter.Twitter(user.username, user.decoded_password).leave(
+            str(args)).addCallback(self._left, user.jid, prot, args
+            ).addErrback(self._failed, user.jid, prot, args)
 
 def must_be_on_or_off(args):
     return args and args.lower() in ["on", "off"]
@@ -322,12 +326,8 @@ class WatchFriendsCommand(BaseCommand):
         return f
 
     @arg_required(must_be_on_or_off)
+    @login_required
     def __call__(self, user, prot, args, session):
-        if not user.has_credentials:
-            prot.send_plain(user.jid,
-                "You must twlogin before you can watch friends.")
-            return
-
         args = args.lower()
         if args == 'on':
             twitter.Twitter(user.username, user.decoded_password).friends(
@@ -365,13 +365,11 @@ Recently:<br/>
         prot.send_html(jid, "(no plain text yet)", html % params)
 
     @arg_required()
+    @login_required
     def __call__(self, user, prot, args, session):
-        if user.has_credentials:
-            twitter.Twitter(user.username, user.decoded_password).show_user(
-                str(args)).addErrback(self._fail, prot, user.jid, args
-                ).addCallback(self._gotUser, prot, user.jid)
-        else:
-            prot.send_plain(user.jid, "You must twlogin before doing a whois.")
+        twitter.Twitter(user.username, user.decoded_password).show_user(
+            str(args)).addErrback(self._fail, prot, user.jid, args
+            ).addCallback(self._gotUser, prot, user.jid)
 
 for __t in (t for t in globals().values() if isinstance(type, type(t))):
     if BaseCommand in __t.__mro__:
