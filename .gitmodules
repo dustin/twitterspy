@@ -1,0 +1,3 @@
+[submodule "lib/twitty-twister"]
+	path = lib/twitty-twister
+	url = git://github.com/dustin/twitty-twister.git

@@ -1,5 +1,6 @@
 import sys
 sys.path.append("lib")
+sys.path.append("lib/twitty-twister/lib")
 
 from twisted.application import service
 from twisted.internet import task, reactor
