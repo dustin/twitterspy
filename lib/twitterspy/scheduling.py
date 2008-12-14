@@ -97,7 +97,6 @@ class QueryRegistry(object):
     def untracked(self, user, query):
         q = self.queries.get(query)
         if q:
-            log.msg("Users of %s: %s" % (query, q))
             q.discard(user)
             if not q:
                 q.stop()
