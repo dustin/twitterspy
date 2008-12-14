@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from twisted.python import log
 from twisted.internet import task, protocol, reactor
 from twisted.words.xish import domish
 from twisted.words.protocols.jabber.jid import JID
@@ -23,7 +24,7 @@ class MemcacheFactory(protocol.ReconnectingClientFactory):
     def buildProtocol(self, addr):
         global mc
         self.resetDelay()
-        print "Connected to memcached."
+        log.msg("Connected to memcached.")
         mc = memcache.MemCacheProtocol()
         return mc
 
@@ -49,10 +50,10 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
         PresenceClientProtocol.connectionInitialized(self)
 
     def connectionMade(self):
-        print "Connected!"
+        log.msg("Connected!")
 
         self.commands=xmpp_commands.all_commands
-        print "Loaded commands: ", `self.commands.keys()`
+        log.msg("Loaded commands: %s" % `self.commands.keys()`)
 
         # Let the scheduler know we connected.
         scheduling.connected()
@@ -83,7 +84,7 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
             session.close()
 
     def connectionLost(self, reason):
-        print "Disconnected!"
+        log.msg("Disconnected!")
         global current_conn
         current_conn = None
         scheduling.disconnected()
@@ -122,10 +123,10 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
         key = string.translate(str(key), self.jidtrans)[0:128]
         def checkedSend(is_new, jid, body, html):
             if is_new:
-                print "Sending", key
+                log.msg("Sending %s" % key)
                 self.send_html(jid, body, html)
             else:
-                print "Skipping", key
+                log.msg("Skipping %s" % key)
         global mc
         mc.add(key, "x").addCallback(checkedSend, jid, body, html)
 
@@ -134,7 +135,7 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
         try:
             rv=models.User.by_jid(jid.userhost(), session)
         except:
-            print "Getting user without the jid in the DB (%s)" % jid.full()
+            log.msg("Getting user without the jid in the DB (%s)" % jid.full())
             rv=models.User.update_status(jid.userhost(), None, session)
             self.subscribe(jid)
         return rv;
@@ -166,21 +167,21 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
                 session.close()
             self.update_presence()
         else:
-            print "Non-chat/body message:", msg.toXml()
+            log.msg("Non-chat/body message: %s" % msg.toXml())
 
     # presence stuff
     def availableReceived(self, entity, show=None, statuses=None, priority=0):
-        print "Available from %s (%s, %s, pri=%s)" % (
-            entity.full(), show, statuses, priority)
+        log.msg("Available from %s (%s, %s, pri=%s)" % (
+            entity.full(), show, statuses, priority))
         if priority >= 0:
             scheduling.available_user(entity)
 
     def unavailableReceived(self, entity, statuses=None):
-        print "Unavailable from %s" % entity.userhost()
+        log.msg("Unavailable from %s" % entity.userhost())
         scheduling.unavailable_user(entity)
 
     def subscribedReceived(self, entity):
-        print "Subscribe received from %s" % (entity.userhost())
+        log.msg("Subscribe received from %s" % (entity.userhost()))
         welcome_message="""Welcome to twitterspy.
 
 Here you can use your normal IM client to post to twitter, track topics, watch
@@ -199,19 +200,19 @@ Type "help" to get started.
             session.close()
 
     def unsubscribedReceived(self, entity):
-        print "Unsubscribed received from %s" % (entity.userhost())
+        log.msg("Unsubscribed received from %s" % (entity.userhost()))
         models.User.update_status(entity.userhost(), 'unsubscribed')
         self.unsubscribe(entity)
         self.unsubscribed(entity)
 
     def subscribeReceived(self, entity):
-        print "Subscribe received from %s" % (entity.userhost())
+        log.msg("Subscribe received from %s" % (entity.userhost()))
         self.subscribe(entity)
         self.subscribed(entity)
         self.update_presence()
 
     def unsubscribeReceived(self, entity):
-        print "Unsubscribe received from %s" % (entity.userhost())
+        log.msg("Unsubscribe received from %s" % (entity.userhost()))
         models.User.update_status(entity.userhost(), 'unsubscribed')
         self.unsubscribe(entity)
         self.unsubscribed(entity)
@@ -232,5 +233,5 @@ class KeepAlive(XMPPHandler):
             self.lc.stop()
 
     def ping(self):
-        print "Stayin' alive"
+        log.msg("Stayin' alive")
         self.send(" ")

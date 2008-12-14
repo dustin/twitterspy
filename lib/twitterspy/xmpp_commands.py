@@ -7,6 +7,7 @@ import datetime
 import urlparse
 import sre_constants
 
+from twisted.python import log
 from twisted.words.xish import domish
 from twisted.web import client
 from twisted.internet import reactor
@@ -161,7 +162,7 @@ class TWLoginCommand(ArgRequired):
             self.__credsRefused, prot, jid)
 
     def __credsRefused(self, e, prot, jid):
-        print "Failed to verify creds for %s: %s" % (jid, e)
+        log.msg("Failed to verify creds for %s: %s" % (jid, e))
         prot.send_plain(jid,
             ":( Your credentials were refused. "
                 "Please try again: twlogin username password")
@@ -241,7 +242,7 @@ class PostCommand(ArgRequired):
         prot.send_plain(jid, ":) Your message has been posted: %s" % url)
 
     def _failed(self, e, jid, prot):
-        print "Error updating for %s:  %s" % (jid, str(e))
+        log.msg("Error updating for %s:  %s" % (jid, str(e)))
         prot.send_plain(jid, ":( Failed to post your message. "
             "Your password may be wrong, or twitter may be broken.")
 
@@ -265,7 +266,7 @@ class FollowCommand(ArgRequired):
         prot.send_plain(jid, ":) Now following %s" % user)
 
     def _failed(self, e, jid, prot, user):
-        print "Failed a follow request", e
+        log.msg("Failed a follow request %s" % repr(e))
         prot.send_plain(jid, ":( Failed to follow %s" % user)
 
     def process(self, user, prot, args, session):
@@ -286,7 +287,7 @@ class LeaveUser(ArgRequired):
         prot.send_plain(jid, ":) No longer following %s" % user)
 
     def _failed(self, e, jid, prot, user):
-        print "Failed an unfollow request", e
+        log.msg("Failed an unfollow request: %s", repr(e))
         prot.send_plain(jid, ":( Failed to follow %s" % user)
         prot.send_plain(jid, ":( Failed to stop following %s" % user)
 
@@ -353,5 +354,5 @@ for __t in (t for t in globals().values() if isinstance(type, type(t))):
             all_commands[i.name] = i
         except TypeError, e:
             # Ignore abstract bases
-            print "Error loading %s: %s" % (__t.__name__, str(e))
+            log.msg("Error loading %s: %s" % (__t.__name__, str(e)))
             pass

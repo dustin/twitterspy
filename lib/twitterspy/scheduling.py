@@ -1,5 +1,6 @@
 import random
 
+from twisted.python import log
 from twisted.internet import task, defer, reactor, threads
 
 import twitter
@@ -22,7 +23,7 @@ class Query(set):
 
         r=random.Random()
         then = r.randint(1, min(60, self.loop_time / 2))
-        print "Starting %s in %ds" % (self.query, then)
+        log.msg("Starting %s in %ds" % (self.query, then))
         self.loop = None
         reactor.callLater(then, self.start)
 
@@ -61,10 +62,10 @@ class Query(set):
             search_semaphore.run(self._do_search)
 
     def _reportError(self, e):
-        print "Error in search %s: %s" % (self.query, str(e))
+        log.msg("Error in search %s: %s" % (self.query, str(e)))
 
     def _do_search(self):
-        print "Searching", self.query
+        log.msg("Searching %s" % self.query)
         params = {}
         if self.last_id > 0:
             params['since_id'] = str(self.last_id)
@@ -77,7 +78,7 @@ class Query(set):
         self.loop.start(self.loop_time)
 
     def stop(self):
-        print "Stopping", self.query
+        log.msg("Stopping %s" % self.query)
         if self.loop:
             self.loop.stop()
             self.loop = None
@@ -88,7 +89,7 @@ class QueryRegistry(object):
         self.queries = {}
 
     def add(self, user, query_str, last_id):
-        print "Adding", user, ":", query_str
+        log.msg("Adding %s: %s" % (user, query_str))
         if not self.queries.has_key(query_str):
             self.queries[query_str] = Query(query_str, last_id)
         self.queries[query_str].add(user)
@@ -102,7 +103,7 @@ class QueryRegistry(object):
                 del self.queries[query]
 
     def remove(self, user):
-        print "Removing", user
+        log.msg("Removing %s" % user)
         for k in list(self.queries.keys()):
             self.untracked(user, k)
 
@@ -170,10 +171,10 @@ class UserStuff(set):
             private_semaphore.run(self._get_user_stuff)
 
     def _reportError(self, e):
-        print "Error getting user data for %s: %s" % (self.short_jid, str(e))
+        log.msg("Error getting user data for %s: %s" % (self.short_jid, str(e)))
 
     def _get_user_stuff(self):
-        print "Getting privates for", self.short_jid
+        log.msg("Getting privates for %s" % self.short_jid)
         params = {}
         if self.last_dm_id > 0:
             params['since_id'] = str(self.last_dm_id)
@@ -190,13 +191,13 @@ class UserStuff(set):
                 ).addErrback(self._reportError)
 
     def start(self):
-        print "Starting", self.short_jid
+        log.msg("Starting %s" % self.short_jid)
         self.loop = task.LoopingCall(self)
         self.loop.start(self.loop_time)
 
     def stop(self):
         if self.loop:
-            print "Stopping", self.short_jid
+            log.msg("Stopping %s" % self.short_jid)
             self.loop.stop()
             self.loop = None
 
@@ -206,7 +207,7 @@ class UserRegistry(object):
         self.users = {}
 
     def add(self, short_jid, full_jid, friends_id, dm_id):
-        print "Adding %s as %s" % (short_jid, full_jid)
+        log.msg("Adding %s as %s" % (short_jid, full_jid))
         if not self.users.has_key(short_jid):
             self.users[short_jid] = UserStuff(short_jid, friends_id, dm_id)
         self.users[short_jid].add(full_jid)
