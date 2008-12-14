@@ -168,8 +168,10 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
 
     # presence stuff
     def availableReceived(self, entity, show=None, statuses=None, priority=0):
-        print "Available from %s (%s, %s)" % (entity.full(), show, statuses)
-        scheduling.available_user(entity)
+        print "Available from %s (%s, %s, pri=%s)" % (
+            entity.full(), show, statuses, priority)
+        if priority >= 0:
+            scheduling.available_user(entity)
 
     def unavailableReceived(self, entity, statuses=None):
         print "Unavailable from %s" % entity.userhost()
