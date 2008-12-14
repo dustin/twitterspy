@@ -173,8 +173,12 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
     def availableReceived(self, entity, show=None, statuses=None, priority=0):
         log.msg("Available from %s (%s, %s, pri=%s)" % (
             entity.full(), show, statuses, priority))
-        if priority >= 0:
+        if priority >= 0 and show not in ['xa', 'dnd']:
             scheduling.available_user(entity)
+        else:
+            log.msg("Marking jid unavailable due to negative priority or "
+                "being somewhat unavailable.")
+            scheduling.unavailable_user(entity)
 
     def unavailableReceived(self, entity, statuses=None):
         log.msg("Unavailable from %s" % entity.userhost())
