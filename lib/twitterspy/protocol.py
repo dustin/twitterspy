@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import with_statement
+
 from twisted.python import log
 from twisted.internet import task, protocol, reactor
 from twisted.words.xish import domish
@@ -71,8 +73,7 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
             MemcacheFactory())
 
     def update_presence(self):
-        session=models.Session()
-        try:
+        with models.Session() as session:
             tracking=session.query(models.Track).count()
             users=session.query(models.User).count()
             if tracking != self._tracking or users != self._users:
@@ -80,8 +81,6 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
                 self.available(None, None, {None: status})
                 self._tracking = tracking
                 self._users = users
-        finally:
-            session.close()
 
     def connectionLost(self, reason):
         log.msg("Disconnected!")
@@ -148,8 +147,7 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
             self.typing_notification(msg['from'])
             a=unicode(msg.body).split(' ', 1)
             args = a[1] if len(a) > 1 else None
-            session=models.Session()
-            try:
+            with models.Session() as session:
                 user = self.get_user(msg, session)
                 cmd = self.commands.get(a[0].lower())
                 if cmd:
@@ -166,8 +164,6 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
                             "please start your message with 'post', or see "
                             "'help autopost'" % a[0])
                 session.commit()
-            finally:
-                session.close()
             self.update_presence()
         else:
             log.msg("Non-chat/body message: %s" % msg.toXml())
@@ -197,14 +193,11 @@ your friends, make new ones, and more.
 Type "help" to get started.
 """
         self.send_plain(entity.full(), welcome_message)
-        session = models.Session()
-        try:
+        with models.Session() as session:
             msg = "New subscriber: %s ( %d )" % (entity.userhost(),
                 session.query(models.User).count())
             for a in config.ADMINS:
                 self.send_plain(a, msg)
-        finally:
-            session.close()
 
     def unsubscribedReceived(self, entity):
         log.msg("Unsubscribed received from %s" % (entity.userhost()))

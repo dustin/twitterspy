@@ -1,3 +1,5 @@
+from __future__ import with_statement
+
 import re
 import sys
 import time
@@ -162,8 +164,7 @@ class TWLoginCommand(BaseCommand):
                 "Please try again: twlogin username password")
 
     def __credsVerified(self, x, prot, jid, username, password):
-        session = models.Session()
-        try:
+        with models.Session() as session:
             user = models.User.by_jid(jid, session)
             user.username = username
             user.password = base64.encodestring(password)
@@ -171,8 +172,6 @@ class TWLoginCommand(BaseCommand):
             prot.send_plain(user.jid, "Added credentials for %s"
                 % user.username)
             scheduling.users.set_creds(jid, username, password)
-        finally:
-            session.close()
 
 class TWLogoutCommand(BaseCommand):
 
@@ -316,12 +315,9 @@ class WatchFriendsCommand(BaseCommand):
 
     def _gotFriendStatus(self, jid, prot):
         def f(entry):
-            session = models.Session()
-            try:
+            with models.Session() as session:
                 user = models.User.by_jid(jid, session)
                 user.friend_timeline_id = entry.id
-            finally:
-                session.close()
             prot.send_plain(jid, ":) Starting to watch friends.")
         return f
 

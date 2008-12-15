@@ -1,3 +1,4 @@
+from __future__ import with_statement
 import random
 
 from twisted.python import log
@@ -41,13 +42,10 @@ class Query(set):
             conn.send_html_deduped(jid, plain, html, key)
 
     def _deferred_write(self, theId):
-        session = models.Session()
-        try:
+        with models.Session() as session:
             t=session.query(models.Track).filter_by(query=self.query).one()
             t.max_seen = theId
             session.commit()
-        finally:
-            session.close()
 
     def _save_track_id(self, old_id):
         def f(x):
@@ -148,13 +146,10 @@ class UserStuff(set):
         self._deliver_message('friend', entry)
 
     def _deferred_write(self, jid, mprop, new_val):
-        session = models.Session()
-        try:
+        with models.Session() as session:
             u = models.User.by_jid(jid, session)
             setattr(u, mprop, new_val)
             session.commit()
-        finally:
-            session.close()
 
     def _maybe_update_prop(self, prop, mprop):
         old_val = getattr(self, prop)
@@ -238,8 +233,7 @@ def _entity_to_jid(entity):
     return entity if isinstance(entity, basestring) else entity.userhost()
 
 def _load_user(entity):
-    try:
-        session = models.Session()
+    with models.Session() as session:
         u = models.User.update_status(_entity_to_jid(entity), None, session)
         rv = None
         if u.active:
@@ -247,8 +241,6 @@ def _load_user(entity):
             rv = ((u.username, u.decoded_password,
                 u.friend_timeline_id, u.direct_message_id), tracks)
         return rv
-    finally:
-        session.close()
 
 def _init_user(stuff, short_jid, full_jids):
     if stuff:
