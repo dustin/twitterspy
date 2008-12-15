@@ -140,6 +140,9 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
             self.subscribe(jid)
         return rv;
 
+    def onError(self, msg):
+        log.msg("Error received for %s: %s" % (msg['to'], msg.toXml()))
+
     def onMessage(self, msg):
         if msg["type"] == 'chat' and hasattr(msg, "body") and msg.body:
             self.typing_notification(msg['from'])
