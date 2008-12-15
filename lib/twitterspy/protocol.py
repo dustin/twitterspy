@@ -140,7 +140,7 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
         return rv;
 
     def onError(self, msg):
-        log.msg("Error received for %s: %s" % (msg['to'], msg.toXml()))
+        log.msg("Error received for %s: %s" % (msg['from'], msg.toXml()))
         scheduling.unavailable_user(JID(msg['from']))
 
     def onMessage(self, msg):
