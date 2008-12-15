@@ -2,6 +2,7 @@ import random
 
 from twisted.python import log
 from twisted.internet import task, defer, reactor, threads
+from twisted.words.protocols.jabber.jid import JID
 
 import twitter
 import protocol
@@ -12,7 +13,12 @@ search_semaphore = defer.DeferredSemaphore(tokens=5)
 private_semaphore = defer.DeferredSemaphore(tokens=20)
 available_sem = defer.DeferredSemaphore(tokens=2)
 
-class Query(set):
+class JidSet(set):
+
+    def bare_jids(self):
+        return set([JID(j).userhost() for j in self])
+
+class Query(JidSet):
 
     loop_time = 15 * 60
 
@@ -36,7 +42,7 @@ class Query(set):
         hcontent=entry.content.replace("&lt;", "<").replace("&gt;", ">"
             ).replace('&amp;', '&')
         html="<a href='%s'>%s</a>: %s" % (entry.author.uri, u, hcontent)
-        for jid in self:
+        for jid in self.bare_jids():
             key = str(eid) + "@" + jid
             conn.send_html_deduped(jid, plain, html, key)
 
@@ -109,7 +115,7 @@ class QueryRegistry(object):
             for j in jids:
                 self.untracked(j, k)
 
-class UserStuff(set):
+class UserStuff(JidSet):
 
     loop_time = 2 * 60
 
@@ -132,7 +138,7 @@ class UserStuff(set):
         aurl = "http://twitter.com/" + u
         html="[%s] <a href='%s'>%s</a>: %s" % (type, aurl, u, entry.text)
         conn = protocol.current_conn
-        for jid in self:
+        for jid in self.bare_jids():
             key = str(entry.id) + "@" + jid
             conn.send_html_deduped(jid, plain, html, key)
 
