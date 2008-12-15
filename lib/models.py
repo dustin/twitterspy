@@ -11,6 +11,16 @@ _engine = create_engine(config.CONF.get('general', 'db'))
 _metadata = MetaData()
 
 Session = sessionmaker()
+
+# Adding methods to Session so it can work with a with statement
+def _session_enter(self):
+    return self
+
+def _session_exit(self, *exc):
+    self.close()
+
+Session.__enter__ = _session_enter
+Session.__exit__ = _session_exit
 Session.configure(bind=_engine)
 
 class User(object):
