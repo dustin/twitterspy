@@ -141,6 +141,7 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
 
     def onError(self, msg):
         log.msg("Error received for %s: %s" % (msg['to'], msg.toXml()))
+        scheduling.unavailable_user(JID(msg['from']))
 
     def onMessage(self, msg):
         if msg["type"] == 'chat' and hasattr(msg, "body") and msg.body:
