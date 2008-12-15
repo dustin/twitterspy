@@ -72,15 +72,15 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
         reactor.connectTCP('localhost', memcache.DEFAULT_PORT,
             MemcacheFactory())
 
-    def update_presence(self):
-        with models.Session() as session:
-            tracking=session.query(models.Track).count()
-            users=session.query(models.User).count()
-            if tracking != self._tracking or users != self._users:
-                status="Tracking %s topics for %s users" % (tracking, users)
-                self.available(None, None, {None: status})
-                self._tracking = tracking
-                self._users = users
+    @models.wants_session
+    def update_presence(self, session):
+        tracking=session.query(models.Track).count()
+        users=session.query(models.User).count()
+        if tracking != self._tracking or users != self._users:
+            status="Tracking %s topics for %s users" % (tracking, users)
+            self.available(None, None, {None: status})
+            self._tracking = tracking
+            self._users = users
 
     def connectionLost(self, reason):
         log.msg("Disconnected!")
@@ -183,7 +183,8 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
         log.msg("Unavailable from %s" % entity.full())
         scheduling.unavailable_user(entity)
 
-    def subscribedReceived(self, entity):
+    @models.wants_session
+    def subscribedReceived(self, entity, session):
         log.msg("Subscribe received from %s" % (entity.userhost()))
         welcome_message="""Welcome to twitterspy.
 
@@ -193,11 +194,10 @@ your friends, make new ones, and more.
 Type "help" to get started.
 """
         self.send_plain(entity.full(), welcome_message)
-        with models.Session() as session:
-            msg = "New subscriber: %s ( %d )" % (entity.userhost(),
-                session.query(models.User).count())
-            for a in config.ADMINS:
-                self.send_plain(a, msg)
+        msg = "New subscriber: %s ( %d )" % (entity.userhost(),
+            session.query(models.User).count())
+        for a in config.ADMINS:
+            self.send_plain(a, msg)
 
     def unsubscribedReceived(self, entity):
         log.msg("Unsubscribed received from %s" % (entity.userhost()))

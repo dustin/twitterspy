@@ -1,5 +1,3 @@
-from __future__ import with_statement
-
 import re
 import sys
 import time
@@ -163,15 +161,14 @@ class TWLoginCommand(BaseCommand):
             ":( Your credentials were refused. "
                 "Please try again: twlogin username password")
 
-    def __credsVerified(self, x, prot, jid, username, password):
-        with models.Session() as session:
-            user = models.User.by_jid(jid, session)
-            user.username = username
-            user.password = base64.encodestring(password)
-            session.commit()
-            prot.send_plain(user.jid, "Added credentials for %s"
-                % user.username)
-            scheduling.users.set_creds(jid, username, password)
+    @models.wants_session
+    def __credsVerified(self, x, prot, jid, username, password, session):
+        user = models.User.by_jid(jid, session)
+        user.username = username
+        user.password = base64.encodestring(password)
+        session.commit()
+        prot.send_plain(user.jid, "Added credentials for %s" % user.username)
+        scheduling.users.set_creds(jid, username, password)
 
 class TWLogoutCommand(BaseCommand):
 
@@ -314,10 +311,10 @@ class WatchFriendsCommand(BaseCommand):
             "Enable or disable watching friends.")
 
     def _gotFriendStatus(self, jid, prot):
-        def f(entry):
-            with models.Session() as session:
-                user = models.User.by_jid(jid, session)
-                user.friend_timeline_id = entry.id
+        @models.wants_session
+        def f(entry, session):
+            user = models.User.by_jid(jid, session)
+            user.friend_timeline_id = entry.id
             prot.send_plain(jid, ":) Starting to watch friends.")
         return f
 

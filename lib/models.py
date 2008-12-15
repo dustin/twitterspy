@@ -1,3 +1,5 @@
+from __future__ import with_statement
+
 import datetime
 import base64
 
@@ -22,6 +24,12 @@ def _session_exit(self, *exc):
 Session.__enter__ = _session_enter
 Session.__exit__ = _session_exit
 Session.configure(bind=_engine)
+
+def wants_session(orig):
+    def f(*args):
+        with Session() as session:
+            return orig(*args + (session,))
+    return f
 
 class User(object):
 
