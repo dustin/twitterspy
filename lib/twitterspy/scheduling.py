@@ -213,14 +213,17 @@ class UserRegistry(object):
         self.users[short_jid].add(full_jid)
 
     def set_creds(self, short_jid, un, pw):
-        u=self.users[short_jid]
-        u.username = un
-        u.password = pw
-        available = un and pw
-        if available and not u.loop:
-            u.start()
-        elif u.loop and not available:
-            u.stop()
+        u=self.users.get(short_jid)
+        if u:
+            u.username = un
+            u.password = pw
+            available = un and pw
+            if available and not u.loop:
+                u.start()
+            elif u.loop and not available:
+                u.stop()
+        else:
+            log.msg("Couldn't find %s to set creds" % short_jid)
 
     def remove(self, short_jid, full_jid=None):
         q = self.users.get(short_jid)
