@@ -14,6 +14,18 @@ from twisted.words.protocols.jabber.jid import internJID as JID
 from twisted.words.protocols.jabber import component, error, xmlstream
 from twisted.words.xish import domish
 
+try:
+    #from twisted.words.protocols.jabber.xmlstream import XMPPHandler
+    from twisted.words.protocols.jabber.xmlstream import XMPPHandlerCollection
+except ImportError:
+    #from wokkel.subprotocols import XMPPHandler
+    from wokkel.subprotocols import XMPPHandlerCollection
+
+try:
+    from twisted.words.protocols.jabber.xmlstream import XmlStreamServerFactory
+except ImportError:
+    from wokkel.compat import XmlStreamServerFactory
+
 from wokkel.generic import XmlPipe
 from wokkel.subprotocols import StreamManager
 
@@ -66,7 +78,7 @@ class Component(StreamManager, service.Service):
 
 
 
-class InternalComponent(xmlstream.XMPPHandlerCollection, service.Service):
+class InternalComponent(XMPPHandlerCollection, service.Service):
     """
     Component service that connects directly to a router.
 
@@ -76,7 +88,7 @@ class InternalComponent(xmlstream.XMPPHandlerCollection, service.Service):
     """
 
     def __init__(self, router, domain):
-        xmlstream.XMPPHandlerCollection.__init__(self)
+        XMPPHandlerCollection.__init__(self)
         self.router = router
         self.domain = domain
 
@@ -115,7 +127,7 @@ class InternalComponent(xmlstream.XMPPHandlerCollection, service.Service):
         """
         Add a new handler and connect it to the stream.
         """
-        xmlstream.XMPPHandlerCollection.addHandler(self, handler)
+        XMPPHandlerCollection.addHandler(self, handler)
 
         if self.xmlstream:
             handler.makeConnection(self.xmlstream)
@@ -133,7 +145,11 @@ class InternalComponent(xmlstream.XMPPHandlerCollection, service.Service):
 class ListenComponentAuthenticator(xmlstream.ListenAuthenticator):
     """
     Authenticator for accepting components.
+
+    @ivar secret: The shared used to authorized incoming component connections.
+    @type secret: C{str}.
     """
+
     namespace = NS_COMPONENT_ACCEPT
 
     def __init__(self, secret):
@@ -142,12 +158,32 @@ class ListenComponentAuthenticator(xmlstream.ListenAuthenticator):
 
 
     def associateWithStream(self, xs):
+        """
+        Associate the authenticator with a stream.
+
+        This sets the stream's version to 0.0, because the XEP-0114 component
+        protocol was not designed for XMPP 1.0.
+        """
         xs.version = (0, 0)
         xmlstream.ListenAuthenticator.associateWithStream(self, xs)
 
 
     def streamStarted(self, rootElement):
+        """
+        Called by the stream when it has started.
+
+        This examines the default namespace of the incoming stream and whether
+        there is a requested hostname for the component. Then it generates a
+        stream identifier, sends a response header and adds an observer for
+        the first incoming element, triggering L{onElement}.
+        """
+
         xmlstream.ListenAuthenticator.streamStarted(self, rootElement)
+
+        # Compatibility fix for pre-8.2 implementations of ListenAuthenticator
+        if not self.xmlstream.sid:
+            from twisted.python import randbytes
+            self.xmlstream.sid = randbytes.secureRandom(8).encode('hex')
 
         if rootElement.defaultUri != self.namespace:
             exc = error.StreamError('invalid-namespace')
@@ -155,27 +191,41 @@ class ListenComponentAuthenticator(xmlstream.ListenAuthenticator):
             return
 
         # self.xmlstream.thisEntity is set to the address the component
-        # wants to assume. This should probably be checked.
+        # wants to assume.
         if not self.xmlstream.thisEntity:
             exc = error.StreamError('improper-addressing')
             self.xmlstream.sendStreamError(exc)
             return
-
-        self.xmlstream.sid = 'random' # FIXME
 
         self.xmlstream.sendHeader()
         self.xmlstream.addOnetimeObserver('/*', self.onElement)
 
 
     def onElement(self, element):
+        """
+        Called on incoming XML Stanzas.
+
+        The very first element received should be a request for handshake.
+        Otherwise, the stream is dropped with a 'not-authorized' error. If a
+        handshake request was received, the hash is extracted and passed to
+        L{onHandshake}.
+        """
         if (element.uri, element.name) == (self.namespace, 'handshake'):
             self.onHandshake(unicode(element))
         else:
-            exc = error.streamError('not-authorized')
+            exc = error.StreamError('not-authorized')
             self.xmlstream.sendStreamError(exc)
 
 
     def onHandshake(self, handshake):
+        """
+        Called upon receiving the handshake request.
+
+        This checks that the given hash in C{handshake} is equal to a
+        calculated hash, responding with a handshake reply or a stream error.
+        If the handshake was ok, the stream is authorized, and  XML Stanzas may
+        be exchanged.
+        """
         calculatedHash = xmlstream.hashPassword(self.xmlstream.sid, self.secret)
         if handshake != calculatedHash:
             exc = error.StreamError('not-authorized', text='Invalid hash')
@@ -187,12 +237,12 @@ class ListenComponentAuthenticator(xmlstream.ListenAuthenticator):
 
 
 
-class RouterService(service.Service):
+class Router(object):
     """
-    XMPP Server's Router Service.
+    XMPP Server's Router.
 
-    This service connects the different components of the XMPP service and
-    routes messages between them based on the given routing table.
+    A router connects the different components of the XMPP service and routes
+    messages between them based on the given routing table.
 
     Connected components are trusted to have correct addressing in the
     stanzas they offer for routing.
@@ -250,9 +300,6 @@ class RouterService(service.Service):
         @param stanza: The stanza to be routed.
         @type stanza: L{domish.Element}.
         """
-        if not list(stanza.elements()):
-            return
-
         destination = JID(stanza['to'])
 
         log.msg("Routing to %s: %r" % (destination.full(), stanza.toXml()))
@@ -264,37 +311,31 @@ class RouterService(service.Service):
 
 
 
-class ComponentServer(service.Service):
+class XMPPComponentServerFactory(XmlStreamServerFactory):
     """
-    XMPP Component Server service.
+    XMPP Component Server factory.
 
-    This service accepts XMPP external component connections and makes
+    This factory accepts XMPP external component connections and makes
     the router service route traffic for a component's bound domain
     to that component.
     """
 
     logTraffic = False
 
-    def __init__(self, router, port=5347, secret='secret'):
+    def __init__(self, router, secret='secret'):
         self.router = router
-        self.port = port
         self.secret = secret
 
         def authenticatorFactory():
             return ListenComponentAuthenticator(self.secret)
 
-        self.factory = xmlstream.XmlStreamServerFactory(authenticatorFactory)
-        self.factory.addBootstrap(xmlstream.STREAM_CONNECTED_EVENT,
-                                  self.makeConnection)
-        self.factory.addBootstrap(xmlstream.STREAM_AUTHD_EVENT,
-                                  self.connectionInitialized)
+        XmlStreamServerFactory.__init__(self, authenticatorFactory)
+        self.addBootstrap(xmlstream.STREAM_CONNECTED_EVENT,
+                          self.makeConnection)
+        self.addBootstrap(xmlstream.STREAM_AUTHD_EVENT,
+                          self.connectionInitialized)
 
         self.serial = 0
-
-
-    def startService(self):
-        service.Service.startService(self)
-        reactor.listenTCP(self.port, self.factory)
 
 
     def makeConnection(self, xs):

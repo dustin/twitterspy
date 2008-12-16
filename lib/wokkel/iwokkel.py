@@ -15,7 +15,7 @@ class IXMPPHandler(Interface):
     handle of (part of) an XMPP extension protocol.
     """
 
-    manager = Attribute("""XML stream manager""")
+    parent = Attribute("""XML stream manager for this handler""")
     xmlstream = Attribute("""The managed XML stream""")
 
     def setHandlerParent(parent):
@@ -25,12 +25,14 @@ class IXMPPHandler(Interface):
         @type parent: L{IXMPPHandlerCollection}
         """
 
+
     def disownHandlerParent(parent):
         """
         Remove the parent of the handler.
 
         @type parent: L{IXMPPHandlerCollection}
         """
+
 
     def makeConnection(xs):
         """
@@ -45,6 +47,7 @@ class IXMPPHandler(Interface):
         @type xs: L{XmlStream<twisted.words.protocols.jabber.XmlStream>}
         """
 
+
     def connectionMade():
         """
         Called after a connection has been established.
@@ -53,6 +56,7 @@ class IXMPPHandler(Interface):
         authenticator or the stream manager prior to stream initialization
         (including authentication).
         """
+
 
     def connectionInitialized():
         """
@@ -63,6 +67,7 @@ class IXMPPHandler(Interface):
         used to setup observers for incoming stanzas.
         """
 
+
     def connectionLost(reason):
         """
         The XML stream has been closed.
@@ -72,6 +77,7 @@ class IXMPPHandler(Interface):
 
         @type reason: L{twisted.python.failure.Failure}
         """
+
 
 
 class IXMPPHandlerCollection(Interface):
@@ -86,6 +92,7 @@ class IXMPPHandlerCollection(Interface):
         Get an iterator over all child handlers.
         """
 
+
     def addHandler(handler):
         """
         Add a child handler.
@@ -93,12 +100,14 @@ class IXMPPHandlerCollection(Interface):
         @type handler: L{IXMPPHandler}
         """
 
+
     def removeHandler(handler):
         """
         Remove a child handler.
 
         @type handler: L{IXMPPHandler}
         """
+
 
 
 class IDisco(Interface):
@@ -269,7 +278,8 @@ class IPubSubService(Interface):
                              C{list} of L{domish.Element})
         """
 
-    def notifyDelete(service, nodeIdentifier, subscriptions):
+    def notifyDelete(service, nodeIdentifier, subscribers,
+                     redirectURI=None):
         """
         Send out node deletion notifications.
 
@@ -277,9 +287,12 @@ class IPubSubService(Interface):
         @type service: L{jid.JID}
         @param nodeIdentifier: The identifier of the node that was deleted.
         @type nodeIdentifier: C{unicode}
-        @param subscriptions: The subscriptions for which a notification should
-                              be sent out.
-        @type subscriptions: C{list} of L{jid.JID}
+        @param subscribers: The subscribers for which a notification should
+                            be sent out.
+        @type subscribers: C{list} of L{jid.JID}
+        @param redirectURI: Optional XMPP URI of another node that subscribers
+                            are redirected to.
+        @type redirectURI: C{str}
         """
 
     def publish(requestor, service, nodeIdentifier, items):
@@ -413,7 +426,7 @@ class IPubSubService(Interface):
         @rtype: C{dict}.
         """
 
-    def getDefaultConfiguration(requestor, service):
+    def getDefaultConfiguration(requestor, service, nodeType):
         """
         Called when a default node configuration request has been received.
 
@@ -421,6 +434,9 @@ class IPubSubService(Interface):
         @type requestor: L{jid.JID}
         @param service: The entity the request was addressed to.
         @type service: L{jid.JID}
+        @param nodeType: The type of node for which the configuration is
+                         retrieved, C{'leaf'} or C{'collection'}.
+        @type nodeType: C{str}
         @return: A deferred that fires with a C{dict} representing the default
                  node configuration. Keys are C{str}s that represent the
                  field name. Values can be of types C{unicode}, C{int} or

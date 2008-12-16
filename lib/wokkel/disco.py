@@ -11,7 +11,7 @@ U{XEP-0030<http://www.xmpp.org/extensions/xep-0030.html>}.
 """
 
 from twisted.internet import defer
-from twisted.words.protocols.jabber import error, jid
+from twisted.words.protocols.jabber import error, jid, xmlstream
 from twisted.words.xish import domish
 
 from wokkel.iwokkel import IDisco
@@ -61,6 +61,65 @@ class DiscoItem(domish.Element):
 
         if name:
             self['name'] = name
+
+
+class DiscoQuery(xmlstream.IQ):
+    """
+    Element representing an XMPP service discovery request.
+    @ivar namespace: Request namespace.
+    @type namespace: C{str}
+    @ivar node: Node to request info from.
+    @type node: C{unicode}
+    """
+    def __init__(self, xs, namespace, node=None):
+        xmlstream.IQ.__init__(self, xs, "get")
+        query = self.addElement((namespace, 'query'))
+        if node:
+            query['node'] = node
+
+
+class DiscoClientProtocol(XMPPHandler):
+    """
+    Protocol implementation for XMPP Service Discovery.
+
+    This handler implements the client part of the protocol.
+    """
+
+    def requestInfo(self, jid, node=None):
+        """
+        Request information discovery from a node.
+
+        @ivar jid: Destination service
+        @type jid: C{jid.JID}
+        @ivar node: Node to request info from.
+        @type node: C{unicode}
+        """
+
+        req = DiscoQuery(self.xmlstream, NS_INFO, node)
+
+        def cb(iq):
+            return iq.query.elements()
+
+        d = req.send(jid.full())
+        return d.addCallback(cb)
+
+    def requestItems(self, jid, node=None):
+        """
+        Request items discovery from a node.
+
+        @ivar jid: Destination service
+        @type jid: C{jid.JID}
+        @ivar node: Node to request info from.
+        @type node: C{unicode}
+        """
+
+        req = DiscoQuery(self.xmlstream, NS_ITEMS, node)
+
+        def cb(iq):
+            return iq.query.elements()
+
+        d = req.send(jid.full())
+        return d.addCallback(cb)
 
 
 class DiscoHandler(XMPPHandler, IQHandlerMixin):

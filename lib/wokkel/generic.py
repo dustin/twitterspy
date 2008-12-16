@@ -11,10 +11,10 @@ from zope.interface import implements
 
 from twisted.internet import defer
 from twisted.words.protocols.jabber import error
+from twisted.words.protocols.jabber.xmlstream import toResponse
 from twisted.words.xish import domish, utility
 
 from wokkel import disco
-from wokkel.compat import toResponse
 from wokkel.iwokkel import IDisco
 from wokkel.subprotocols import XMPPHandler
 

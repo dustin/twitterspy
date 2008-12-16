@@ -392,18 +392,12 @@ class MessageProtocol(XMPPHandler):
         messageType = message.getAttribute("type")
 
         if messageType == 'error':
-            self.onError(message)
             return
 
         if messageType not in self.messageTypes:
             message["type"] = 'normal'
 
         self.onMessage(message)
-
-    def onError(self, message):
-        """
-        Called when an error message stanza was received.
-        """
 
     def onMessage(self, message):
         """
