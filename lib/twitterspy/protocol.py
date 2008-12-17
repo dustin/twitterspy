@@ -54,8 +54,13 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
     def connectionMade(self):
         log.msg("Connected!")
 
-        self.commands=xmpp_commands.all_commands
-        log.msg("Loaded commands: %s" % `self.commands.keys()`)
+        commands=xmpp_commands.all_commands
+        self.commands={}
+        for c in commands.values():
+            self.commands[c.name] = c
+            for a in c.aliases:
+                self.commands[a] = c
+        log.msg("Loaded commands: %s" % `sorted(commands.keys())`)
 
         # Let the scheduler know we connected.
         scheduling.connected()

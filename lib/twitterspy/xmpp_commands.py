@@ -54,9 +54,10 @@ class BaseCommand(object):
 
     extended_help=property(__get_extended_help, __set_extended_help)
 
-    def __init__(self, name, help=None, extended_help=None):
+    def __init__(self, name, help=None, extended_help=None, aliases=[]):
         self.name=name
         self.help=help
+        self.aliases=aliases
         self.extended_help=extended_help
 
     def __call__(self, user, prot, args, session):
@@ -216,7 +217,7 @@ class TracksCommand(BaseCommand):
 
     def __init__(self):
         super(TracksCommand, self).__init__('tracks',
-            "List the topics you're tracking.")
+            "List the topics you're tracking.", aliases=['tracking'])
 
     def __call__(self, user, prot, args, session):
         rv = ["Currently tracking:\n"]
@@ -273,7 +274,7 @@ class LeaveUser(BaseCommand):
 
     def __init__(self):
         super(LeaveUser, self).__init__('leave',
-            "Stop following a user.")
+            "Stop following a user.", aliases=['unfollow'])
 
     def _left(self, e, jid, prot, user):
         prot.send_plain(jid, ":) No longer following %s" % user)
@@ -308,7 +309,7 @@ class WatchFriendsCommand(BaseCommand):
 
     def __init__(self):
         super(WatchFriendsCommand, self).__init__('watch_friends',
-            "Enable or disable watching friends.")
+            "Enable or disable watching friends.", aliases=['watchfriends'])
 
     def _gotFriendStatus(self, jid, prot):
         @models.wants_session
