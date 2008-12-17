@@ -99,6 +99,9 @@ class HelpCommand(BaseCommand):
             if c:
                 rv.append("Help for %s:\n" % c.name)
                 rv.append(c.extended_help)
+                if c.aliases:
+                    rv.append("\nAliases:\n * ")
+                    "\n * ".join(c.aliases)
             else:
                 rv.append("Unknown command %s." % args)
         else:
