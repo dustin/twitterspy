@@ -20,7 +20,7 @@ class JidSet(set):
 
 class Query(JidSet):
 
-    loop_time = 15 * 60
+    loop_time = 5 * 60
 
     def __init__(self, query, last_id):
         super(Query, self).__init__()
@@ -117,7 +117,7 @@ class QueryRegistry(object):
 
 class UserStuff(JidSet):
 
-    loop_time = 2 * 60
+    loop_time = 90
 
     def __init__(self, short_jid, friends_id, dm_id):
         super(UserStuff, self).__init__()
