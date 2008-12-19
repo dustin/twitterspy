@@ -94,7 +94,7 @@ class HelpCommand(BaseCommand):
 
     def __call__(self, user, prot, args, session):
         rv=[]
-        if args:
+        if args and args.strip():
             c=all_commands.get(args.strip().lower(), None)
             if c:
                 rv.append("Help for %s:\n" % c.name)
