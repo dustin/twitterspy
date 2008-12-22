@@ -7,9 +7,13 @@ from twisted.internet import task, reactor
 from twisted.words.protocols.jabber import jid
 from wokkel.client import XMPPClient
 from wokkel.generic import VersionHandler
+import twitter
 
 from twitterspy import config
 from twitterspy import protocol
+
+# Set the user agent for twitter
+twitter.Twitter.agent = "twitterspy"
 
 application = service.Application("twitterspy")
 
