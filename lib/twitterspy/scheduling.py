@@ -32,7 +32,7 @@ def tally_results():
     else:
         mood = "angry"
 
-    print msg + " my mood is " + mood
+    log.msg(msg + " my mood is " + mood)
 
 class JidSet(set):
 
