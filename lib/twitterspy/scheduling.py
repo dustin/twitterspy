@@ -1,4 +1,5 @@
 import random
+from collections import deque
 
 from twisted.python import log
 from twisted.internet import task, defer, reactor, threads
@@ -12,6 +13,26 @@ import models
 search_semaphore = defer.DeferredSemaphore(tokens=5)
 private_semaphore = defer.DeferredSemaphore(tokens=20)
 available_sem = defer.DeferredSemaphore(tokens=2)
+
+# Record the 1000 most recent search results (assuming good from the beginning)
+recent_results = deque([True] * 1000)
+
+def tally_results():
+    good = reduce(lambda x, y: x + 1 if y else x, recent_results)
+    lrr = len(recent_results)
+    percentage = float(good) / float(lrr)
+    msg = "Processed %d out of %d recent searches" % (good, lrr)
+    mood = ""
+    if percentage > .9:
+        mood = "happy"
+    elif percentage > .5:
+        mood = "frustrated"
+    elif percentage > .1:
+        mood = "annoyed"
+    else:
+        mood = "angry"
+
+    print msg + " my mood is " + mood
 
 class JidSet(set):
 
@@ -33,7 +54,12 @@ class Query(JidSet):
         self.loop = None
         reactor.callLater(then, self.start)
 
+    def _save_result(self, r):
+        recent_results.popleft()
+        recent_results.append(r)
+
     def _gotResult(self, entry):
+        self._save_result(True)
         eid = int(entry.id.split(':')[-1])
         self.last_id = max(self.last_id, eid)
         conn = protocol.current_conn
@@ -66,6 +92,7 @@ class Query(JidSet):
 
     def _reportError(self, e):
         log.msg("Error in search %s: %s" % (self.query, str(e)))
+        self._save_result(False)
 
     def _do_search(self):
         log.msg("Searching %s" % self.query)

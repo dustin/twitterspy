@@ -11,6 +11,7 @@ import twitter
 
 from twitterspy import config
 from twitterspy import protocol
+from twitterspy import scheduling
 
 # Set the user agent for twitter
 twitter.Twitter.agent = "twitterspy"
@@ -25,3 +26,5 @@ twitterspy.setHandlerParent(xmppclient)
 VersionHandler('twitterspy', config.VERSION).setHandlerParent(xmppclient)
 protocol.KeepAlive().setHandlerParent(xmppclient)
 xmppclient.setServiceParent(application)
+
+task.LoopingCall(scheduling.tally_results).start(60)
