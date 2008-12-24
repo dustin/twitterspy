@@ -107,6 +107,7 @@ class HelpCommand(BaseCommand):
         else:
             for k in sorted(all_commands.keys()):
                 rv.append('%s\t%s' % (k, all_commands[k].help))
+        rv.append("\nFor more help, see http://dustin.github.com/twitterspy/")
         prot.send_plain(user.jid, "\n".join(rv))
 
 class OnCommand(BaseCommand):
