@@ -8,6 +8,7 @@ from twisted.internet import task, reactor
 from twisted.words.protocols.jabber import jid
 from wokkel.client import XMPPClient
 from wokkel.generic import VersionHandler
+from wokkel.keepalive import KeepAlive
 import twitter
 
 from twitterspy import config
@@ -32,7 +33,7 @@ for p in protocols:
     handler.setHandlerParent(xmppclient)
 
 VersionHandler('twitterspy', config.VERSION).setHandlerParent(xmppclient)
-protocol.KeepAlive().setHandlerParent(xmppclient)
+KeepAlive().setHandlerParent(xmppclient)
 xmppclient.setServiceParent(application)
 
 task.LoopingCall(scheduling.tally_results).start(60)
