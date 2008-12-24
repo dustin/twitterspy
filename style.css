@@ -22,6 +22,10 @@ h3 { text-align: center; color: #5bb03e; }
 
 a { color: #5bb03e; }
 
+img {
+	border: none;
+}
+
 .description {
 	font-size: 1.2em;
 	margin-bottom: 30px;
