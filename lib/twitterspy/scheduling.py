@@ -18,8 +18,11 @@ MAX_RESULTS = 1000
 
 # Record the most recent search results
 recent_results = deque()
+# Previous count of good searches (of attempted searches)
+previous_good = (0, 0)
 
 def tally_results():
+    global previous_good, recent_results
     # Short-circuit no results
     if not recent_results:
         log.msg("Short-circuiting tally results since there aren't any.")
@@ -27,7 +30,8 @@ def tally_results():
     good = reduce(lambda x, y: x + 1 if y else x, recent_results)
     lrr = len(recent_results)
     percentage = float(good) / float(lrr)
-    msg = "Processed %d out of %d recent searches." % (good, lrr)
+    msg = ("Processed %d out of %d recent searches (previously %d/%d)."
+        % (good, lrr, previous_good[0], previous_good[1]))
     mood = ""
     if percentage > .9:
         mood = "happy"
@@ -37,6 +41,8 @@ def tally_results():
         mood = "annoyed"
     else:
         mood = "angry"
+
+    previous_good = (good, lrr)
 
     log.msg(msg + " my mood is " + mood)
     conn = protocol.current_conn
