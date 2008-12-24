@@ -21,7 +21,7 @@ def tally_results():
     good = reduce(lambda x, y: x + 1 if y else x, recent_results)
     lrr = len(recent_results)
     percentage = float(good) / float(lrr)
-    msg = "Processed %d out of %d recent searches" % (good, lrr)
+    msg = "Processed %d out of %d recent searches." % (good, lrr)
     mood = ""
     if percentage > .9:
         mood = "happy"
@@ -33,6 +33,9 @@ def tally_results():
         mood = "angry"
 
     log.msg(msg + " my mood is " + mood)
+    conn = protocol.current_conn
+    if conn:
+        conn.publish_mood(mood, msg)
 
 class JidSet(set):
 

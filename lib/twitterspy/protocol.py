@@ -36,6 +36,7 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
         super(TwitterspyProtocol, self).__init__()
         self._tracking=-1
         self._users=-1
+        self._pubid = 1
         self.__connectMemcached()
 
         goodChars=string.letters + string.digits + "/=,_+.-~@"
@@ -68,6 +69,7 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
         # send initial presence
         self._tracking=-1
         self._users=-1
+        self._pubid = 1
         self.update_presence()
 
         global current_conn
@@ -92,6 +94,27 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
         global current_conn
         current_conn = None
         scheduling.disconnected()
+
+    def _gen_id(self, prefix):
+        self._pubid += 1
+        return prefix + str(self._pubid)
+
+    def publish_mood(self, mood, text):
+        msg="""<iq from='%s'
+    id='%s'
+    type='set'>
+  <pubsub xmlns='http://jabber.org/protocol/pubsub'>
+    <publish node='http://jabber.org/protocol/mood'>
+      <item>
+        <mood xmlns='http://jabber.org/protocol/mood'>
+          <%s/>
+          <text>%s</text>
+        </mood>
+      </item>
+    </publish>
+  </pubsub>
+</iq>""" % (config.SCREEN_NAME, self._gen_id('pub'), mood, text)
+        self.send(msg)
 
     def typing_notification(self, jid):
         """Send a typing notification to the given jid."""
