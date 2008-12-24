@@ -62,7 +62,6 @@ class Query(JidSet):
         recent_results.append(r)
 
     def _gotResult(self, entry):
-        self._save_result(True)
         eid = int(entry.id.split(':')[-1])
         self.last_id = max(self.last_id, eid)
         conn = protocol.current_conn
@@ -83,6 +82,7 @@ class Query(JidSet):
 
     def _save_track_id(self, old_id):
         def f(x):
+            self._save_result(True)
             if old_id != self.last_id:
                 threads.deferToThread(self._deferred_write, self.last_id)
         return f
