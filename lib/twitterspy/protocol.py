@@ -30,12 +30,10 @@ class MemcacheFactory(protocol.ReconnectingClientFactory):
         mc = memcache.MemCacheProtocol()
         return mc
 
-class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
+class TwitterspyMessageProtocol(MessageProtocol):
 
     def __init__(self):
-        super(TwitterspyProtocol, self).__init__()
-        self._tracking=-1
-        self._users=-1
+        super(TwitterspyMessageProtocol, self).__init__()
         self._pubid = 1
         self.__connectMemcached()
 
@@ -47,10 +45,6 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
         badchars=string.translate(allChars, allChars, goodChars)
         rv=string.maketrans(badchars, badChar * len(badchars))
         return rv
-
-    def connectionInitialized(self):
-        MessageProtocol.connectionInitialized(self)
-        PresenceClientProtocol.connectionInitialized(self)
 
     def connectionMade(self):
         log.msg("Connected!")
@@ -66,11 +60,7 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
         # Let the scheduler know we connected.
         scheduling.connected()
 
-        # send initial presence
-        self._tracking=-1
-        self._users=-1
         self._pubid = 1
-        self.update_presence()
 
         global current_conn
         current_conn = self
@@ -78,16 +68,6 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
     def __connectMemcached(self):
         reactor.connectTCP('localhost', memcache.DEFAULT_PORT,
             MemcacheFactory())
-
-    @models.wants_session
-    def update_presence(self, session):
-        tracking=session.query(models.Track).count()
-        users=session.query(models.User).count()
-        if tracking != self._tracking or users != self._users:
-            status="Tracking %s topics for %s users" % (tracking, users)
-            self.available(None, None, {None: status})
-            self._tracking = tracking
-            self._users = users
 
     def connectionLost(self, reason):
         log.msg("Disconnected!")
@@ -193,11 +173,29 @@ class TwitterspyProtocol(MessageProtocol, PresenceClientProtocol):
                             "please start your message with 'post', or see "
                             "'help autopost'" % a[0])
                 session.commit()
-            self.update_presence()
         else:
             log.msg("Non-chat/body message: %s" % msg.toXml())
 
-    # presence stuff
+class TwitterspyPresenceProtocol(PresenceClientProtocol):
+
+    _tracking=-1
+    _users=-1
+
+    def connectionMade(self):
+        self._tracking=-1
+        self._users=-1
+        self.update_presence()
+
+    @models.wants_session
+    def update_presence(self, session):
+        tracking=session.query(models.Track).count()
+        users=session.query(models.User).count()
+        if tracking != self._tracking or users != self._users:
+            status="Tracking %s topics for %s users" % (tracking, users)
+            self.available(None, None, {None: status})
+            self._tracking = tracking
+            self._users = users
+
     def availableReceived(self, entity, show=None, statuses=None, priority=0):
         log.msg("Available from %s (%s, %s, pri=%s)" % (
             entity.full(), show, statuses, priority))
@@ -225,8 +223,9 @@ Type "help" to get started.
         self.send_plain(entity.full(), welcome_message)
         msg = "New subscriber: %s ( %d )" % (entity.userhost(),
             session.query(models.User).count())
+        global current_conn
         for a in config.ADMINS:
-            self.send_plain(a, msg)
+            current_conn.send_plain(a, msg)
 
     def unsubscribedReceived(self, entity):
         log.msg("Unsubscribed received from %s" % (entity.userhost()))

@@ -21,8 +21,15 @@ application = service.Application("twitterspy")
 xmppclient = XMPPClient(jid.internJID(config.SCREEN_NAME),
     config.CONF.get('xmpp', 'pass'))
 xmppclient.logTraffic = False
-twitterspy=protocol.TwitterspyProtocol()
-twitterspy.setHandlerParent(xmppclient)
+
+# Stream handling protocols for twitterspy
+protocols = [protocol.TwitterspyPresenceProtocol,
+    protocol.TwitterspyMessageProtocol]
+
+for p in protocols:
+    handler=p()
+    handler.setHandlerParent(xmppclient)
+
 VersionHandler('twitterspy', config.VERSION).setHandlerParent(xmppclient)
 protocol.KeepAlive().setHandlerParent(xmppclient)
 xmppclient.setServiceParent(application)
