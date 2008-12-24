@@ -14,10 +14,16 @@ search_semaphore = defer.DeferredSemaphore(tokens=5)
 private_semaphore = defer.DeferredSemaphore(tokens=20)
 available_sem = defer.DeferredSemaphore(tokens=2)
 
-# Record the 1000 most recent search results (assuming good from the beginning)
-recent_results = deque([True] * 1000)
+MAX_RESULTS = 1000
+
+# Record the most recent search results
+recent_results = deque()
 
 def tally_results():
+    # Short-circuit no results
+    if not recent_results:
+        log.msg("Short-circuiting tally results since there aren't any.")
+        return
     good = reduce(lambda x, y: x + 1 if y else x, recent_results)
     lrr = len(recent_results)
     percentage = float(good) / float(lrr)
@@ -58,7 +64,8 @@ class Query(JidSet):
         reactor.callLater(then, self.start)
 
     def _save_result(self, r):
-        recent_results.popleft()
+        if len(recent_results) > MAX_RESULTS:
+            recent_results.popleft()
         recent_results.append(r)
 
     def _gotResult(self, entry):
