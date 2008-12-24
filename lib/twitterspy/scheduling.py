@@ -70,7 +70,7 @@ class Query(JidSet):
         reactor.callLater(then, self.start)
 
     def _save_result(self, r):
-        if len(recent_results) > MAX_RESULTS:
+        if len(recent_results) >= MAX_RESULTS:
             recent_results.popleft()
         recent_results.append(r)
 
