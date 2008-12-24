@@ -6,35 +6,15 @@
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
 	<title>dustin/twitterspy @ GitHub</title>
-	
-	<style type="text/css">
-		body {
-  		margin-top: 1.0em;
-  		background-color: #a44fc1;
-		  font-family: "helvetica"; 
-  		color: #000000;
-    }
-    #container {
-      margin: 0 auto;
-      width: 700px;
-    }
-		h1 { font-size: 3.8em; color: #5bb03e; margin-bottom: 3px; }
-		h1 .small { font-size: 0.4em; }
-		h1 a { text-decoration: none }
-		h2 { font-size: 1.5em; color: #5bb03e; }
-    h3 { text-align: center; color: #5bb03e; }
-    a { color: #5bb03e; }
-    .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
-    .download { float: right; }
-		pre { background: #000; color: #fff; padding: 15px;}
-    hr { border: 0; width: 80%; border-bottom: 1px solid #aaa}
-    .footer { text-align:center; padding-top:30px; font-style: italic; }
-	</style>
+	<link rel="stylesheet" href="style.css"/>
 	
 </head>
 
 <body>
-  <a href="http://github.com/dustin/twitterspy"><img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
+	<a href="http://github.com/dustin/twitterspy"><img style="position: absolute;
+		top: 0; right: 0; border: 0;"
+		src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png"
+		alt="Fork me on GitHub" /></a>
   
   <div id="container">
 
@@ -50,18 +30,49 @@
 
     <div class="description">
       TwitterSpy is a supplemental bot for twitter that does the stuff the twitter one used to do, and a few things it doesn't.
-
     </div>
 
+	<p>
+		IM <code>help</code> to
+		<a href="xmpp:twitterspy@jabber.org">twitterspy@jabber.org</a>
+		to see what you can do.
+	</p>
+
+	<h2>Complaints?</h2>
+	<p>
+		Please direct complaints to our <a
+		href="http://getsatisfaction.com/enjit/products/enjit_twitterspy">get
+		satisfaction</a> page.
+	</p>
+
     <h2>Dependencies</h2>
-<p>twisted names, web, and words
-SQLAlchemy</p>
+<ul>
+	<li>Twisted
+		<ul>
+			<li>names</li>
+			<li>web</li>
+			<li>words</li>
+		</ul>
+	</li>
+	<li>SQLAlchemy</li>
+</ul>
+
 <h2>Install</h2>
-<p>Install depdendencies, copy twitterspy.conf.sample to twitterspy.conf, edit the config, run ./etc/create_tables.py and start going.</p>
+<ol>
+	<li>Install depdendencies</li>
+	<li>copy twitterspy.conf.sample to twitterspy.conf</li>
+	<li>edit twitterspy.conf</li>
+	<li>./etc/create_tables.py</li>
+	<li>twisted -ny twitterspy.tac</li>
+</ol>
+
 <h2>License</h2>
-<p>MIT</p>
+<p><a href="http://www.opensource.org/licenses/mit-license.php">MIT</a></p>
 <h2>Authors</h2>
-<p>Dustin Sallings (dustin@spy.net)<br/>Klaus Alexander Seistrup (klaus@seistrup.dk)<br/>Pedro Melo (melo@simplicidade.org)<br/>Stefan Strigler (zeank@fiddl.strigler.de)</p>
+<p>Dustin Sallings (dustin@spy.net)
+<br/>Klaus Alexander Seistrup (klaus@seistrup.dk)
+<br/>Pedro Melo (melo@simplicidade.org)
+<br/>Stefan Strigler (zeank@fiddl.strigler.de)</p>
 <h2>Contact</h2>
 <p>Dustin Sallings (dustin@spy.net)</p>
 
