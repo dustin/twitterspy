@@ -18,6 +18,13 @@ MAX_RESULTS = 1000
 
 class Moodiness(object):
 
+    MOOD_CHOICES=[
+        (0.9, 'happy'),
+        (0.5, 'frustrated'),
+        (0.1, 'annoyed'),
+        (float('-inf'), 'angry')
+        ]
+
     def __init__(self):
         self.recent_results = deque()
         self.previous_good = (0, 0)
@@ -32,15 +39,7 @@ class Moodiness(object):
         percentage = float(good) / float(lrr)
         msg = ("Processed %d out of %d recent searches (previously %d/%d)."
             % (good, lrr, self.previous_good[0], self.previous_good[1]))
-        mood = ""
-        if percentage > .9:
-            mood = "happy"
-        elif percentage > .5:
-            mood = "frustrated"
-        elif percentage > .1:
-            mood = "annoyed"
-        else:
-            mood = "angry"
+        mood=[v for a,v in self.MOOD_CHOICES if percentage >= a][0]
 
         self.previous_good = (good, lrr)
 
