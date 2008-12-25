@@ -19,10 +19,10 @@ MAX_RESULTS = 1000
 class Moodiness(object):
 
     MOOD_CHOICES=[
-        (0.9, 'happy'),
-        (0.5, 'frustrated'),
-        (0.1, 'annoyed'),
-        (float('-inf'), 'angry')
+        (0.9, ('happy', 'humbled')),
+        (0.5, ('frustrated', 'annoyed', 'anxious', 'grumpy')),
+        (0.1, ('annoyed', 'dismayed', 'depressed', 'worried')),
+        (float('-inf'), ('angry', 'cranky', 'disappointed'))
         ]
 
     def __init__(self):
@@ -39,7 +39,8 @@ class Moodiness(object):
         percentage = float(good) / float(lrr)
         msg = ("Processed %d out of %d recent searches (previously %d/%d)."
             % (good, lrr, self.previous_good[0], self.previous_good[1]))
-        mood=[v for a,v in self.MOOD_CHOICES if percentage >= a][0]
+        choices=[v for a,v in self.MOOD_CHOICES if percentage >= a][0]
+        mood=random.choice(choices)
 
         self.previous_good = (good, lrr)
 
