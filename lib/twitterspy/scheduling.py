@@ -16,38 +16,45 @@ available_sem = defer.DeferredSemaphore(tokens=2)
 
 MAX_RESULTS = 1000
 
-# Record the most recent search results
-recent_results = deque()
-# Previous count of good searches (of attempted searches)
-previous_good = (0, 0)
+class Moodiness(object):
 
-def tally_results():
-    global previous_good, recent_results
-    # Short-circuit no results
-    if not recent_results:
-        log.msg("Short-circuiting tally results since there aren't any.")
-        return
-    good = reduce(lambda x, y: x + 1 if y else x, recent_results)
-    lrr = len(recent_results)
-    percentage = float(good) / float(lrr)
-    msg = ("Processed %d out of %d recent searches (previously %d/%d)."
-        % (good, lrr, previous_good[0], previous_good[1]))
-    mood = ""
-    if percentage > .9:
-        mood = "happy"
-    elif percentage > .5:
-        mood = "frustrated"
-    elif percentage > .1:
-        mood = "annoyed"
-    else:
-        mood = "angry"
+    def __init__(self):
+        self.recent_results = deque()
+        self.previous_good = (0, 0)
 
-    previous_good = (good, lrr)
+    def __call__(self):
+        # Short-circuit no results
+        if not self.recent_results:
+            log.msg("Short-circuiting tally results since there aren't any.")
+            return
+        good = reduce(lambda x, y: x + 1 if y else x, self.recent_results)
+        lrr = len(self.recent_results)
+        percentage = float(good) / float(lrr)
+        msg = ("Processed %d out of %d recent searches (previously %d/%d)."
+            % (good, lrr, self.previous_good[0], self.previous_good[1]))
+        mood = ""
+        if percentage > .9:
+            mood = "happy"
+        elif percentage > .5:
+            mood = "frustrated"
+        elif percentage > .1:
+            mood = "annoyed"
+        else:
+            mood = "angry"
 
-    log.msg(msg + " my mood is " + mood)
-    conn = protocol.current_conn
-    if conn:
-        conn.publish_mood(mood, msg)
+        self.previous_good = (good, lrr)
+
+        log.msg(msg + " my mood is " + mood)
+        conn = protocol.current_conn
+        if conn:
+            conn.publish_mood(mood, msg)
+
+    def add(self, result):
+        if len(self.recent_results) >= MAX_RESULTS:
+            self.recent_results.popleft()
+        self.recent_results.append(result)
+
+moodiness = Moodiness()
 
 class JidSet(set):
 
@@ -68,11 +75,6 @@ class Query(JidSet):
         log.msg("Starting %s in %ds" % (self.query, then))
         self.loop = None
         reactor.callLater(then, self.start)
-
-    def _save_result(self, r):
-        if len(recent_results) >= MAX_RESULTS:
-            recent_results.popleft()
-        recent_results.append(r)
 
     def _gotResult(self, entry):
         eid = int(entry.id.split(':')[-1])
@@ -95,7 +97,8 @@ class Query(JidSet):
 
     def _save_track_id(self, old_id):
         def f(x):
-            self._save_result(True)
+            global moodiness
+            moodiness.add(True)
             if old_id != self.last_id:
                 threads.deferToThread(self._deferred_write, self.last_id)
         return f
@@ -108,7 +111,8 @@ class Query(JidSet):
 
     def _reportError(self, e):
         log.msg("Error in search %s: %s" % (self.query, str(e)))
-        self._save_result(False)
+        global moodiness
+        moodiness.add(True)
 
     def _do_search(self):
         log.msg("Searching %s" % self.query)

@@ -36,4 +36,4 @@ VersionHandler('twitterspy', config.VERSION).setHandlerParent(xmppclient)
 KeepAlive().setHandlerParent(xmppclient)
 xmppclient.setServiceParent(application)
 
-task.LoopingCall(scheduling.tally_results).start(60)
+task.LoopingCall(scheduling.moodiness).start(60)
