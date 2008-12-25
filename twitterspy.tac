@@ -9,10 +9,12 @@ from twisted.words.protocols.jabber import jid
 from wokkel.client import XMPPClient
 from wokkel.generic import VersionHandler
 from wokkel.keepalive import KeepAlive
+from wokkel.disco import DiscoHandler
 import twitter
 
 from twitterspy import config
 from twitterspy import protocol
+from twitterspy import xmpp_ping
 from twitterspy import scheduling
 
 # Set the user agent for twitter
@@ -32,7 +34,9 @@ for p in protocols:
     handler=p()
     handler.setHandlerParent(xmppclient)
 
+DiscoHandler().setHandlerParent(xmppclient)
 VersionHandler('twitterspy', config.VERSION).setHandlerParent(xmppclient)
+xmpp_ping.PingHandler().setHandlerParent(xmppclient)
 KeepAlive().setHandlerParent(xmppclient)
 xmppclient.setServiceParent(application)
 
