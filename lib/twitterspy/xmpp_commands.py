@@ -320,6 +320,7 @@ class WatchFriendsCommand(BaseCommand):
         def f(entry, session):
             user = models.User.by_jid(jid, session)
             user.friend_timeline_id = entry.id
+            session.commit()
             prot.send_plain(jid, ":) Starting to watch friends.")
         return f
 
