@@ -161,7 +161,11 @@ class TwitterspyMessageProtocol(MessageProtocol):
                 if cmd:
                     cmd(user, self, args, session)
                 else:
-                    d = self.commands['post'] if user.auto_post else None
+                    d = None
+                    if user.auto_post:
+                        d=self.commands['post']
+                    elif a[0][0] == '@':
+                        d=self.commands['post']
                     if d:
                         d(user, self, unicode(msg.body), session)
                     else:
