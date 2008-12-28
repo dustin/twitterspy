@@ -48,7 +48,7 @@ You can download this project in either [zip][1] or [tar][2] formats.
 
 You can also clone the project with [git](http://git-scm.com/) by running:
 
-    $ git clone git://github.com/dustin/twitterspy
+    $ git clone git://github.com/dustin/twitterspy.git
 
 [1]:http://github.com/dustin/twitterspy/zipball/master
 [2]:http://github.com/dustin/twitterspy/tarball/master
