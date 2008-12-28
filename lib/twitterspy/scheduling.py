@@ -93,7 +93,10 @@ class Query(JidSet):
     def _deferred_write(self, theId, session):
         t=session.query(models.Track).filter_by(query=self.query).one()
         t.max_seen = theId
-        session.commit()
+        try:
+            session.commit()
+        except:
+            log.err()
 
     def _save_track_id(self, old_id):
         def f(x):
@@ -201,7 +204,10 @@ class UserStuff(JidSet):
     def _deferred_write(self, jid, mprop, new_val, session):
         u = models.User.by_jid(jid, session)
         setattr(u, mprop, new_val)
-        session.commit()
+        try:
+            session.commit()
+        except:
+            log.err()
 
     def _maybe_update_prop(self, prop, mprop):
         old_val = getattr(self, prop)

@@ -171,9 +171,15 @@ class TWLoginCommand(BaseCommand):
         user = models.User.by_jid(jid, session)
         user.username = username
         user.password = base64.encodestring(password)
-        session.commit()
-        prot.send_plain(user.jid, "Added credentials for %s" % user.username)
-        scheduling.users.set_creds(jid, username, password)
+        try:
+            session.commit()
+            prot.send_plain(user.jid, "Added credentials for %s"
+                % user.username)
+            scheduling.users.set_creds(jid, username, password)
+        except:
+            log.err()
+            prot.send_plain(user.jid, "Error setting credentials for %s. "
+                "Please try again." % user.username)
 
 class TWLogoutCommand(BaseCommand):
 
@@ -320,8 +326,13 @@ class WatchFriendsCommand(BaseCommand):
         def f(entry, session):
             user = models.User.by_jid(jid, session)
             user.friend_timeline_id = entry.id
-            session.commit()
-            prot.send_plain(jid, ":) Starting to watch friends.")
+            try:
+                session.commit()
+                prot.send_plain(jid, ":) Starting to watch friends.")
+            except:
+                log.err()
+                prot.send_plain(jid,
+                    ":( Error watching friends, please try again.")
         return f
 
     @arg_required(must_be_on_or_off)

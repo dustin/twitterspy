@@ -156,7 +156,12 @@ class TwitterspyMessageProtocol(MessageProtocol):
             a=unicode(msg.body).split(' ', 1)
             args = a[1] if len(a) > 1 else None
             with models.Session() as session:
-                user = self.get_user(msg, session)
+                try:
+                    user = self.get_user(msg, session)
+                except:
+                    log.err()
+                    self.send_plain(msg['from'],
+                        "Stupid error processing message, please try again.")
                 cmd = self.commands.get(a[0].lower())
                 if cmd:
                     cmd(user, self, args, session)
@@ -175,7 +180,10 @@ class TwitterspyMessageProtocol(MessageProtocol):
                             "If you intended to post your message, "
                             "please start your message with 'post', or see "
                             "'help autopost'" % a[0])
-                session.commit()
+                try:
+                    session.commit()
+                except:
+                    log.err()
         else:
             log.msg("Non-chat/body message: %s" % msg.toXml())
 
@@ -191,13 +199,16 @@ class TwitterspyPresenceProtocol(PresenceClientProtocol):
 
     @models.wants_session
     def update_presence(self, session):
-        tracking=session.query(models.Track).count()
-        users=session.query(models.User).count()
-        if tracking != self._tracking or users != self._users:
-            status="Tracking %s topics for %s users" % (tracking, users)
-            self.available(None, None, {None: status})
-            self._tracking = tracking
-            self._users = users
+        try:
+            tracking=session.query(models.Track).count()
+            users=session.query(models.User).count()
+            if tracking != self._tracking or users != self._users:
+                status="Tracking %s topics for %s users" % (tracking, users)
+                self.available(None, None, {None: status})
+                self._tracking = tracking
+                self._users = users
+        except:
+            log.err()
 
     def availableReceived(self, entity, show=None, statuses=None, priority=0):
         log.msg("Available from %s (%s, %s, pri=%s)" % (
@@ -224,15 +235,22 @@ your friends, make new ones, and more.
 Type "help" to get started.
 """
         self.send_plain(entity.full(), welcome_message)
-        msg = "New subscriber: %s ( %d )" % (entity.userhost(),
-            session.query(models.User).count())
+        cnt = -1
+        try:
+            cnt = session.query(models.User).count()
+        except:
+            log.err()
+        msg = "New subscriber: %s ( %d )" % (entity.userhost(), cnt)
         global current_conn
         for a in config.ADMINS:
             current_conn.send_plain(a, msg)
 
     def unsubscribedReceived(self, entity):
         log.msg("Unsubscribed received from %s" % (entity.userhost()))
-        models.User.update_status(entity.userhost(), 'unsubscribed')
+        try:
+            models.User.update_status(entity.userhost(), 'unsubscribed')
+        except:
+            log.err()
         self.unsubscribe(entity)
         self.unsubscribed(entity)
 
@@ -244,7 +262,10 @@ Type "help" to get started.
 
     def unsubscribeReceived(self, entity):
         log.msg("Unsubscribe received from %s" % (entity.userhost()))
-        models.User.update_status(entity.userhost(), 'unsubscribed')
+        try:
+            models.User.update_status(entity.userhost(), 'unsubscribed')
+        except:
+            log.err()
         self.unsubscribe(entity)
         self.unsubscribed(entity)
         self.update_presence()
