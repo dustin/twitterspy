@@ -333,6 +333,11 @@ def unavailable_user(entity):
     queries.remove(entity.full())
     users.remove(entity.userhost(), entity.full())
 
+def resources(jid):
+    """Find all watched resources for the given JID."""
+    jids=users.users.get(jid, [])
+    return [JID(j).resource for j in jids]
+
 def _reset_all():
     global queries
     global users

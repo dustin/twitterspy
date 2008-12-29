@@ -1,3 +1,4 @@
+# coding=utf-8
 import re
 import sys
 import time
@@ -80,6 +81,14 @@ class StatusCommand(BaseCommand):
         rv.append("Jid:  %s" % user.jid)
         rv.append("Twitterspy status:  %s"
             % {True: 'Active', False: 'Inactive'}[user.active])
+        resources = scheduling.resources(user.jid)
+        if resources:
+            rv.append("I see you logged in with the following resources:")
+            for r in resources:
+                rv.append(u"  • %s" % r)
+        else:
+            rv.append("I don't see you logged in with any resource I'd send "
+                "a message to.  Perhaps you're dnd, xa, or negative priority.")
         rv.append("You are currently tracking %d topics." % len(user.tracks))
         if user.has_credentials:
             rv.append("You're logged in to twitter as %s" % (user.username))
