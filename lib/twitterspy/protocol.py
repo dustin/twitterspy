@@ -162,6 +162,7 @@ class TwitterspyMessageProtocol(MessageProtocol):
                     log.err()
                     self.send_plain(msg['from'],
                         "Stupid error processing message, please try again.")
+                    return
                 cmd = self.commands.get(a[0].lower())
                 if cmd:
                     cmd(user, self, args, session)
