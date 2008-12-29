@@ -235,14 +235,14 @@ your friends, make new ones, and more.
 
 Type "help" to get started.
 """
-        self.send_plain(entity.full(), welcome_message)
+        global current_conn
+        current_conn.send_plain(entity.full(), welcome_message)
         cnt = -1
         try:
             cnt = session.query(models.User).count()
         except:
             log.err()
         msg = "New subscriber: %s ( %d )" % (entity.userhost(), cnt)
-        global current_conn
         for a in config.ADMINS:
             current_conn.send_plain(a, msg)
 
