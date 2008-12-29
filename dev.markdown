@@ -33,10 +33,10 @@ title: dustin/twitterspy @ GitHub -- developer page
 
 <ul>
 	<li>Dustin Sallings (dustin@spy.net)</li>
+	<li class="minor">tsing (tsing@jianqing.org)</li>
 	<li class="minor">Klaus Alexander Seistrup (klaus@seistrup.dk)</li>
 	<li class="minor">Pedro Melo (melo@simplicidade.org)</li>
 	<li class="minor">Stefan Strigler (zeank@fiddl.strigler.de)</li>
-	<li class="minor">tsing (tsing@jianqing.org)</li>
 </ul>
 
 ## Contact
