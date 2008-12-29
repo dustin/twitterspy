@@ -120,7 +120,7 @@ class TwitterspyMessageProtocol(MessageProtocol):
         msg["from"] = config.SCREEN_NAME
         msg["type"] = 'chat'
         html = u"<html xmlns='http://jabber.org/protocol/xhtml-im'><body xmlns='http://www.w3.org/1999/xhtml'>"+unicode(html)+u"</body></html>"
-        msg.addElement("body", content=unicode(body))
+        msg.addRawXml(u"<body>" + unicode(body) + u"</body>")
         msg.addRawXml(unicode(html))
 
         self.send(msg)
