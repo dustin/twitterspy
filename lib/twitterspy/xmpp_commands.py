@@ -390,6 +390,26 @@ Recently:<br/>
             str(args)).addErrback(self._fail, prot, user.jid, args
             ).addCallback(self._gotUser, prot, user.jid)
 
+class Top10Command(BaseCommand):
+
+    def __init__(self):
+        super(Top10Command, self).__init__('top10',
+            'Get the top10 most common tracks.')
+
+    def __call__(self, user, prot, args, session):
+        query="""
+select t.query, count(*) as watchers
+  from tracks t join user_tracks ut on (t.id = ut.track_id)
+  group by t.query
+  order by watchers desc, query
+  limit 10
+"""
+        rv=["Top 10 most tracked topics:"]
+        rv.append("")
+        for row in models._engine.execute(query).fetchall():
+            rv.append("%s (%d watchers)" % (row[0], row[1]))
+        prot.send_plain(user.jid, "\n".join(rv))
+
 for __t in (t for t in globals().values() if isinstance(type, type(t))):
     if BaseCommand in __t.__mro__:
         try:
