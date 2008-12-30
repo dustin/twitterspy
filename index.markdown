@@ -36,4 +36,4 @@ Check out the [developer](dev.html) page.
 
 [1]:http://www.techlifeweb.com/2008/07/07/how-to-set-up-twitterspy-in-google-talk/
 [2]:http://dustin.github.com/2008/12/24/moody-bots.html
-[3]:"http://getsatisfaction.com/enjit/products/enjit_twittersp
+[3]:http://getsatisfaction.com/enjit/products/enjit_twitterspy
