@@ -152,7 +152,8 @@ class SearchCommand(BaseCommand):
         twitter.Twitter().search(args, gotResult, {'rpp': '3'}).addCallback(
             lambda x: prot.send_plain(jid, "Results\n\n"
                 + "\n\n".join(rv))).addErrback(
-            lambda x: prot.send_plain(jid, "Problem performing search"))
+            lambda x: prot.send_plain(jid, "Problem performing search")
+            ).addErrback(log.err)
 
 class TWLoginCommand(BaseCommand):
 
