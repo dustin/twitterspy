@@ -153,7 +153,7 @@ class TwitterspyMessageProtocol(MessageProtocol):
     def onMessage(self, msg):
         if msg["type"] == 'chat' and hasattr(msg, "body") and msg.body:
             self.typing_notification(msg['from'])
-            a=unicode(msg.body).split(' ', 1)
+            a=unicode(msg.body).strip().split(None, 1)
             args = a[1] if len(a) > 1 else None
             with models.Session() as session:
                 try:
@@ -173,7 +173,7 @@ class TwitterspyMessageProtocol(MessageProtocol):
                     elif a[0][0] == '@':
                         d=self.commands['post']
                     if d:
-                        d(user, self, unicode(msg.body), session)
+                        d(user, self, unicode(msg.body).strip(), session)
                     else:
                         self.send_plain(msg['from'],
                             "No such command: %s\n"
