@@ -1,3 +1,4 @@
+import bisect
 import random
 from collections import deque
 
@@ -86,12 +87,12 @@ class Query(JidSet):
                                            ).replace("&gt;", ">"
                                            ).replace('&amp;', '&')
             html="<a href='%s'>%s</a>: %s" % (entry.author.uri, u, hcontent)
-            results.append((eid, plain, html))
+            bisect.insort(results, (eid, plain, html))
         return f
 
     def _sendMessages(self, something, results):
         conn = protocol.current_conn
-        for eid, plain, html in sorted(results):
+        for eid, plain, html in results:
             for jid in self.bare_jids():
                 key = str(eid) + "@" + jid
                 conn.send_html_deduped(jid, plain, html, key)
@@ -197,11 +198,11 @@ class UserStuff(JidSet):
         plain="[%s] %s: %s" % (type, u, entry.text)
         aurl = "http://twitter.com/" + u
         html="[%s] <a href='%s'>%s</a>: %s" % (type, aurl, u, entry.text)
-        results.append((entry.id, plain, html))
+        bisect.insort(results, (entry.id, plain, html))
 
     def _deliver_messages(self, whatever, messages):
         conn = protocol.current_conn
-        for eid, plain, html in sorted(messages):
+        for eid, plain, html in messages:
             for jid in self.bare_jids():
                 key = str(eid) + "@" + jid
                 conn.send_html_deduped(jid, plain, html, key)
