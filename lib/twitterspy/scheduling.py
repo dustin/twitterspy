@@ -76,18 +76,25 @@ class Query(JidSet):
         self.loop = None
         reactor.callLater(then, self.start)
 
-    def _gotResult(self, entry):
-        eid = int(entry.id.split(':')[-1])
-        self.last_id = max(self.last_id, eid)
+    def _gotResult(self, results):
+        def f(entry):
+            eid = int(entry.id.split(':')[-1])
+            self.last_id = max(self.last_id, eid)
+            u = entry.author.name.split(' ')[0]
+            plain=u + ": " + entry.title
+            hcontent=entry.content.replace("&lt;", "<"
+                                           ).replace("&gt;", ">"
+                                           ).replace('&amp;', '&')
+            html="<a href='%s'>%s</a>: %s" % (entry.author.uri, u, hcontent)
+            results.append((eid, plain, html))
+        return f
+
+    def _sendMessages(self, something, results):
         conn = protocol.current_conn
-        u = entry.author.name.split(' ')[0]
-        plain=u + ": " + entry.title
-        hcontent=entry.content.replace("&lt;", "<").replace("&gt;", ">"
-            ).replace('&amp;', '&')
-        html="<a href='%s'>%s</a>: %s" % (entry.author.uri, u, hcontent)
-        for jid in self.bare_jids():
-            key = str(eid) + "@" + jid
-            conn.send_html_deduped(jid, plain, html, key)
+        for eid, plain, html in sorted(results):
+            for jid in self.bare_jids():
+                key = str(eid) + "@" + jid
+                conn.send_html_deduped(jid, plain, html, key)
 
     @models.wants_session
     def _deferred_write(self, theId, session):
@@ -122,9 +129,12 @@ class Query(JidSet):
         params = {}
         if self.last_id > 0:
             params['since_id'] = str(self.last_id)
-        return twitter.Twitter().search(self.query, self._gotResult, params
-            ).addCallback(self._save_track_id(self.last_id)).addErrback(
-            self._reportError)
+        results=[]
+        return twitter.Twitter().search(self.query, self._gotResult(results),
+            params
+            ).addCallback(self._sendMessages, results
+            ).addCallback(self._save_track_id(self.last_id)
+            ).addErrback(self._reportError)
 
     def start(self):
         self.loop = task.LoopingCall(self)
