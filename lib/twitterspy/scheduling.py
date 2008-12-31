@@ -189,7 +189,7 @@ class UserStuff(JidSet):
         self.password = None
         self.loop = None
 
-    def _deliver_message(self, type, entry):
+    def _format_message(self, type, entry, results):
         s = getattr(entry, 'sender', None)
         if not s:
             s=entry.user
@@ -197,18 +197,26 @@ class UserStuff(JidSet):
         plain="[%s] %s: %s" % (type, u, entry.text)
         aurl = "http://twitter.com/" + u
         html="[%s] <a href='%s'>%s</a>: %s" % (type, aurl, u, entry.text)
+        results.append((entry.id, plain, html))
+
+    def _deliver_messages(self, whatever, messages):
         conn = protocol.current_conn
-        for jid in self.bare_jids():
-            key = str(entry.id) + "@" + jid
-            conn.send_html_deduped(jid, plain, html, key)
+        for eid, plain, html in sorted(messages):
+            for jid in self.bare_jids():
+                key = str(eid) + "@" + jid
+                conn.send_html_deduped(jid, plain, html, key)
 
-    def _gotDMResult(self, entry):
-        self.last_dm_id = max(self.last_dm_id, int(entry.id))
-        self._deliver_message('direct', entry)
+    def _gotDMResult(self, results):
+        def f(entry):
+            self.last_dm_id = max(self.last_dm_id, int(entry.id))
+            self._format_message('direct', entry, results)
+        return f
 
-    def _gotFriendsResult(self, entry):
-        self.last_friend_id = max(self.last_friend_id, int(entry.id))
-        self._deliver_message('friend', entry)
+    def _gotFriendsResult(self, results):
+        def f(entry):
+            self.last_friend_id = max(self.last_friend_id, int(entry.id))
+            self._format_message('friend', entry, results)
+        return f
 
     @models.wants_session
     def _deferred_write(self, jid, mprop, new_val, session):
@@ -242,15 +250,19 @@ class UserStuff(JidSet):
         if self.last_dm_id > 0:
             params['since_id'] = str(self.last_dm_id)
         tw = twitter.Twitter(self.username, self.password)
-        tw.direct_messages(self._gotDMResult, params).addCallback(
+        dm_list=[]
+        tw.direct_messages(self._gotDMResult(dm_list), params).addCallback(
             self._maybe_update_prop('last_dm_id', 'direct_message_id')
+            ).addCallback(self._deliver_messages, dm_list
             ).addErrback(self._reportError)
 
         if self.last_friend_id is not None:
-            tw.friends(self._gotFriendsResult,
+            friend_list=[]
+            tw.friends(self._gotFriendsResult(friend_list),
                 {'since_id': str(self.last_friend_id)}).addCallback(
                     self._maybe_update_prop(
                         'last_friend_id', 'friend_timeline_id')
+                ).addCallback(self._deliver_messages, friend_list
                 ).addErrback(self._reportError)
 
     def start(self):
