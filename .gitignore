@@ -5,3 +5,4 @@ twitterspy.conf
 *.pyc
 log
 twistd.pid
+*~
