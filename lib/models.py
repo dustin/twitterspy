@@ -117,6 +117,7 @@ _users_table = Table('users', _metadata,
     Column('friend_timeline_id', Integer),
     Column('direct_message_id', Integer),
     Column('next_scan', DateTime),
+    Column('created_at', DateTime, default=datetime.datetime.now)
 )
 
 _tracks_table = Table('tracks', _metadata,
