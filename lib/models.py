@@ -129,7 +129,7 @@ _usertrack_table = Table('user_tracks', _metadata,
     Column('id', Integer, primary_key=True, index=True),
     Column('user_id', Integer, ForeignKey('users.id')),
     Column('track_id', Integer, ForeignKey('tracks.id')),
-    Column('created_at', DateTime),
+    Column('created_at', DateTime, default=datetime.datetime.now),
 )
 
 mapper(User, _users_table, properties={
