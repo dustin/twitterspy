@@ -10,6 +10,7 @@ import sre_constants
 
 from twisted.python import log
 from twisted.words.xish import domish
+from twisted.words.protocols.jabber.jid import JID
 from twisted.web import client
 from twisted.internet import reactor
 from sqlalchemy.orm import exc
@@ -18,6 +19,7 @@ import models
 
 import twitter
 import scheduling
+import protocol
 
 all_commands={}
 
@@ -419,6 +421,18 @@ select t.query, count(*) as watchers
         for row in models._engine.execute(query).fetchall():
             rv.append("%s (%d watchers)" % (row[0], row[1]))
         prot.send_plain(user.jid, "\n".join(rv))
+
+class AdminSubscribeCommand(BaseCommand):
+
+    def __init__(self):
+        super(AdminSubscribeCommand, self).__init__('adm_subscribe',
+            'Subscribe a user.')
+
+    @admin_required
+    @arg_required()
+    def __call__(self, user, prot, args, session):
+        prot.send_plain(user.jid, "Subscribing " + args)
+        protocol.presence_conn.subscribe(JID(args))
 
 for __t in (t for t in globals().values() if isinstance(type, type(t))):
     if BaseCommand in __t.__mro__:
