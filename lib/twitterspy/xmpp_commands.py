@@ -448,8 +448,11 @@ class AdminUserStatusCommand(BaseStatusCommand):
     @admin_required
     @arg_required()
     def __call__(self, user, prot, args, session):
-        u=models.User.by_jid(args, session)
-        prot.send_plain(user.jid, self.get_user_status(u))
+        try:
+            u=models.User.by_jid(args, session)
+            prot.send_plain(user.jid, self.get_user_status(u))
+        except Exception, e:
+            prot.send_plain(user.jid, "Failed to load user: " + str(e))
 
 for __t in (t for t in globals().values() if isinstance(type, type(t))):
     if BaseCommand in __t.__mro__:
