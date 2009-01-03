@@ -81,12 +81,9 @@ class BaseCommand(object):
         except:
             return False
 
-class StatusCommand(BaseCommand):
+class BaseStatusCommand(BaseCommand):
 
-    def __init__(self):
-        super(StatusCommand, self).__init__('status', 'Check your status.')
-
-    def __call__(self, user, prot, args, session):
+    def get_user_status(self, user):
         rv=[]
         rv.append("Jid:  %s" % user.jid)
         rv.append("Twitterspy status:  %s"
@@ -104,7 +101,15 @@ class StatusCommand(BaseCommand):
             rv.append("You're logged in to twitter as %s" % (user.username))
         if user.friend_timeline_id is not None:
             rv.append("Friend tracking is enabled.")
-        prot.send_plain(user.jid, "\n".join(rv))
+        return "\n".join(rv)
+
+class StatusCommand(BaseStatusCommand):
+
+    def __init__(self):
+        super(StatusCommand, self).__init__('status', 'Check your status.')
+
+    def __call__(self, user, prot, args, session):
+        prot.send_plain(user.jid, self.get_user_status(user))
 
 class HelpCommand(BaseCommand):
 
@@ -433,6 +438,18 @@ class AdminSubscribeCommand(BaseCommand):
     def __call__(self, user, prot, args, session):
         prot.send_plain(user.jid, "Subscribing " + args)
         protocol.presence_conn.subscribe(JID(args))
+
+class AdminUserStatusCommand(BaseStatusCommand):
+
+    def __init__(self):
+        super(AdminUserStatusCommand, self).__init__('adm_status',
+            "Check a user's status.")
+
+    @admin_required
+    @arg_required()
+    def __call__(self, user, prot, args, session):
+        u=models.User.by_jid(args, session)
+        prot.send_plain(user.jid, self.get_user_status(u))
 
 for __t in (t for t in globals().values() if isinstance(type, type(t))):
     if BaseCommand in __t.__mro__:
