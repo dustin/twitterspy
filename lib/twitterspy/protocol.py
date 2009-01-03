@@ -18,6 +18,7 @@ import scheduling
 import string
 
 current_conn = None
+presence_conn = None
 mc = None
 
 class MemcacheFactory(protocol.ReconnectingClientFactory):
@@ -197,6 +198,9 @@ class TwitterspyPresenceProtocol(PresenceClientProtocol):
         self._tracking=-1
         self._users=-1
         self.update_presence()
+
+        global presence_conn
+        presence_conn = self
 
     @models.wants_session
     def update_presence(self, session):
