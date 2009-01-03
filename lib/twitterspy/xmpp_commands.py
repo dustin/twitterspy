@@ -41,6 +41,14 @@ def login_required(orig):
                 % self.name)
     return every
 
+def admin_required(orig):
+    def every(self, user, prot, args, session):
+        if user.is_admin:
+            orig(self, user, prot, args, session)
+        else:
+            prot.send_plain(user.jid, "You're not an admin.")
+    return every
+
 class BaseCommand(object):
     """Base class for command processors."""
 
@@ -115,7 +123,8 @@ class HelpCommand(BaseCommand):
                 rv.append("Unknown command %s." % args)
         else:
             for k in sorted(all_commands.keys()):
-                rv.append('%s\t%s' % (k, all_commands[k].help))
+                if (not k.startswith('adm_')) or user.is_admin:
+                    rv.append('%s\t%s' % (k, all_commands[k].help))
         rv.append("\nFor more help, see http://dustin.github.com/twitterspy/")
         prot.send_plain(user.jid, "\n".join(rv))
 

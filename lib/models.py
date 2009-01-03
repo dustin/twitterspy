@@ -98,6 +98,10 @@ class User(object):
     def decoded_password(self):
         return base64.decodestring(self.password) if self.password else None
 
+    @property
+    def is_admin(self):
+        return self.jid in config.ADMINS
+
 class Track(object):
     pass
 
