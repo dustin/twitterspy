@@ -6,6 +6,7 @@ from twisted.python import log
 from twisted.internet import protocol, reactor
 from twisted.words.xish import domish
 from twisted.words.protocols.jabber.jid import JID
+from twisted.words.protocols.jabber.xmlstream import IQ
 from twisted.protocols import memcache
 
 from wokkel.xmppim import MessageProtocol, PresenceClientProtocol
@@ -78,6 +79,23 @@ class TwitterspyMessageProtocol(MessageProtocol):
     def _gen_id(self, prefix):
         self._pubid += 1
         return prefix + str(self._pubid)
+
+    def ping(self, fromjid, tojid):
+        iq = IQ(self.xmlstream, 'get')
+        iq['from'] = config.SCREEN_NAME
+        iq['to'] = tojid
+        iq.addElement(("urn:xmpp:ping", 'ping'))
+        d = iq.send()
+        print "Sending ping", iq.toXml()
+        def _gotPing(x):
+            print "got ping", x
+            self.send_plain(fromjid, "Pinged")
+        def _gotError(x):
+            print "Got an error", x
+            self.send_plain(fromjid, "got an error: %s" % x)
+        d.addCallback(_gotPing)
+        d.addErrback(_gotError)
+        return d
 
     def publish_mood(self, mood, text):
         msg="""<iq from='%s'

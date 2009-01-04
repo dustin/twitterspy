@@ -454,6 +454,17 @@ class AdminUserStatusCommand(BaseStatusCommand):
         except Exception, e:
             prot.send_plain(user.jid, "Failed to load user: " + str(e))
 
+class AdminPingCommand(BaseCommand):
+
+    def __init__(self):
+        super(AdminPingCommand, self).__init__('adm_ping',
+            'Ping a JID')
+
+    @admin_required
+    @arg_required()
+    def __call__(self, user, prot, args, session):
+        protocol.current_conn.ping(user.jid, args)
+
 for __t in (t for t in globals().values() if isinstance(type, type(t))):
     if BaseCommand in __t.__mro__:
         try:
