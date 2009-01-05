@@ -23,7 +23,7 @@ title: dustin/twitterspy @ GitHub -- developer page
 3. copy twitterspy.conf.sample to twitterspy.conf
 4. edit twitterspy.conf
 5. ./etc/create\_tables.py
-6. twisted -ny twitterspy.tac
+6. twistd -ny twitterspy.tac
 
 ## License
 
