@@ -13,9 +13,9 @@ title: dustin/twitterspy @ GitHub -- developer page
 </div>
 
 ## Dependencies
-* Twisted (names, web, words)
-* SQLAlchemy
-* Memcached
+* [Twisted][twisted] (names, web, words)
+* [SQLAlchemy][sqlalchemy]
+* [Memcached][memcached]
 
 ## Install
 
@@ -60,3 +60,6 @@ You can also clone the project with [git](http://git-scm.com/) by running:
 
 [1]:http://github.com/dustin/twitterspy/zipball/master
 [2]:http://github.com/dustin/twitterspy/tarball/master
+[twisted]:http://twistedmatrix.com/
+[sqlalchemy]:http://www.sqlalchemy.org/
+[memcached]:http://www.danga.com/memcached/
