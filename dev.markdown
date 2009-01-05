@@ -15,6 +15,7 @@ title: dustin/twitterspy @ GitHub -- developer page
 ## Dependencies
 * Twisted (names, web, words)
 * SQLAlchemy
+* Memcached
 
 ## Install
 
@@ -24,6 +25,12 @@ title: dustin/twitterspy @ GitHub -- developer page
 4. edit twitterspy.conf
 5. ./etc/create\_tables.py
 6. twistd -ny twitterspy.tac
+
+Do note that this service expects memcached to be running on localhost
+on whatever machine is running the bot.  memcached is used for
+optimistic message deduplication, but is required for operation.  The
+errors you get when memcached is not running are currently a bit
+weird (something about 'NoneType' object has no attribute 'add').
 
 ## License
 
