@@ -11,7 +11,7 @@ title: dustin/twitterspy @ GitHub -- developer page
   <img alt="tar" width="90"
 	src="http://github.com/images/modules/download/tar.png"/></a>
 </div>
-      
+
 ## Dependencies
 * Twisted (names, web, words)
 * SQLAlchemy
