@@ -2,6 +2,8 @@
 
 from __future__ import with_statement
 
+import time
+
 from twisted.python import log
 from twisted.internet import protocol, reactor
 from twisted.words.xish import domish
@@ -86,13 +88,16 @@ class TwitterspyMessageProtocol(MessageProtocol):
         iq['to'] = tojid
         iq.addElement(("urn:xmpp:ping", 'ping'))
         d = iq.send()
+        start_time = time.time()
         log.msg("Sending ping %s" % iq.toXml())
         def _gotPing(x):
+            duration = time.time() - start_time
             log.msg("pong %s" % tojid)
-            self.send_plain(fromjid, "Pong (%s)" % tojid)
+            self.send_plain(fromjid, "Pong (%s) - %fs" % (tojid, duration))
         def _gotError(x):
+            duration = time.time() - start_time
             log.msg("Got an error pinging %s: %s" % (tojid, x))
-            self.send_plain(fromjid, "Error pinging %s: %s" % (tojid, x))
+            self.send_plain(fromjid, "Error pinging %s (%fs): %s" % (tojid, duration, x))
         d.addCallback(_gotPing)
         d.addErrback(_gotError)
         return d
