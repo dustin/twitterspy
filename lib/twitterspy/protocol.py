@@ -97,22 +97,23 @@ class TwitterspyMessageProtocol(MessageProtocol):
         d.addErrback(_gotError)
         return d
 
-    def publish_mood(self, mood, text):
-        msg="""<iq from='%s'
-    id='%s'
-    type='set'>
-  <pubsub xmlns='http://jabber.org/protocol/pubsub'>
-    <publish node='http://jabber.org/protocol/mood'>
-      <item>
-        <mood xmlns='http://jabber.org/protocol/mood'>
-          <%s/>
-          <text>%s</text>
-        </mood>
-      </item>
-    </publish>
-  </pubsub>
-</iq>""" % (config.SCREEN_NAME, self._gen_id('pub'), mood, text)
-        self.send(msg)
+    def publish_mood(self, mood_str, text):
+        iq = IQ(self.xmlstream, 'set')
+        iq['from'] = config.SCREEN_NAME
+        pubsub = iq.addElement(('http://jabber.org/protocol/pubsub', 'pubsub'))
+        moodpub = pubsub.addElement('publish')
+        moodpub['node'] = 'http://jabber.org/protocol/mood'
+        item = moodpub.addElement('item')
+        mood = item.addElement(('http://jabber.org/protocol/mood', 'mood'))
+        mood.addElement(mood_str)
+        mood.addElement('text').addContent(text)
+        def _doLog(x):
+            log.msg("Delivered mood: %s (%s)" % (mood_str, text))
+        d = iq.send()
+        d.addErrback(log.err)
+        d.addCallback(_doLog)
+        log.msg("Delivering mood: %s" % iq.toXml())
+        self.send(iq)
 
     def typing_notification(self, jid):
         """Send a typing notification to the given jid."""
