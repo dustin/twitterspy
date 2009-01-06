@@ -86,13 +86,13 @@ class TwitterspyMessageProtocol(MessageProtocol):
         iq['to'] = tojid
         iq.addElement(("urn:xmpp:ping", 'ping'))
         d = iq.send()
-        print "Sending ping", iq.toXml()
+        log.msg("Sending ping %s" % iq.toXml())
         def _gotPing(x):
-            print "got ping", x
-            self.send_plain(fromjid, "Pinged")
+            log.msg("pong %s" % tojid)
+            self.send_plain(fromjid, "Pong (%s)" % tojid)
         def _gotError(x):
-            print "Got an error", x
-            self.send_plain(fromjid, "got an error: %s" % x)
+            log.msg("Got an error pinging %s: %s" % (tojid, x))
+            self.send_plain(fromjid, "Error pinging %s: %s" % (tojid, x))
         d.addCallback(_gotPing)
         d.addErrback(_gotError)
         return d
