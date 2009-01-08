@@ -13,7 +13,6 @@ from twisted.protocols import memcache
 
 from wokkel.xmppim import MessageProtocol, PresenceClientProtocol
 from wokkel.xmppim import AvailablePresence
-from wokkel import ping
 
 import xmpp_commands
 import config
@@ -82,22 +81,6 @@ class TwitterspyMessageProtocol(MessageProtocol):
     def _gen_id(self, prefix):
         self._pubid += 1
         return prefix + str(self._pubid)
-
-    def ping(self, fromjid, tojid):
-        p = ping.Ping(self.xmlstream, config.SCREEN_NAME, tojid)
-        d = p.send()
-        log.msg("Sending ping %s" % p.toXml())
-        def _gotPing(x):
-            duration = time.time() - p.start_time
-            log.msg("pong %s" % tojid)
-            self.send_plain(fromjid, "Pong (%s) - %fs" % (tojid, duration))
-        def _gotError(x):
-            duration = time.time() - p.start_time
-            log.msg("Got an error pinging %s: %s" % (tojid, x))
-            self.send_plain(fromjid, "Error pinging %s (%fs): %s" % (tojid, duration, x))
-        d.addCallback(_gotPing)
-        d.addErrback(_gotError)
-        return d
 
     def publish_mood(self, mood_str, text):
         iq = IQ(self.xmlstream, 'set')

@@ -13,10 +13,12 @@ from twisted.words.xish import domish
 from twisted.words.protocols.jabber.jid import JID
 from twisted.web import client
 from twisted.internet import reactor
+from wokkel import ping
 from sqlalchemy.orm import exc
 
 import models
 
+import config
 import twitter
 import scheduling
 import protocol
@@ -460,17 +462,34 @@ class AdminPingCommand(BaseCommand):
         super(AdminPingCommand, self).__init__('adm_ping',
             'Ping a JID')
 
+    def ping(self, prot, fromjid, tojid):
+        p = ping.Ping(prot.xmlstream, config.SCREEN_NAME, tojid)
+        d = p.send()
+        log.msg("Sending ping %s" % p.toXml())
+        def _gotPing(x):
+            duration = time.time() - p.start_time
+            log.msg("pong %s" % tojid)
+            prot.send_plain(fromjid, ":) Pong (%s) - %fs" % (tojid, duration))
+        def _gotError(x):
+            duration = time.time() - p.start_time
+            log.msg("Got an error pinging %s: %s" % (tojid, x))
+            prot.send_plain(fromjid, ":( Error pinging %s (%fs): %s"
+                            % (tojid, duration, x.value.condition))
+        d.addCallback(_gotPing)
+        d.addErrback(_gotError)
+        return d
+
     @admin_required
     @arg_required()
     def __call__(self, user, prot, args, session):
         # For bare jids, we'll send what was requested,
         # but also look up the user and send it to any active resources
-        protocol.current_conn.ping(user.jid, args)
+        self.ping(prot, user.jid, args)
         j = JID(args)
         if j.user and not j.resource:
             for rsrc in scheduling.resources(args):
                 j.resource=rsrc
-                protocol.current_conn.ping(user.jid, j.full())
+                self.ping(prot, user.jid, j.full())
 
 for __t in (t for t in globals().values() if isinstance(type, type(t))):
     if BaseCommand in __t.__mro__:
