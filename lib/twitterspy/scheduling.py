@@ -123,7 +123,7 @@ class Query(JidSet):
     def _reportError(self, e):
         log.msg("Error in search %s: %s" % (self.query, str(e)))
         global moodiness
-        moodiness.add(True)
+        moodiness.add(False)
 
     def _do_search(self):
         log.msg("Searching %s" % self.query)
