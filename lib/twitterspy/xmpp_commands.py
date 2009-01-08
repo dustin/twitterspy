@@ -463,7 +463,14 @@ class AdminPingCommand(BaseCommand):
     @admin_required
     @arg_required()
     def __call__(self, user, prot, args, session):
+        # For bare jids, we'll send what was requested,
+        # but also look up the user and send it to any active resources
         protocol.current_conn.ping(user.jid, args)
+        j = JID(args)
+        if j.user and not j.resource:
+            for rsrc in scheduling.resources(user.jid):
+                j.resource=rsrc
+                protocol.current_conn.ping(user.jid, j.full())
 
 for __t in (t for t in globals().values() if isinstance(type, type(t))):
     if BaseCommand in __t.__mro__:
