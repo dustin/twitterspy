@@ -468,7 +468,7 @@ class AdminPingCommand(BaseCommand):
         protocol.current_conn.ping(user.jid, args)
         j = JID(args)
         if j.user and not j.resource:
-            for rsrc in scheduling.resources(user.jid):
+            for rsrc in scheduling.resources(args):
                 j.resource=rsrc
                 protocol.current_conn.ping(user.jid, j.full())
 
