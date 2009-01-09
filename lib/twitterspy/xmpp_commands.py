@@ -168,12 +168,12 @@ class SearchCommand(BaseCommand):
     def _error(self, e, jid, prot):
         scheduling.moodiness.add(False)
         good, lrr, percentage = scheduling.moodiness.current_mood()
-        rv = ["Problem performing search."]
+        rv = [":( Problem performing search."]
         if percentage > 0.5:
-            rv.append("%f%% of recent searches have worked (%d out of %d)"
+            rv.append("%.1f%% of recent searches have worked (%d out of %d)"
                       % ((percentage * 100.0), good, lrr))
         else:
-            rv.append("This is not surprising, as only %d%% work now anyway (%d out of %d)"
+            rv.append("This is not surprising -- only %.1f%% work now anyway (%d out of %d)"
                       % ((percentage * 100.0), good, lrr))
         prot.send_plain(jid, "\n".join(rv))
 
