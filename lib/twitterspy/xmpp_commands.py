@@ -22,6 +22,7 @@ import config
 import twitter
 import scheduling
 import protocol
+import moodiness
 
 all_commands={}
 
@@ -162,12 +163,12 @@ class SearchCommand(BaseCommand):
             'Perform a search query (but do not track).')
 
     def _success(self, e, jid, prot, rv):
-        scheduling.moodiness.add(True)
+        moodiness.moodiness.add(True)
         prot.send_plain(jid, "Results\n\n" + "\n\n".join(rv))
 
     def _error(self, e, jid, prot):
-        scheduling.moodiness.add(False)
-        good, lrr, percentage = scheduling.moodiness.current_mood()
+        moodiness.moodiness.add(False)
+        good, lrr, percentage = moodiness.moodiness.current_mood()
         rv = [":( Problem performing search."]
         if percentage > 0.5:
             rv.append("%.1f%% of recent searches have worked (%d out of %d)"
