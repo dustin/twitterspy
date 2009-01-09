@@ -53,4 +53,12 @@ class Moodiness(object):
             self.recent_results.popleft()
         self.recent_results.append(result)
 
+    def markSuccess(self, *args):
+        """Record that a search was successfully performed."""
+        self.add(True)
+
+    def markFailure(self, *args):
+        """Record that a search failed to complete successfully."""
+        self.add(False)
+
 moodiness = Moodiness()

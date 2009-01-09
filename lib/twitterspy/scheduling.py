@@ -66,7 +66,6 @@ class Query(JidSet):
 
     def _save_track_id(self, old_id):
         def f(x):
-            moodiness.moodiness.add(True)
             if old_id != self.last_id:
                 threads.deferToThread(self._deferred_write, self.last_id)
         return f
@@ -79,7 +78,6 @@ class Query(JidSet):
 
     def _reportError(self, e):
         log.msg("Error in search %s: %s" % (self.query, str(e)))
-        moodiness.moodiness.add(False)
 
     def _do_search(self):
         log.msg("Searching %s" % self.query)
@@ -89,6 +87,8 @@ class Query(JidSet):
         results=[]
         return twitter.Twitter().search(self.query, self._gotResult(results),
             params
+            ).addCallback(moodiness.moodiness.markSuccess
+            ).addErrback(moodiness.moodiness.markFailure
             ).addCallback(self._sendMessages, results
             ).addCallback(self._save_track_id(self.last_id)
             ).addErrback(self._reportError)

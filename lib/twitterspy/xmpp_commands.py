@@ -163,11 +163,9 @@ class SearchCommand(BaseCommand):
             'Perform a search query (but do not track).')
 
     def _success(self, e, jid, prot, rv):
-        moodiness.moodiness.add(True)
         prot.send_plain(jid, "Results\n\n" + "\n\n".join(rv))
 
     def _error(self, e, jid, prot):
-        moodiness.moodiness.add(False)
         good, lrr, percentage = moodiness.moodiness.current_mood()
         rv = [":( Problem performing search."]
         if percentage > 0.5:
@@ -187,6 +185,8 @@ class SearchCommand(BaseCommand):
         def gotResult(entry):
             rv.append(entry.author.name.split()[0] + ": " + entry.title)
         twitter.Twitter().search(query, gotResult, {'rpp': '3'}
+            ).addCallback(moodiness.moodiness.markSuccess
+            ).addErrback(moodiness.moodiness.markFailure
             ).addCallback(self._success, jid, prot, rv
             ).addErrback(self._error, jid, prot
             ).addErrback(log.err)
