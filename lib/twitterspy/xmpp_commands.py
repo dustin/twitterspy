@@ -172,6 +172,10 @@ class SearchCommand(BaseCommand):
         if percentage > 0.5:
             rv.append("%.1f%% of recent searches have worked (%d out of %d)"
                       % ((percentage * 100.0), good, lrr))
+        elif good == 0:
+            rv.append("This is not surprising, "
+                      "no recent searches worked for me, either (%d out of %d)"
+                      % (good, lrr))
         else:
             rv.append("This is not surprising -- only %.1f%% work now anyway (%d out of %d)"
                       % ((percentage * 100.0), good, lrr))
