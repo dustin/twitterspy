@@ -161,17 +161,34 @@ class SearchCommand(BaseCommand):
         super(SearchCommand, self).__init__('search',
             'Perform a search query (but do not track).')
 
-    @arg_required()
-    def __call__(self, user, prot, args, session):
+    def _success(self, e, jid, prot, rv):
+        scheduling.moodiness.add(True)
+        prot.send_plain(jid, "Results\n\n" + "\n\n".join(rv))
+
+    def _error(self, e, jid, prot):
+        scheduling.moodiness.add(False)
+        good, lrr, percentage = scheduling.moodiness.current_mood()
+        rv = ["Problem performing search."]
+        if percentage > 0.5:
+            rv.append("%f%% of recent searches have worked (%d out of %d)"
+                      % ((percentage * 100.0), good, lrr))
+        else:
+            rv.append("This is not surprising, as only %d%% work now anyway (%d out of %d)"
+                      % ((percentage * 100.0), good, lrr))
+        prot.send_plain(jid, "\n".join(rv))
+
+    def _do_search(self, query, jid, prot):
         rv = []
         def gotResult(entry):
             rv.append(entry.author.name.split()[0] + ": " + entry.title)
-        jid = user.jid
-        twitter.Twitter().search(args, gotResult, {'rpp': '3'}).addCallback(
-            lambda x: prot.send_plain(jid, "Results\n\n"
-                + "\n\n".join(rv))).addErrback(
-            lambda x: prot.send_plain(jid, "Problem performing search")
+        twitter.Twitter().search(query, gotResult, {'rpp': '3'}
+            ).addCallback(self._success, jid, prot, rv
+            ).addErrback(self._error, jid, prot
             ).addErrback(log.err)
+
+    @arg_required()
+    def __call__(self, user, prot, args, session):
+        scheduling.search_semaphore.run(self._do_search, args, user.jid, prot)
 
 class TWLoginCommand(BaseCommand):
 

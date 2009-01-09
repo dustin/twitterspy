@@ -30,14 +30,22 @@ class Moodiness(object):
         self.recent_results = deque()
         self.previous_good = (0, 0)
 
-    def __call__(self):
-        # Short-circuit no results
+    def current_mood(self):
+        """Get the current mood (good, total, percentage)"""
         if not self.recent_results:
             log.msg("Short-circuiting tally results since there aren't any.")
-            return
+            return None, None, None
         good = reduce(lambda x, y: x + 1 if y else x, self.recent_results)
         lrr = len(self.recent_results)
         percentage = float(good) / float(lrr)
+
+        return good, lrr, percentage
+
+    def __call__(self):
+        # Short-circuit no results
+        good, total, percentage = self.current_mood()
+        if total is None:
+            return
         msg = ("Processed %d out of %d recent searches (previously %d/%d)."
             % (good, lrr, self.previous_good[0], self.previous_good[1]))
         choices=[v for a,v in self.MOOD_CHOICES if percentage >= a][0]
