@@ -64,11 +64,9 @@ class Query(JidSet):
         except:
             log.err()
 
-    def _save_track_id(self, old_id):
-        def f(x):
-            if old_id != self.last_id:
-                threads.deferToThread(self._deferred_write, self.last_id)
-        return f
+    def _save_track_id(self, x, old_id):
+        if old_id != self.last_id:
+            threads.deferToThread(self._deferred_write, self.last_id)
 
     def __call__(self):
         # Don't bother if we're not connected...
@@ -90,7 +88,7 @@ class Query(JidSet):
             ).addCallback(moodiness.moodiness.markSuccess
             ).addErrback(moodiness.moodiness.markFailure
             ).addCallback(self._sendMessages, results
-            ).addCallback(self._save_track_id(self.last_id)
+            ).addCallback(self._save_track_id, self.last_id
             ).addErrback(self._reportError)
 
     def start(self):
