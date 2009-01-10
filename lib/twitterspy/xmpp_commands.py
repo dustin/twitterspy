@@ -166,7 +166,7 @@ class SearchCommand(BaseCommand):
         prot.send_plain(jid, "Results\n\n" + "\n\n".join(rv))
 
     def _error(self, e, jid, prot):
-        good, lrr, percentage = moodiness.moodiness.current_mood()
+        mood, good, lrr, percentage = moodiness.moodiness.current_mood()
         rv = [":( Problem performing search."]
         if percentage > 0.5:
             rv.append("%.1f%% of recent searches have worked (%d out of %d)"
@@ -449,6 +449,22 @@ select t.query, count(*) as watchers
         rv.append("")
         for row in models._engine.execute(query).fetchall():
             rv.append("%s (%d watchers)" % (row[0], row[1]))
+        prot.send_plain(user.jid, "\n".join(rv))
+
+class MoodCommand(BaseCommand):
+
+    def __init__(self):
+        super(MoodCommand, self).__init__('mood',
+            "Ask about twitterspy's mood.")
+
+    def __call__(self, user, prot, args, session):
+        mood, good, total, percentage = moodiness.moodiness.current_mood()
+        if mood:
+            rv=["My current mood is %s" % mood]
+            rv.append("I've processed %d out of the last %d searches."
+                      % (good, total))
+        else:
+            rv=["I just woke up.  Ask me in a minute or two."]
         prot.send_plain(user.jid, "\n".join(rv))
 
 class AdminSubscribeCommand(BaseCommand):
