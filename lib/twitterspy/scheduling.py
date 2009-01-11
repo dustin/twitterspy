@@ -15,6 +15,23 @@ search_semaphore = defer.DeferredSemaphore(tokens=5)
 private_semaphore = defer.DeferredSemaphore(tokens=20)
 available_sem = defer.DeferredSemaphore(tokens=2)
 
+class SearchCollector(object):
+
+    def __init__(self, last_id=0):
+        self.results=[]
+        self.last_id = last_id
+
+    def gotResult(self, entry):
+        eid = int(entry.id.split(':')[-1])
+        self.last_id = max(self.last_id, eid)
+        u = entry.author.name.split(' ')[0]
+        plain=u + ": " + entry.title
+        hcontent=entry.content.replace("&lt;", "<"
+                                       ).replace("&gt;", ">"
+                                       ).replace('&amp;', '&')
+        html="<a href='%s'>%s</a>: %s" % (entry.author.uri, u, hcontent)
+        bisect.insort(self.results, (eid, plain, html))
+
 class JidSet(set):
 
     def bare_jids(self):
@@ -35,22 +52,10 @@ class Query(JidSet):
         self.loop = None
         reactor.callLater(then, self.start)
 
-    def _gotResult(self, results):
-        def f(entry):
-            eid = int(entry.id.split(':')[-1])
-            self.last_id = max(self.last_id, eid)
-            u = entry.author.name.split(' ')[0]
-            plain=u + ": " + entry.title
-            hcontent=entry.content.replace("&lt;", "<"
-                                           ).replace("&gt;", ">"
-                                           ).replace('&amp;', '&')
-            html="<a href='%s'>%s</a>: %s" % (entry.author.uri, u, hcontent)
-            bisect.insort(results, (eid, plain, html))
-        return f
-
     def _sendMessages(self, something, results):
+        self.last_id = results.last_id
         conn = protocol.current_conn
-        for eid, plain, html in results:
+        for eid, plain, html in results.results:
             for jid in self.bare_jids():
                 key = str(eid) + "@" + jid
                 conn.send_html_deduped(jid, plain, html, key)
@@ -82,8 +87,8 @@ class Query(JidSet):
         params = {}
         if self.last_id > 0:
             params['since_id'] = str(self.last_id)
-        results=[]
-        return twitter.Twitter().search(self.query, self._gotResult(results),
+        results=SearchCollector(self.last_id)
+        return twitter.Twitter().search(self.query, results.gotResult,
             params
             ).addCallback(moodiness.moodiness.markSuccess
             ).addErrback(moodiness.moodiness.markFailure
