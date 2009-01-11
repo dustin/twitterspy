@@ -163,7 +163,13 @@ class SearchCommand(BaseCommand):
             'Perform a search query (but do not track).')
 
     def _success(self, e, jid, prot, rv):
-        prot.send_plain(jid, "Results\n\n" + "\n\n".join(rv))
+        plain = []
+        html = []
+        for eid, p, h in rv.results:
+            plain.append(p)
+            html.append(h)
+        prot.send_html(jid, "Results\n\n" + "\n\n".join(plain),
+                       "Results<br/>\n<br/>\n" + "<br/>\n<br/>\n".join(html))
 
     def _error(self, e, jid, prot):
         mood, good, lrr, percentage = moodiness.moodiness.current_mood()
@@ -181,10 +187,8 @@ class SearchCommand(BaseCommand):
         prot.send_plain(jid, "\n".join(rv))
 
     def _do_search(self, query, jid, prot):
-        rv = []
-        def gotResult(entry):
-            rv.append(entry.author.name.split()[0] + ": " + entry.title)
-        twitter.Twitter().search(query, gotResult, {'rpp': '3'}
+        rv = scheduling.SearchCollector()
+        twitter.Twitter().search(query, rv.gotResult, {'rpp': '3'}
             ).addCallback(moodiness.moodiness.markSuccess
             ).addErrback(moodiness.moodiness.markFailure
             ).addCallback(self._success, jid, prot, rv
