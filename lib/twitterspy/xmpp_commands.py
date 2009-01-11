@@ -162,14 +162,19 @@ class SearchCommand(BaseCommand):
         super(SearchCommand, self).__init__('search',
             'Perform a search query (but do not track).')
 
-    def _success(self, e, jid, prot, rv):
+    def _success(self, e, jid, prot, query, rv):
+        log.msg("%d results found for %s" % (len(rv.results), query))
         plain = []
         html = []
         for eid, p, h in rv.results:
             plain.append(p)
             html.append(h)
-        prot.send_html(jid, "Results\n\n" + "\n\n".join(plain),
-                       "Results<br/>\n<br/>\n" + "<br/>\n<br/>\n".join(html))
+        prot.send_html(jid, str(len(rv.results))
+                           + " results for " + query
+                           + "\n\n" + "\n\n".join(plain),
+                       str(len(rv.results)) + " results for "
+                           + query + "<br/>\n<br/>\n"
+                           + "<br/>\n<br/>\n".join(html))
 
     def _error(self, e, jid, prot):
         mood, good, lrr, percentage = moodiness.moodiness.current_mood()
@@ -191,7 +196,7 @@ class SearchCommand(BaseCommand):
         twitter.Twitter().search(query, rv.gotResult, {'rpp': '3'}
             ).addCallback(moodiness.moodiness.markSuccess
             ).addErrback(moodiness.moodiness.markFailure
-            ).addCallback(self._success, jid, prot, rv
+            ).addCallback(self._success, jid, prot, query, rv
             ).addErrback(self._error, jid, prot
             ).addErrback(log.err)
 
