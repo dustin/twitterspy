@@ -32,6 +32,11 @@ optimistic message deduplication, but is required for operation.  The
 errors you get when memcached is not running are currently a bit
 weird (something about 'NoneType' object has no attribute 'add').
 
+## Help from Others
+
+[David Banes](http://www.davidbanes.com/) was kind enough to write an
+article about his adventures in [getting twitterspy running on debian][tsdeb].
+
 ## License
 
 [MIT](http://www.opensource.org/licenses/mit-license.php)
@@ -63,3 +68,4 @@ You can also clone the project with [git](http://git-scm.com/) by running:
 [twisted]:http://twistedmatrix.com/
 [sqlalchemy]:http://www.sqlalchemy.org/
 [memcached]:http://www.danga.com/memcached/
+[tsdeb]:http://www.davidbanes.com/2009/01/11/installing-twitterspy-on-debian-etch/
