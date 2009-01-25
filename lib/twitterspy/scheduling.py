@@ -228,7 +228,7 @@ class UserStuff(JidSet):
     def start(self):
         log.msg("Starting %s" % self.short_jid)
         self.loop = task.LoopingCall(self)
-        self.loop.start(self.loop_time)
+        self.loop.start(self.loop_time, now=False)
 
     def stop(self):
         if self.loop:
