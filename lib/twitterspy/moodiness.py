@@ -56,8 +56,9 @@ class Moodiness(object):
         """Record that a search was successfully performed."""
         self.add(True)
 
-    def markFailure(self, *args):
+    def markFailure(self, error):
         """Record that a search failed to complete successfully."""
         self.add(False)
+        return error
 
 moodiness = Moodiness()

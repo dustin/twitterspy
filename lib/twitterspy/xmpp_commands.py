@@ -190,6 +190,7 @@ class SearchCommand(BaseCommand):
             rv.append("This is not surprising -- only %.1f%% work now anyway (%d out of %d)"
                       % ((percentage * 100.0), good, lrr))
         prot.send_plain(jid, "\n".join(rv))
+        return e
 
     def _do_search(self, query, jid, prot):
         rv = scheduling.SearchCollector()
