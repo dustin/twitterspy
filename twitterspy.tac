@@ -23,8 +23,15 @@ twitter.Twitter.agent = "twitterspy"
 
 application = service.Application("twitterspy")
 
+host = None
+try:
+    host = config.CONF.get("xmpp", 'host')
+except ConfigParser.NoOptionError:
+    pass
+
 xmppclient = XMPPClient(jid.internJID(config.SCREEN_NAME),
-    config.CONF.get('xmpp', 'pass'))
+    config.CONF.get('xmpp', 'pass'), host)
+
 xmppclient.logTraffic = False
 
 # Stream handling protocols for twitterspy
