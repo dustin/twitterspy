@@ -194,7 +194,7 @@ class SearchCommand(BaseCommand):
 
     def _do_search(self, query, jid, prot):
         rv = scheduling.SearchCollector()
-        twitter.Twitter().search(query, rv.gotResult, {'rpp': '3'}
+        scheduling.getTwitterAPI().search(query, rv.gotResult, {'rpp': '3'}
             ).addCallback(moodiness.moodiness.markSuccess
             ).addErrback(moodiness.moodiness.markFailure
             ).addCallback(self._success, jid, prot, query, rv
@@ -216,7 +216,7 @@ class TWLoginCommand(BaseCommand):
         args = args.replace(">", "").replace("<", "")
         username, password=args.split(' ', 1)
         jid = user.jid
-        twitter.Twitter(username, password).verify_credentials().addCallback(
+        scheduling.getTwitterAPI(username, password).verify_credentials().addCallback(
             self.__credsVerified, prot, jid, username, password).addErrback(
             self.__credsRefused, prot, jid)
 
@@ -313,7 +313,7 @@ class PostCommand(BaseCommand):
     def __call__(self, user, prot, args, session):
         if user.has_credentials:
             jid = user.jid
-            twitter.Twitter(user.username, user.decoded_password).update(
+            scheduling.getTwitterAPI(user.username, user.decoded_password).update(
                 args, 'twitterspy'
                 ).addCallback(self._posted, jid, user.username, prot
                 ).addErrback(self._failed, jid, prot)
@@ -336,7 +336,7 @@ class FollowCommand(BaseCommand):
     @arg_required()
     @login_required
     def __call__(self, user, prot, args, session):
-        twitter.Twitter(user.username, user.decoded_password).follow(
+        scheduling.getTwitterAPI(user.username, user.decoded_password).follow(
             str(args)).addCallback(self._following, user.jid, prot, args
             ).addErrback(self._failed, user.jid, prot, args)
 
@@ -357,7 +357,7 @@ class LeaveUser(BaseCommand):
     @arg_required()
     @login_required
     def __call__(self, user, prot, args, session):
-        twitter.Twitter(user.username, user.decoded_password).leave(
+        scheduling.getTwitterAPI(user.username, user.decoded_password).leave(
             str(args)).addCallback(self._left, user.jid, prot, args
             ).addErrback(self._failed, user.jid, prot, args)
 
@@ -400,7 +400,7 @@ class WatchFriendsCommand(BaseCommand):
     def __call__(self, user, prot, args, session):
         args = args.lower()
         if args == 'on':
-            twitter.Twitter(user.username, user.decoded_password).friends(
+            scheduling.getTwitterAPI(user.username, user.decoded_password).friends(
                 self._gotFriendStatus(user.jid, prot), params={'count': '1'})
         elif args == 'off':
             user.friend_timeline_id = None
@@ -437,7 +437,7 @@ Recently:<br/>
     @arg_required()
     @login_required
     def __call__(self, user, prot, args, session):
-        twitter.Twitter(user.username, user.decoded_password).show_user(
+        scheduling.getTwitterAPI(user.username, user.decoded_password).show_user(
             str(args)).addErrback(self._fail, prot, user.jid, args
             ).addCallback(self._gotUser, prot, user.jid)
 

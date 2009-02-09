@@ -15,6 +15,35 @@ search_semaphore = defer.DeferredSemaphore(tokens=5)
 private_semaphore = defer.DeferredSemaphore(tokens=20)
 available_sem = defer.DeferredSemaphore(tokens=2)
 
+MAX_REQUESTS = 20000
+REQUEST_PERIOD = 3600
+
+available_requests = MAX_REQUESTS
+
+def getTwitterAPI(*args):
+    global available_requests
+    if available_requests > 0:
+        available_requests -= 1
+        return twitter.Twitter(*args)
+    else:
+        log.msg("Out of requests.  :(")
+        # Return something that just generates deferreds that error.
+        class ErrorGenerator(object):
+            def __getattr__(self, attr):
+                def error_generator(*args):
+                    d = defer.Deferred()
+                    reactor.callLater(0, d.errback,
+                        RuntimeError(
+                            "There are no more available twitter requests."))
+                    return d
+                return error_generator
+        return ErrorGenerator()
+
+def resetRequests():
+    global available_requests
+    available_requests = MAX_REQUESTS
+    log.msg("Available requests are reset to %d" % available_requests)
+
 class SearchCollector(object):
 
     def __init__(self, last_id=0):
@@ -88,7 +117,7 @@ class Query(JidSet):
         if self.last_id > 0:
             params['since_id'] = str(self.last_id)
         results=SearchCollector(self.last_id)
-        return twitter.Twitter().search(self.query, results.gotResult,
+        return getTwitterAPI().search(self.query, results.gotResult,
             params
             ).addCallback(moodiness.moodiness.markSuccess
             ).addErrback(moodiness.moodiness.markFailure
@@ -209,7 +238,7 @@ class UserStuff(JidSet):
         params = {}
         if self.last_dm_id > 0:
             params['since_id'] = str(self.last_dm_id)
-        tw = twitter.Twitter(self.username, self.password)
+        tw = getTwitterAPI(self.username, self.password)
         dm_list=[]
         tw.direct_messages(self._gotDMResult(dm_list), params).addCallback(
             self._maybe_update_prop('last_dm_id', 'direct_message_id')

@@ -49,3 +49,4 @@ KeepAlive().setHandlerParent(xmppclient)
 xmppclient.setServiceParent(application)
 
 task.LoopingCall(moodiness.moodiness).start(60)
+task.LoopingCall(scheduling.resetRequests).start(scheduling.REQUEST_PERIOD)
