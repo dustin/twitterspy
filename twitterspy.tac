@@ -3,6 +3,8 @@ sys.path.insert(0,"lib/twitty-twister/lib")
 sys.path.insert(0,"lib/wokkel")
 sys.path.insert(0,"lib")
 
+import ConfigParser
+
 from twisted.application import service
 from twisted.internet import task, reactor
 from twisted.words.protocols.jabber import jid
