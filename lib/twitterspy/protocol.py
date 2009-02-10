@@ -156,6 +156,12 @@ class TwitterspyMessageProtocol(MessageProtocol):
         scheduling.unavailable_user(JID(msg['from']))
 
     def onMessage(self, msg):
+        try:
+            self.__onMessage(msg)
+        except KeyError:
+            log.err()
+
+    def __onMessage(self, msg):
         if msg["type"] == 'chat' and hasattr(msg, "body") and msg.body:
             self.typing_notification(msg['from'])
             a=unicode(msg.body).strip().split(None, 1)
