@@ -19,8 +19,8 @@ available_sem = defer.DeferredSemaphore(tokens=2)
 MAX_REQUESTS = 20000
 REQUEST_PERIOD = 3600
 
-QUERY_FREQUENCY = 10 * 60
-USER_FREQUENCY = 2 * 60
+QUERY_FREQUENCY = 15 * 60
+USER_FREQUENCY = 3 * 60
 
 available_requests = MAX_REQUESTS
 reported_empty = False
