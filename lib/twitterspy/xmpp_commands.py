@@ -475,8 +475,9 @@ class MoodCommand(BaseCommand):
                       % (good, total))
         else:
             rv=["I just woke up.  Ask me in a minute or two."]
-        rv.append("I currently have %d API requests available."
-                  % scheduling.available_requests)
+        rv.append("I currently have %d API requests available, "
+                  "and have run out %d times."
+                  % (scheduling.available_requests, scheduling.empty_resets))
         prot.send_plain(user.jid, "\n".join(rv))
 
 class AdminSubscribeCommand(BaseCommand):

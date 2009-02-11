@@ -10,6 +10,7 @@ import protocol
 
 import models
 import moodiness
+import config
 
 search_semaphore = defer.DeferredSemaphore(tokens=5)
 private_semaphore = defer.DeferredSemaphore(tokens=20)
@@ -19,13 +20,18 @@ MAX_REQUESTS = 20000
 REQUEST_PERIOD = 3600
 
 available_requests = MAX_REQUESTS
+reported_empty = False
+empty_resets = 0
 
 def getTwitterAPI(*args):
-    global available_requests
+    global available_requests, reported_empty
     if available_requests > 0:
         available_requests -= 1
         return twitter.Twitter(*args)
     else:
+        if not reported_empty:
+            admin_message(":-x Just ran out of requests for the hour.")
+            reported_empty = True
         log.msg("Out of requests.  :(")
         # Return something that just generates deferreds that error.
         class ErrorGenerator(object):
@@ -39,8 +45,16 @@ def getTwitterAPI(*args):
                 return error_generator
         return ErrorGenerator()
 
+def admin_message(msg):
+    for a in config.ADMINS:
+        protocol.current_conn.send_plain(a, msg);
+
 def resetRequests():
-    global available_requests
+    global available_requests, empty_resets, reported_empty
+    if available_requests == 0:
+        empty_resets += 1
+        admin_message(":-x Just got some more requests after running out.")
+        reported_empty = False
     available_requests = MAX_REQUESTS
     log.msg("Available requests are reset to %d" % available_requests)
 
