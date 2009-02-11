@@ -19,6 +19,9 @@ available_sem = defer.DeferredSemaphore(tokens=2)
 MAX_REQUESTS = 20000
 REQUEST_PERIOD = 3600
 
+QUERY_FREQUENCY = 10 * 60
+USER_FREQUENCY = 2 * 60
+
 available_requests = MAX_REQUESTS
 reported_empty = False
 empty_resets = 0
@@ -82,7 +85,7 @@ class JidSet(set):
 
 class Query(JidSet):
 
-    loop_time = 10 * 60
+    loop_time = QUERY_FREQUENCY
 
     def __init__(self, query, last_id):
         super(Query, self).__init__()
@@ -180,7 +183,7 @@ class QueryRegistry(object):
 
 class UserStuff(JidSet):
 
-    loop_time = 2 * 60
+    loop_time = USER_FREQUENCY
 
     def __init__(self, short_jid, friends_id, dm_id):
         super(UserStuff, self).__init__()
