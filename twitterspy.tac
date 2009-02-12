@@ -50,5 +50,6 @@ xmpp_ping.PingHandler().setHandlerParent(xmppclient)
 KeepAlive().setHandlerParent(xmppclient)
 xmppclient.setServiceParent(application)
 
-task.LoopingCall(moodiness.moodiness).start(60)
-task.LoopingCall(scheduling.resetRequests).start(scheduling.REQUEST_PERIOD)
+task.LoopingCall(moodiness.moodiness).start(60, now=False)
+task.LoopingCall(scheduling.resetRequests).start(scheduling.REQUEST_PERIOD,
+                                                 now=False)
