@@ -212,18 +212,30 @@ class TwitterspyPresenceProtocol(PresenceClientProtocol):
         global presence_conn
         presence_conn = self
 
-    @models.wants_session
-    def update_presence(self, session):
+    def update_presence(self):
         try:
-            tracking=session.query(models.Track).count()
-            users=session.query(models.User).count()
-            if tracking != self._tracking or users != self._users:
-                status="Tracking %s topics for %s users" % (tracking, users)
-                self.available(None, None, {None: status})
-                self._tracking = tracking
-                self._users = users
+            if scheduling.available_requests > 0:
+                self._update_presence_ready()
+            else:
+                self._update_presence_not_ready()
         except:
             log.err()
+
+    @models.wants_session
+    def _update_presence_ready(self, session):
+        tracking=session.query(models.Track).count()
+        users=session.query(models.User).count()
+        if tracking != self._tracking or users != self._users:
+            status="Tracking %s topics for %s users" % (tracking, users)
+            self.available(None, None, {None: status})
+            self._tracking = tracking
+            self._users = users
+
+    def _update_presence_not_ready(self):
+        status="Ran out of Twitter API requests."
+        self.available(None, 'away', {None: status})
+        self._tracking = -1
+        self._users = -1
 
     def availableReceived(self, entity, show=None, statuses=None, priority=0):
         log.msg("Available from %s (%s, %s, pri=%s)" % (

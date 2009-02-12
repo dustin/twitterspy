@@ -35,6 +35,8 @@ def getTwitterAPI(*args):
         if not reported_empty:
             admin_message(":-x Just ran out of requests for the hour.")
             reported_empty = True
+            if protocol.presence_conn:
+                protocol.presence_conn.update_presence()
         log.msg("Out of requests.  :(")
         # Return something that just generates deferreds that error.
         class ErrorGenerator(object):
@@ -59,6 +61,8 @@ def resetRequests():
         admin_message(":-x Just got some more requests after running out.")
         reported_empty = False
     available_requests = MAX_REQUESTS
+    if protocol.presence_conn:
+        protocol.presence_conn.update_presence()
     log.msg("Available requests are reset to %d" % available_requests)
 
 class SearchCollector(object):
