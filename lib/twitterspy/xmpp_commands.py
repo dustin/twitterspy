@@ -351,7 +351,6 @@ class LeaveUser(BaseCommand):
 
     def _failed(self, e, jid, prot, user):
         log.msg("Failed an unfollow request: %s", repr(e))
-        prot.send_plain(jid, ":( Failed to follow %s" % user)
         prot.send_plain(jid, ":( Failed to stop following %s" % user)
 
     @arg_required()
