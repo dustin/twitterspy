@@ -360,6 +360,46 @@ class LeaveUser(BaseCommand):
             str(args)).addCallback(self._left, user.jid, prot, args
             ).addErrback(self._failed, user.jid, prot, args)
 
+class BlockCommand(BaseCommand):
+
+    def __init__(self):
+        super(BlockCommand, self).__init__('block',
+                                            "Block a user.")
+
+    def _blocked(self, e, jid, prot, user):
+        prot.send_plain(jid, ":) Now blocking %s" % user)
+
+    def _failed(self, e, jid, prot, user):
+        log.msg("Failed a block request %s" % repr(e))
+        prot.send_plain(jid, ":( Failed to block %s" % user)
+
+    @arg_required()
+    @login_required
+    def __call__(self, user, prot, args, session):
+        scheduling.getTwitterAPI(user.username, user.decoded_password).block(
+            str(args)).addCallback(self._blocked, user.jid, prot, args
+            ).addErrback(self._failed, user.jid, prot, args)
+
+class UnblockCommand(BaseCommand):
+
+    def __init__(self):
+        super(UnblockCommand, self).__init__('unblock',
+                                        "Unblock a user.")
+
+    def _left(self, e, jid, prot, user):
+        prot.send_plain(jid, ":) No longer blocking %s" % user)
+
+    def _failed(self, e, jid, prot, user):
+        log.msg("Failed an unblock request: %s", repr(e))
+        prot.send_plain(jid, ":( Failed to unblock %s" % user)
+
+    @arg_required()
+    @login_required
+    def __call__(self, user, prot, args, session):
+        scheduling.getTwitterAPI(user.username, user.decoded_password).unblock(
+            str(args)).addCallback(self._left, user.jid, prot, args
+            ).addErrback(self._failed, user.jid, prot, args)
+
 def must_be_on_or_off(args):
     return args and args.lower() in ["on", "off"]
 
