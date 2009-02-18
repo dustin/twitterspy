@@ -301,7 +301,7 @@ class PostCommand(BaseCommand):
             "Post a message to twitter.")
 
     def _posted(self, id, jid, username, prot):
-        url = "http://twitter.com/%s/statuses/%s" % (username, id)
+        url = "https://twitter.com/%s/statuses/%s" % (username, id)
         prot.send_plain(jid, ":) Your message has been posted: %s" % url)
 
     def _failed(self, e, jid, prot):
@@ -458,14 +458,14 @@ class WhoisCommand(BaseCommand):
 
     def _gotUser(self, u, prot, jid):
         html="""Whois <a
-  href="http://twitter.com/%(screen_name)s">%(screen_name)s</a><br/><br/>
+  href="https://twitter.com/%(screen_name)s">%(screen_name)s</a><br/><br/>
 Name:  %(name)s<br/>
 Home:  %(url)s<br/>
 Where: %(location)s<br/>
 Friends: <a
-  href="http://twitter.com/%(screen_name)s/friends">%(friends_count)s</a><br/>
+  href="https://twitter.com/%(screen_name)s/friends">%(friends_count)s</a><br/>
 Followers: <a
-  href="http://twitter.com/%(screen_name)s/followers">%(followers_count)s</a><br/>
+  href="https://twitter.com/%(screen_name)s/followers">%(followers_count)s</a><br/>
 Recently:<br/>
         %(status_text)s
 """

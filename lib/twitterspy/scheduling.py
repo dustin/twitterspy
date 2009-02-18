@@ -205,7 +205,7 @@ class UserStuff(JidSet):
             s=entry.user
         u = s.screen_name
         plain="[%s] %s: %s" % (type, u, entry.text)
-        aurl = "http://twitter.com/" + u
+        aurl = "https://twitter.com/" + u
         html="[%s] <a href='%s'>%s</a>: %s" % (type, aurl, u, entry.text)
         bisect.insort(results, (entry.id, plain, html))
 
