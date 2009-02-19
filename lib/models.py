@@ -80,6 +80,7 @@ class User(object):
             if not session:
                 s.close()
 
+    @db_mutexed
     def track(self, query, session):
         try:
             return session.query(Track).join(User.tracks).filter(
@@ -92,6 +93,7 @@ class User(object):
                 track.query = query
             self.tracks.append(track)
 
+    @db_mutexed
     def untrack(self, query, session):
         try:
             t = session.query(UserTrack).select_from(
