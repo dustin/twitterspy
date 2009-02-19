@@ -149,6 +149,8 @@ class TwitterspyMessageProtocol(MessageProtocol):
         global mc
         mc.add(key, "x").addCallback(checkedSend, jid, body, html)
 
+    # XXX:  This happens synchronously and is kind of nasty.
+    @models.db_mutexed
     def get_user(self, msg, session):
         jid=JID(msg['from'])
         try:
