@@ -226,6 +226,7 @@ class TWLoginCommand(BaseCommand):
             ":( Your credentials were refused. "
                 "Please try again: twlogin username password")
 
+    @models.db_mutexed
     @models.wants_session
     def __credsVerified(self, x, prot, jid, username, password, session):
         user = models.User.by_jid(jid, session)
