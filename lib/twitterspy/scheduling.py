@@ -110,6 +110,7 @@ class Query(JidSet):
                 key = str(eid) + "@" + jid
                 conn.send_html_deduped(jid, plain, html, key)
 
+    @models.db_mutexed
     @models.wants_session
     def _deferred_write(self, theId, session):
         t=session.query(models.Track).filter_by(query=self.query).one()
@@ -228,6 +229,7 @@ class UserStuff(JidSet):
             self._format_message('friend', entry, results)
         return f
 
+    @models.db_mutexed
     @models.wants_session
     def _deferred_write(self, jid, mprop, new_val, session):
         u = models.User.by_jid(jid, session)
