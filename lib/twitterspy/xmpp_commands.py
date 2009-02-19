@@ -422,6 +422,7 @@ class WatchFriendsCommand(BaseCommand):
             "Enable or disable watching friends.", aliases=['watchfriends'])
 
     def _gotFriendStatus(self, jid, prot):
+        @models.db_mutexed
         @models.wants_session
         def f(entry, session):
             user = models.User.by_jid(jid, session)
