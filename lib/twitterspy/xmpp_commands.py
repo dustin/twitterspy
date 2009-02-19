@@ -588,6 +588,7 @@ class AdminBroadcastCommand(BaseCommand):
         super(AdminBroadcastCommand, self).__init__('adm_broadcast',
                                                     'Broadcast a message.')
 
+    @models.db_mutexed
     @models.wants_session
     def _load_users(self, session):
         return [user.jid for user in session.query(models.User).filter(
