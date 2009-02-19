@@ -5,7 +5,7 @@ from __future__ import with_statement
 import time
 
 from twisted.python import log
-from twisted.internet import protocol, reactor
+from twisted.internet import protocol, reactor, threads
 from twisted.words.xish import domish
 from twisted.words.protocols.jabber.jid import JID
 from twisted.words.protocols.jabber.xmlstream import IQ
@@ -23,6 +23,14 @@ import string
 current_conn = None
 presence_conn = None
 mc = None
+
+@models.db_mutexed
+@models.wants_session
+def model_counts(models, session):
+    rv = {}
+    for m in models:
+        rv[m] = session.query(m).count()
+    return rv
 
 class MemcacheFactory(protocol.ReconnectingClientFactory):
 
@@ -221,15 +229,17 @@ class TwitterspyPresenceProtocol(PresenceClientProtocol):
         except:
             log.err()
 
-    @models.wants_session
-    def _update_presence_ready(self, session):
-        tracking=session.query(models.Track).count()
-        users=session.query(models.User).count()
-        if tracking != self._tracking or users != self._users:
-            status="Tracking %s topics for %s users" % (tracking, users)
-            self.available(None, None, {None: status})
-            self._tracking = tracking
-            self._users = users
+    def _update_presence_ready(self):
+        def gotResult(counts):
+            users = counts[models.User]
+            tracking = counts[models.Track]
+            if tracking != self._tracking or users != self._users:
+                status="Tracking %s topics for %s users" % (tracking, users)
+                self.available(None, None, {None: status})
+                self._tracking = tracking
+                self._users = users
+        threads.deferToThread(model_counts, [models.User, models.Track]
+                              ).addCallback(gotResult)
 
     def _update_presence_not_ready(self):
         status="Ran out of Twitter API requests."
