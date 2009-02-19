@@ -2,6 +2,7 @@ from __future__ import with_statement
 
 import datetime
 import base64
+import thread
 
 from sqlalchemy import *
 from sqlalchemy.orm import sessionmaker, mapper, relation, backref, exc, join
@@ -24,6 +25,17 @@ def _session_exit(self, *exc):
 Session.__enter__ = _session_enter
 Session.__exit__ = _session_exit
 Session.configure(bind=_engine)
+
+__lock = thread.allocate_lock()
+
+def db_mutexed(orig):
+    def f(*args):
+        try:
+            __lock.acquire()
+            return orig(*args)
+        finally:
+            __lock.release()
+    return f
 
 def wants_session(orig):
     def f(*args):
