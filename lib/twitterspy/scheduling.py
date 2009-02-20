@@ -8,7 +8,7 @@ from twisted.words.protocols.jabber.jid import JID
 import twitter
 import protocol
 
-import models
+import db
 import moodiness
 import config
 
@@ -91,7 +91,7 @@ class Query(JidSet):
 
     loop_time = QUERY_FREQUENCY
 
-    def __init__(self, query, last_id):
+    def __init__(self, query, last_id=0):
         super(Query, self).__init__()
         self.query = query
         self.last_id = last_id
@@ -103,26 +103,14 @@ class Query(JidSet):
         reactor.callLater(then, self.start)
 
     def _sendMessages(self, something, results):
+        first_shot = self.last_id == 0
         self.last_id = results.last_id
-        conn = protocol.current_conn
-        for eid, plain, html in results.results:
-            for jid in self.bare_jids():
-                key = str(eid) + "@" + jid
-                conn.send_html_deduped(jid, plain, html, key)
-
-    @models.db_mutexed
-    @models.wants_session
-    def _deferred_write(self, theId, session):
-        t=session.query(models.Track).filter_by(query=self.query).one()
-        t.max_seen = theId
-        try:
-            session.commit()
-        except:
-            log.err()
-
-    def _save_track_id(self, x, old_id):
-        if old_id != self.last_id:
-            threads.deferToThread(self._deferred_write, self.last_id)
+        if not first_shot:
+            conn = protocol.current_conn
+            for eid, plain, html in results.results:
+                for jid in self.bare_jids():
+                    key = str(eid) + "@" + jid
+                    conn.send_html_deduped(jid, plain, html, key)
 
     def __call__(self):
         # Don't bother if we're not connected...
@@ -144,7 +132,6 @@ class Query(JidSet):
             ).addCallback(moodiness.moodiness.markSuccess
             ).addErrback(moodiness.moodiness.markFailure
             ).addCallback(self._sendMessages, results
-            ).addCallback(self._save_track_id, self.last_id
             ).addErrback(self._reportError)
 
     def start(self):
@@ -162,7 +149,7 @@ class QueryRegistry(object):
     def __init__(self):
         self.queries = {}
 
-    def add(self, user, query_str, last_id):
+    def add(self, user, query_str, last_id=0):
         log.msg("Adding %s: %s" % (user, query_str))
         if not self.queries.has_key(query_str):
             self.queries[query_str] = Query(query_str, last_id)
@@ -229,23 +216,17 @@ class UserStuff(JidSet):
             self._format_message('friend', entry, results)
         return f
 
-    @models.db_mutexed
-    @models.wants_session
-    def _deferred_write(self, jid, mprop, new_val, session):
-        u = models.User.by_jid(jid, session)
+    def _deferred_write(self, u, mprop, new_val):
         setattr(u, mprop, new_val)
-        try:
-            session.commit()
-        except:
-            log.err()
+        u.save()
 
     def _maybe_update_prop(self, prop, mprop):
         old_val = getattr(self, prop)
         def f(x):
             new_val = getattr(self, prop)
             if old_val != new_val:
-                threads.deferToThread(
-                    self._deferred_write, self.short_jid, mprop, new_val)
+                db.User.by_jid(self.short_jid).addCallback(self._deferred_write,
+                                                           mprop, new_val)
         return f
 
     def __call__(self):
@@ -327,41 +308,29 @@ users = UserRegistry()
 def _entity_to_jid(entity):
     return entity if isinstance(entity, basestring) else entity.userhost()
 
-@models.wants_session
-def _load_user(entity, session):
-    u = models.User.update_status(_entity_to_jid(entity), None, session)
-    rv = None
-    if u.active:
-        tracks = [(t.query, t.max_seen) for t in u.tracks]
-        rv = ((u.username, u.decoded_password,
-            u.friend_timeline_id, u.direct_message_id), tracks)
-    return rv
-
-def _init_user(stuff, short_jid, full_jids):
-    if stuff:
-        for j in full_jids:
-            users.add(short_jid, j, stuff[0][2], stuff[0][3])
-            for q, id in stuff[1]:
-                queries.add(j, q, id)
-        users.set_creds(short_jid, stuff[0][0], stuff[0][1])
+def __init_user(entity, jids=[]):
+    jid = _entity_to_jid(entity)
+    def f(u):
+        if u.active:
+            full_jids = users.users.get(jid, jids)
+            for j in full_jids:
+                users.add(jid, j, u.friend_timeline_id, u.direct_message_id)
+                for q in u.tracks:
+                    queries.add(j, q)
+            users.set_creds(jid, u.username, u.decoded_password)
+    db.User.by_jid(jid).addCallback(f)
 
 def enable_user(jid):
-    def process():
-        return threads.deferToThread(_load_user, jid).addCallback(
-            _init_user, jid, users.users.get(jid, []))
     global available_sem
-    available_sem.run(process)
+    available_sem.run(__init_user, jid)
 
 def disable_user(jid):
     queries.remove_user(jid, users.users.get(jid, []))
     users.set_creds(jid, None, None)
 
 def available_user(entity):
-    def process():
-        return threads.deferToThread(_load_user, entity).addCallback(
-            _init_user, entity.userhost(), [entity.full()])
     global available_sem
-    available_sem.run(process)
+    available_sem.run(__init_user, entity, [entity.full()])
 
 def unavailable_user(entity):
     queries.remove(entity.full())

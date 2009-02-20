@@ -14,23 +14,15 @@ from twisted.protocols import memcache
 from wokkel.xmppim import MessageProtocol, PresenceClientProtocol
 from wokkel.xmppim import AvailablePresence
 
+import db
 import xmpp_commands
 import config
-import models
 import scheduling
 import string
 
 current_conn = None
 presence_conn = None
 mc = None
-
-@models.db_mutexed
-@models.wants_session
-def model_counts(models, session):
-    rv = {}
-    for m in models:
-        rv[m] = session.query(m).count()
-    return rv
 
 class MemcacheFactory(protocol.ReconnectingClientFactory):
 
@@ -149,18 +141,6 @@ class TwitterspyMessageProtocol(MessageProtocol):
         global mc
         mc.add(key, "x").addCallback(checkedSend, jid, body, html)
 
-    # XXX:  This happens synchronously and is kind of nasty.
-    @models.db_mutexed
-    def get_user(self, msg, session):
-        jid=JID(msg['from'])
-        try:
-            rv=models.User.by_jid(jid.userhost(), session)
-        except:
-            log.msg("Getting user without the jid in the DB (%s)" % jid.full())
-            rv=models.User.update_status(jid.userhost(), None, session)
-            self.subscribe(jid)
-        return rv;
-
     def onError(self, msg):
         log.msg("Error received for %s: %s" % (msg['from'], msg.toXml()))
         scheduling.unavailable_user(JID(msg['from']))
@@ -171,41 +151,33 @@ class TwitterspyMessageProtocol(MessageProtocol):
         except KeyError:
             log.err()
 
+    def __onUserMessage(self, user, a, args, msg):
+        cmd = self.commands.get(a[0].lower())
+        if cmd:
+            cmd(user, self, args)
+        else:
+            d = None
+            if user.auto_post:
+                d=self.commands['post']
+            elif a[0][0] == '@':
+                d=self.commands['post']
+                if d:
+                    d(user, self, unicode(msg.body).strip())
+                else:
+                    self.send_plain(msg['from'],
+                                    "No such command: %s\n"
+                                    "Send 'help' for known commands\n"
+                                    "If you intended to post your message, "
+                                    "please start your message with 'post', or see "
+                                    "'help autopost'" % a[0])
+
     def __onMessage(self, msg):
         if msg["type"] == 'chat' and hasattr(msg, "body") and msg.body:
             self.typing_notification(msg['from'])
             a=unicode(msg.body).strip().split(None, 1)
             args = a[1] if len(a) > 1 else None
-            with models.Session() as session:
-                try:
-                    user = self.get_user(msg, session)
-                except:
-                    log.err()
-                    self.send_plain(msg['from'],
-                        "Stupid error processing message, please try again.")
-                    return
-                cmd = self.commands.get(a[0].lower())
-                if cmd:
-                    cmd(user, self, args, session)
-                else:
-                    d = None
-                    if user.auto_post:
-                        d=self.commands['post']
-                    elif a[0][0] == '@':
-                        d=self.commands['post']
-                    if d:
-                        d(user, self, unicode(msg.body).strip(), session)
-                    else:
-                        self.send_plain(msg['from'],
-                            "No such command: %s\n"
-                            "Send 'help' for known commands\n"
-                            "If you intended to post your message, "
-                            "please start your message with 'post', or see "
-                            "'help autopost'" % a[0])
-                try:
-                    session.commit()
-                except:
-                    log.err()
+            db.User.by_jid(JID(msg['from']).userhost()
+                           ).addCallback(self.__onUserMessage, a, args, msg)
         else:
             log.msg("Non-chat/body message: %s" % msg.toXml())
 
@@ -233,15 +205,14 @@ class TwitterspyPresenceProtocol(PresenceClientProtocol):
 
     def _update_presence_ready(self):
         def gotResult(counts):
-            users = counts[models.User]
-            tracking = counts[models.Track]
+            users = counts['users']
+            tracking = counts['tracks']
             if tracking != self._tracking or users != self._users:
                 status="Tracking %s topics for %s users" % (tracking, users)
                 self.available(None, None, {None: status})
                 self._tracking = tracking
                 self._users = users
-        threads.deferToThread(model_counts, [models.User, models.Track]
-                              ).addCallback(gotResult)
+        db.model_counts().addCallback(gotResult)
 
     def _update_presence_not_ready(self):
         status="Ran out of Twitter API requests."
@@ -263,8 +234,7 @@ class TwitterspyPresenceProtocol(PresenceClientProtocol):
         log.msg("Unavailable from %s" % entity.full())
         scheduling.unavailable_user(entity)
 
-    @models.wants_session
-    def subscribedReceived(self, entity, session):
+    def subscribedReceived(self, entity):
         log.msg("Subscribe received from %s" % (entity.userhost()))
         welcome_message="""Welcome to twitterspy.
 
@@ -275,21 +245,23 @@ Type "help" to get started.
 """
         global current_conn
         current_conn.send_plain(entity.full(), welcome_message)
-        cnt = -1
-        try:
-            cnt = session.query(models.User).count()
-        except:
-            log.err()
-        msg = "New subscriber: %s ( %d )" % (entity.userhost(), cnt)
-        for a in config.ADMINS:
-            current_conn.send_plain(a, msg)
+        def send_noticies(counts):
+            cnt = counts['users']
+            msg = "New subscriber: %s ( %d )" % (entity.userhost(), cnt)
+            for a in config.ADMINS:
+                current_conn.send_plain(a, msg)
+        db.model_counts().addCallback(send_noticies)
+
+    def _set_status(self, u, status):
+        u.status='unsubscribed'
+        u.save()
+
+    def _find_and_set_status(self, jid, status):
+        db.User.by_jid(jid).addCallback(self._set_status, 'unsubscribed')
 
     def unsubscribedReceived(self, entity):
         log.msg("Unsubscribed received from %s" % (entity.userhost()))
-        try:
-            models.User.update_status(entity.userhost(), 'unsubscribed')
-        except:
-            log.err()
+        self._find_and_set_status(entity.userhost(), 'unsubscribed')
         self.unsubscribe(entity)
         self.unsubscribed(entity)
 
@@ -301,10 +273,7 @@ Type "help" to get started.
 
     def unsubscribeReceived(self, entity):
         log.msg("Unsubscribe received from %s" % (entity.userhost()))
-        try:
-            models.User.update_status(entity.userhost(), 'unsubscribed')
-        except:
-            log.err()
+        self._find_and_set_status(entity.userhost(), 'unsubscribed')
         self.unsubscribe(entity)
         self.unsubscribed(entity)
         self.update_presence()

@@ -16,7 +16,7 @@ from twisted.internet import reactor, threads
 from wokkel import ping
 from sqlalchemy.orm import exc
 
-import models
+import db
 
 import config
 import twitter
@@ -111,7 +111,7 @@ class StatusCommand(BaseStatusCommand):
     def __init__(self):
         super(StatusCommand, self).__init__('status', 'Check your status.')
 
-    def __call__(self, user, prot, args, session):
+    def __call__(self, user, prot, args):
         prot.send_plain(user.jid, self.get_user_status(user))
 
 class HelpCommand(BaseCommand):
@@ -119,7 +119,7 @@ class HelpCommand(BaseCommand):
     def __init__(self):
         super(HelpCommand, self).__init__('help', 'You need help.')
 
-    def __call__(self, user, prot, args, session):
+    def __call__(self, user, prot, args):
         rv=[]
         if args and args.strip():
             c=all_commands.get(args.strip().lower(), None)
@@ -142,18 +142,22 @@ class OnCommand(BaseCommand):
     def __init__(self):
         super(OnCommand, self).__init__('on', 'Enable tracks.')
 
-    def __call__(self, user, prot, args, session):
+    def __call__(self, user, prot, args):
         user.active=True
         scheduling.enable_user(user.jid)
+        user.save()
+        # XXX:  Check result
         prot.send_plain(user.jid, "Enabled tracks.")
 
 class OffCommand(BaseCommand):
     def __init__(self):
         super(OffCommand, self).__init__('off', 'Disable tracks.')
 
-    def __call__(self, user, prot, args, session):
+    def __call__(self, user, prot, args):
         user.active=False
         scheduling.disable_user(user.jid)
+        user.save()
+        # XXX:  Check result
         prot.send_plain(user.jid, "Disabled tracks.")
 
 class SearchCommand(BaseCommand):
@@ -202,7 +206,7 @@ class SearchCommand(BaseCommand):
             ).addErrback(log.err)
 
     @arg_required()
-    def __call__(self, user, prot, args, session):
+    def __call__(self, user, prot, args):
         scheduling.search_semaphore.run(self._do_search, args, user.jid, prot)
 
 class TWLoginCommand(BaseCommand):
@@ -212,7 +216,7 @@ class TWLoginCommand(BaseCommand):
             'Set your twitter username and password (use at your own risk)')
 
     @arg_required()
-    def __call__(self, user, prot, args, session):
+    def __call__(self, user, prot, args):
         args = args.replace(">", "").replace("<", "")
         username, password=args.split(' ', 1)
         jid = user.jid
@@ -226,14 +230,14 @@ class TWLoginCommand(BaseCommand):
             ":( Your credentials were refused. "
                 "Please try again: twlogin username password")
 
-    @models.db_mutexed
-    @models.wants_session
+    # XXX:  FIX!!!
     def __credsVerified(self, x, prot, jid, username, password, session):
         user = models.User.by_jid(jid, session)
         user.username = username
         user.password = base64.encodestring(password)
         try:
-            session.commit()
+            user.save()
+            # XXX:  Check result
             prot.send_plain(user.jid, "Added credentials for %s"
                 % user.username)
             scheduling.users.set_creds(jid, username, password)
@@ -248,7 +252,7 @@ class TWLogoutCommand(BaseCommand):
         super(TWLogoutCommand, self).__init__('twlogout',
             "Discard your twitter credentials.")
 
-    def __call__(self, user, prot, args, session):
+    def __call__(self, user, prot, args):
         user.username = None
         user.password = None
         prot.send_plain(user.jid, "You have been logged out.")
@@ -260,13 +264,14 @@ class TrackCommand(BaseCommand):
         super(TrackCommand, self).__init__('track', "Start tracking a topic.")
 
     @arg_required()
-    def __call__(self, user, prot, args, session):
-        user.track(args, session)
+    def __call__(self, user, prot, args):
+        user.track(args)
         if user.active:
             scheduling.queries.add(user.jid, args, 0)
             rv = "Tracking %s" % args
         else:
             rv = "Will track %s as soon as you activate again." % args
+        user.save()
         prot.send_plain(user.jid, rv)
 
 class UnTrackCommand(BaseCommand):
@@ -276,10 +281,11 @@ class UnTrackCommand(BaseCommand):
             "Stop tracking a topic.")
 
     @arg_required()
-    def __call__(self, user, prot, args, session):
-        if user.untrack(args, session):
+    def __call__(self, user, prot, args):
+        if user.untrack(args):
             scheduling.queries.untracked(user.jid, args)
             prot.send_plain(user.jid, "Stopped tracking %s" % args)
+            user.save()
         else:
             prot.send_plain(user.jid,
                 "Didn't tracking %s (sure you were tracking it?)" % args)
@@ -290,7 +296,7 @@ class TracksCommand(BaseCommand):
         super(TracksCommand, self).__init__('tracks',
             "List the topics you're tracking.", aliases=['tracking'])
 
-    def __call__(self, user, prot, args, session):
+    def __call__(self, user, prot, args):
         rv = ["Currently tracking:\n"]
         rv.extend(sorted([t.query for t in user.tracks]))
         prot.send_plain(user.jid, "\n".join(rv))
@@ -311,7 +317,7 @@ class PostCommand(BaseCommand):
             "Your password may be wrong, or twitter may be broken.")
 
     @arg_required()
-    def __call__(self, user, prot, args, session):
+    def __call__(self, user, prot, args):
         if user.has_credentials:
             jid = user.jid
             scheduling.getTwitterAPI(user.username, user.decoded_password).update(
@@ -336,7 +342,7 @@ class FollowCommand(BaseCommand):
 
     @arg_required()
     @login_required
-    def __call__(self, user, prot, args, session):
+    def __call__(self, user, prot, args):
         scheduling.getTwitterAPI(user.username, user.decoded_password).follow(
             str(args)).addCallback(self._following, user.jid, prot, args
             ).addErrback(self._failed, user.jid, prot, args)
@@ -356,7 +362,7 @@ class LeaveUser(BaseCommand):
 
     @arg_required()
     @login_required
-    def __call__(self, user, prot, args, session):
+    def __call__(self, user, prot, args):
         scheduling.getTwitterAPI(user.username, user.decoded_password).leave(
             str(args)).addCallback(self._left, user.jid, prot, args
             ).addErrback(self._failed, user.jid, prot, args)
@@ -376,7 +382,7 @@ class BlockCommand(BaseCommand):
 
     @arg_required()
     @login_required
-    def __call__(self, user, prot, args, session):
+    def __call__(self, user, prot, args):
         scheduling.getTwitterAPI(user.username, user.decoded_password).block(
             str(args)).addCallback(self._blocked, user.jid, prot, args
             ).addErrback(self._failed, user.jid, prot, args)
@@ -396,7 +402,7 @@ class UnblockCommand(BaseCommand):
 
     @arg_required()
     @login_required
-    def __call__(self, user, prot, args, session):
+    def __call__(self, user, prot, args):
         scheduling.getTwitterAPI(user.username, user.decoded_password).unblock(
             str(args)).addCallback(self._left, user.jid, prot, args
             ).addErrback(self._failed, user.jid, prot, args)
@@ -411,8 +417,10 @@ class AutopostCommand(BaseCommand):
             "Enable or disable autopost.")
 
     @arg_required(must_be_on_or_off)
-    def __call__(self, user, prot, args, session):
+    def __call__(self, user, prot, args):
         user.auto_post = (args.lower() == "on")
+        user.save()
+        # XXX:  Check results
         prot.send_plain(user.jid, "Autoposting is now %s." % (args.lower()))
 
 class WatchFriendsCommand(BaseCommand):
@@ -422,13 +430,13 @@ class WatchFriendsCommand(BaseCommand):
             "Enable or disable watching friends.", aliases=['watchfriends'])
 
     def _gotFriendStatus(self, jid, prot):
-        @models.db_mutexed
-        @models.wants_session
-        def f(entry, session):
+        # XXX:  FIX
+        def f(entry):
             user = models.User.by_jid(jid, session)
             user.friend_timeline_id = entry.id
             try:
-                session.commit()
+                user.save()
+                # XXX:  Check results
                 prot.send_plain(jid, ":) Starting to watch friends.")
             except:
                 log.err()
@@ -438,7 +446,7 @@ class WatchFriendsCommand(BaseCommand):
 
     @arg_required(must_be_on_or_off)
     @login_required
-    def __call__(self, user, prot, args, session):
+    def __call__(self, user, prot, args):
         args = args.lower()
         if args == 'on':
             scheduling.getTwitterAPI(user.username, user.decoded_password).friends(
@@ -477,7 +485,7 @@ Recently:<br/>
 
     @arg_required()
     @login_required
-    def __call__(self, user, prot, args, session):
+    def __call__(self, user, prot, args):
         scheduling.getTwitterAPI(user.username, user.decoded_password).show_user(
             str(args)).addErrback(self._fail, prot, user.jid, args
             ).addCallback(self._gotUser, prot, user.jid)
@@ -488,7 +496,7 @@ class Top10Command(BaseCommand):
         super(Top10Command, self).__init__('top10',
             'Get the top10 most common tracks.')
 
-    def __call__(self, user, prot, args, session):
+    def __call__(self, user, prot, args):
         query="""
 select t.query, count(*) as watchers
   from tracks t join user_tracks ut on (t.id = ut.track_id)
@@ -498,6 +506,7 @@ select t.query, count(*) as watchers
 """
         rv=["Top 10 most tracked topics:"]
         rv.append("")
+        # XXX:  FIX!
         for row in models._engine.execute(query).fetchall():
             rv.append("%s (%d watchers)" % (row[0], row[1]))
         prot.send_plain(user.jid, "\n".join(rv))
@@ -508,7 +517,7 @@ class MoodCommand(BaseCommand):
         super(MoodCommand, self).__init__('mood',
             "Ask about twitterspy's mood.")
 
-    def __call__(self, user, prot, args, session):
+    def __call__(self, user, prot, args):
         mood, good, total, percentage = moodiness.moodiness.current_mood()
         if mood:
             rv=["My current mood is %s" % mood]
@@ -529,7 +538,7 @@ class AdminSubscribeCommand(BaseCommand):
 
     @admin_required
     @arg_required()
-    def __call__(self, user, prot, args, session):
+    def __call__(self, user, prot, args):
         prot.send_plain(user.jid, "Subscribing " + args)
         protocol.presence_conn.subscribe(JID(args))
 
@@ -541,9 +550,10 @@ class AdminUserStatusCommand(BaseStatusCommand):
 
     @admin_required
     @arg_required()
-    def __call__(self, user, prot, args, session):
+    def __call__(self, user, prot, args):
         try:
-            u=models.User.by_jid(args, session)
+            # XXX:  FIX!
+            u=models.User.by_jid(args)
             prot.send_plain(user.jid, self.get_user_status(u))
         except Exception, e:
             prot.send_plain(user.jid, "Failed to load user: " + str(e))
@@ -573,7 +583,7 @@ class AdminPingCommand(BaseCommand):
 
     @admin_required
     @arg_required()
-    def __call__(self, user, prot, args, session):
+    def __call__(self, user, prot, args):
         # For bare jids, we'll send what was requested,
         # but also look up the user and send it to any active resources
         self.ping(prot, user.jid, args)
@@ -589,9 +599,8 @@ class AdminBroadcastCommand(BaseCommand):
         super(AdminBroadcastCommand, self).__init__('adm_broadcast',
                                                     'Broadcast a message.')
 
-    @models.db_mutexed
-    @models.wants_session
-    def _load_users(self, session):
+    # XXX:  FIX!
+    def _load_users(self):
         return [user.jid for user in session.query(models.User).filter(
                 models.User.status.in_(['online', 'away', 'dnd', 'xa']))]
 

@@ -8,6 +8,8 @@ from twisted.internet import defer
 
 import paisley
 
+import config
+
 DB_NAME='twitterspy'
 
 def get_couch():
@@ -30,9 +32,10 @@ class User(object):
 
     @staticmethod
     def from_doc(doc):
+        print "Loading from doc:", str(doc)
         user = User()
         user.jid = doc['_id']
-        v = doc['value']
+        v = doc
         user.active = v.get('active')
         user.auto_post = v.get('auto_post')
         user.username = v.get('username')
@@ -52,7 +55,7 @@ class User(object):
     @staticmethod
     def by_jid(jid):
         couch = get_couch()
-        d = couch.openDoc(DB_NAME, jid)
+        d = couch.openDoc(DB_NAME, str(jid))
         rv = defer.Deferred()
         d.addCallback(lambda doc: rv.callback(User.from_doc(doc)))
         d.addErrback(lambda e: rv.callback(User(jid)))
@@ -78,3 +81,11 @@ class User(object):
     @property
     def is_admin(self):
         return self.jid in config.ADMINS
+
+def model_counts():
+    d = defer.Deferred()
+    docd = get_couch().openDoc(DB_NAME, "_view/counts/counts")
+    docd.addCallback(lambda r: d.callback(r['rows'][0]['value']))
+    docd.addErrback(lambda e: d.errback(e))
+
+    return d
