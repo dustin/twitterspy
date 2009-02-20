@@ -261,8 +261,13 @@ class TWLogoutCommand(BaseCommand):
     def __call__(self, user, prot, args):
         user.username = None
         user.password = None
-        prot.send_plain(user.jid, "You have been logged out.")
-        scheduling.users.set_creds(user.jid, None, None)
+        def worked(stuff):
+            prot.send_plain(user.jid, "You have been logged out.")
+            scheduling.users.set_creds(user.jid, None, None)
+        def notWorked(e):
+            log.err(e)
+            prot.send_plain(user.jid, "Failed to log you out.  Try again.")
+        user.save().addCallback(worked).addErrback(notWorked)
 
 class TrackCommand(BaseCommand):
 
