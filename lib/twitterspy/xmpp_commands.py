@@ -448,19 +448,14 @@ class WatchFriendsCommand(BaseCommand):
         super(WatchFriendsCommand, self).__init__('watch_friends',
             "Enable or disable watching friends.", aliases=['watchfriends'])
 
-    def _gotFriendStatus(self, jid, prot):
-        # XXX:  FIX
+    def _gotFriendStatus(self, user, prot):
         def f(entry):
-            user = models.User.by_jid(jid, session)
             user.friend_timeline_id = entry.id
-            try:
-                user.save()
-                # XXX:  Check results
-                prot.send_plain(jid, ":) Starting to watch friends.")
-            except:
-                log.err()
-                prot.send_plain(jid,
-                    ":( Error watching friends, please try again.")
+            def worked(stuff):
+                prot.send_plain(user.jid, ":) Starting to watch friends.")
+            def notWorked(e):
+                prot.send_plain(user.jid, ":( Error watching friends.  Try again.")
+            user.save().addCallback(worked).addErrback(notWorked)
         return f
 
     @arg_required(must_be_on_or_off)
@@ -469,10 +464,14 @@ class WatchFriendsCommand(BaseCommand):
         args = args.lower()
         if args == 'on':
             scheduling.getTwitterAPI(user.username, user.decoded_password).friends(
-                self._gotFriendStatus(user.jid, prot), params={'count': '1'})
+                self._gotFriendStatus(user, prot), params={'count': '1'})
         elif args == 'off':
             user.friend_timeline_id = None
-            prot.send_plain(user.jid, ":) No longer watching your friends.")
+            def worked(stuff):
+                prot.send_plain(user.jid, ":) No longer watching your friends.")
+            def notWorked(e):
+                prot.send_plain(user.jid, ":( Problem stopping friend watches. Try again.")
+            user.save().addCallback(worked).addErrback(notWorked)
         else:
             prot.send_plain(user.jid, "Watch must be 'on' or 'off'.")
 
