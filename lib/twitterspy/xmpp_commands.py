@@ -28,9 +28,9 @@ all_commands={}
 
 def arg_required(validator=lambda n: n):
     def f(orig):
-        def every(self, user, prot, args, session):
+        def every(self, user, prot, args):
             if validator(args):
-                orig(self, user, prot, args, session)
+                orig(self, user, prot, args)
             else:
                 prot.send_plain(user.jid, "Arguments required for %s:\n%s"
                     % (self.name, self.extended_help))
@@ -38,18 +38,18 @@ def arg_required(validator=lambda n: n):
     return f
 
 def login_required(orig):
-    def every(self, user, prot, args, session):
+    def every(self, user, prot, args):
         if user.has_credentials:
-            orig(self, user, prot, args, session)
+            orig(self, user, prot, args)
         else:
             prot.send_plain(user.jid, "You must twlogin before calling %s"
                 % self.name)
     return every
 
 def admin_required(orig):
-    def every(self, user, prot, args, session):
+    def every(self, user, prot, args):
         if user.is_admin:
-            orig(self, user, prot, args, session)
+            orig(self, user, prot, args)
         else:
             prot.send_plain(user.jid, "You're not an admin.")
     return every
