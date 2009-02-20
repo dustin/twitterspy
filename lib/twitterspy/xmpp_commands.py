@@ -144,10 +144,13 @@ class OnCommand(BaseCommand):
 
     def __call__(self, user, prot, args):
         user.active=True
-        scheduling.enable_user(user.jid)
-        user.save()
-        # XXX:  Check result
-        prot.send_plain(user.jid, "Enabled tracks.")
+        def worked(stuff):
+            scheduling.enable_user(user.jid)
+            prot.send_plain(user.jid, "Enabled tracks.")
+        def notWorked(e):
+            log.err()
+            prot.send_plain(user.jid, "Failed to enable.  Try again.")
+        user.save().addCallback(worked).addErrback(notWorked)
 
 class OffCommand(BaseCommand):
     def __init__(self):
@@ -155,10 +158,13 @@ class OffCommand(BaseCommand):
 
     def __call__(self, user, prot, args):
         user.active=False
-        scheduling.disable_user(user.jid)
-        user.save()
-        # XXX:  Check result
-        prot.send_plain(user.jid, "Disabled tracks.")
+        def worked(stuff):
+            scheduling.enable_user(user.jid)
+            prot.send_plain(user.jid, "Disabled tracks.")
+        def notWorked(e):
+            log.err(e)
+            prot.send_plain(user.jid, "Failed to disable.  Try again.")
+        user.save().addCallback(worked).addErrback(notWorked)
 
 class SearchCommand(BaseCommand):
 
