@@ -315,7 +315,7 @@ class TracksCommand(BaseCommand):
 
     def __call__(self, user, prot, args):
         rv = ["Currently tracking:\n"]
-        rv.extend(sorted([t.query for t in user.tracks]))
+        rv.extend(sorted(user.tracks))
         prot.send_plain(user.jid, "\n".join(rv))
 
 class PostCommand(BaseCommand):
