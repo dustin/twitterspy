@@ -275,12 +275,17 @@ class TrackCommand(BaseCommand):
     def __call__(self, user, prot, args):
         user.track(args)
         if user.active:
-            scheduling.queries.add(user.jid, args, 0)
             rv = "Tracking %s" % args
         else:
             rv = "Will track %s as soon as you activate again." % args
-        user.save()
-        prot.send_plain(user.jid, rv)
+
+        def worked(stuff):
+            if user.active:
+                scheduling.queries.add(user.jid, args, 0)
+            prot.send_plain(user.jid, rv)
+        def notWorked(e):
+            prot.send_plain(user.jid, ":( Failed to save your tracks.  Try again.")
+        user.save().addCallback(worked).addErrback(notWorked)
 
 class UnTrackCommand(BaseCommand):
 
@@ -291,12 +296,16 @@ class UnTrackCommand(BaseCommand):
     @arg_required()
     def __call__(self, user, prot, args):
         if user.untrack(args):
-            scheduling.queries.untracked(user.jid, args)
-            prot.send_plain(user.jid, "Stopped tracking %s" % args)
-            user.save()
+            def worked(stuff):
+                scheduling.queries.untracked(user.jid, args)
+                prot.send_plain(user.jid, "Stopped tracking %s" % args)
+            def notWorked(e):
+                log.err(e)
+                prot.send_plain(user.jid, ":( Failed to save tracks. Try again")
+            user.save().addCallback(worked).addErrback(notWorked)
         else:
             prot.send_plain(user.jid,
-                "Didn't tracking %s (sure you were tracking it?)" % args)
+                "Didn't untrack %s (sure you were tracking it?)" % args)
 
 class TracksCommand(BaseCommand):
 

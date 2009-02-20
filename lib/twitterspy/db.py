@@ -67,7 +67,11 @@ class User(object):
         self.tracks.append(query)
 
     def untrack(self, query):
-        self.tracks.remove(query)
+        try:
+            self.tracks.remove(query)
+            return True
+        except ValueError:
+            return False
 
     def save(self):
         return get_couch().saveDoc(DB_NAME, self.to_doc(), str(self.jid))
