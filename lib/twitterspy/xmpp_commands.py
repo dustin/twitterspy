@@ -227,7 +227,7 @@ class TWLoginCommand(BaseCommand):
         username, password=args.split(' ', 1)
         jid = user.jid
         scheduling.getTwitterAPI(username, password).verify_credentials().addCallback(
-            self.__credsVerified, prot, jid, username, password).addErrback(
+            self.__credsVerified, prot, jid, username, password, user).addErrback(
             self.__credsRefused, prot, jid)
 
     def __credsRefused(self, e, prot, jid):
@@ -236,21 +236,18 @@ class TWLoginCommand(BaseCommand):
             ":( Your credentials were refused. "
                 "Please try again: twlogin username password")
 
-    # XXX:  FIX!!!
-    def __credsVerified(self, x, prot, jid, username, password, session):
-        user = models.User.by_jid(jid, session)
+    def __credsVerified(self, x, prot, jid, username, password, user):
         user.username = username
         user.password = base64.encodestring(password)
-        try:
-            user.save()
-            # XXX:  Check result
+        def worked(stuff):
             prot.send_plain(user.jid, "Added credentials for %s"
                 % user.username)
             scheduling.users.set_creds(jid, username, password)
-        except:
+        def notWorked(stuff):
             log.err()
             prot.send_plain(user.jid, "Error setting credentials for %s. "
                 "Please try again." % user.username)
+        user.save().addCallback(worked).addErrback(notWorked)
 
 class TWLogoutCommand(BaseCommand):
 
