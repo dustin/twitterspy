@@ -436,9 +436,11 @@ class AutopostCommand(BaseCommand):
     @arg_required(must_be_on_or_off)
     def __call__(self, user, prot, args):
         user.auto_post = (args.lower() == "on")
-        user.save()
-        # XXX:  Check results
-        prot.send_plain(user.jid, "Autoposting is now %s." % (args.lower()))
+        def worked(stuff):
+            prot.send_plain(user.jid, "Autoposting is now %s." % (args.lower()))
+        def notWorked(e):
+            prot.send_plain(user.jid, "Problem saving autopost. Try again.")
+        user.save().addCallback(worked).addErrback(notWorked)
 
 class WatchFriendsCommand(BaseCommand):
 
