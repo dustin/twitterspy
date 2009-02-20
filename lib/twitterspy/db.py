@@ -28,6 +28,7 @@ class User(object):
         self.friend_timeline_id = None
         self.direct_message_id = None
         self.created_at = time.time()
+        self._rev = None
         self.tracks = []
 
     @staticmethod
@@ -44,6 +45,7 @@ class User(object):
         user.friend_timeline_id = v.get('friend_timeline_id')
         user.direct_message_id = v.get('direct_message_id')
         user.created_at = v.get('created_at', time.time())
+        user._rev = v.get('_rev')
         user.tracks = v.get('tracks', [])
         return user
 
