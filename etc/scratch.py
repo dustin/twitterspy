@@ -9,11 +9,11 @@ from twitterspy import db
 
 @defer.deferredGenerator
 def f():
-    d = db.User.by_jid('dustin@sallings.org')
+    d = db.get_active_users()
     wfd = defer.waitForDeferred(d)
     yield wfd
     u = wfd.getResult()
-    print "%s tracks %s" % (u.jid, str(u.tracks))
+    print u
 
     reactor.stop()
 
