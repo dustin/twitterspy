@@ -33,7 +33,6 @@ class User(object):
 
     @staticmethod
     def from_doc(doc):
-        print "Loading from doc:", str(doc)
         user = User()
         user.jid = doc['_id']
         v = doc
