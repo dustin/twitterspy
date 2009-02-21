@@ -14,6 +14,7 @@ from wokkel.keepalive import KeepAlive
 from wokkel.disco import DiscoHandler
 import twitter
 
+from twitterspy import db
 from twitterspy import config
 from twitterspy import protocol
 from twitterspy import xmpp_ping
@@ -35,6 +36,8 @@ xmppclient = XMPPClient(jid.internJID(config.SCREEN_NAME),
     config.CONF.get('xmpp', 'pass'), host)
 
 xmppclient.logTraffic = False
+
+db.initialize()
 
 # Stream handling protocols for twitterspy
 protocols = [protocol.TwitterspyPresenceProtocol,

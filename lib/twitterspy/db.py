@@ -4,7 +4,7 @@ import base64
 import time
 
 from twisted.python import log
-from twisted.internet import defer
+from twisted.internet import defer, task
 
 import paisley
 
@@ -89,6 +89,13 @@ class User(object):
     @property
     def is_admin(self):
         return self.jid in config.ADMINS
+
+def initialize():
+    def periodic():
+        log.msg("Performing compaction.")
+        get_couch().post("/" + DB_NAME + '/_compact', '')
+    loop = task.LoopingCall(periodic)
+    loop.start(3600)
 
 def model_counts():
     """Returns a deferred whose callback will receive a dict of object
