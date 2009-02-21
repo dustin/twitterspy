@@ -37,7 +37,7 @@ def create_database():
     print wfd.getResult()
 
     doc="""
-{"language":"javascript","views":{"counts":{"map":"function(doc) {\n  if(doc.doctype == 'User') {\n    emit(null, [1, doc.tracks.length]);\n  }\n}","reduce":"function(key, values) {\n  var result = {users: 0, tracks: 0};\n  values.forEach(function(pair) {\n     result.users += pair[0];\n     result.tracks += pair[1];\n  });\n  return result;\n}"}}}
+{"language":"javascript","views":{"counts":{"map":"function(doc) {\n  if(doc.doctype == 'User') {\n    emit(null, {users: 1, tracks: doc.tracks.length});\n  }\n}","reduce":"function(key, values) {\n  var result = {users: 0, tracks: 0};\n  values.forEach(function(p) {\n     result.users += p.users;\n     result.tracks += p.tracks;\n  });\n  return result;\n}"}}}
 """
     d = couch.saveDoc(db.DB_NAME, doc, '_design/counts')
     wfd = defer.waitForDeferred(d)
