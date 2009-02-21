@@ -1,5 +1,6 @@
 import bisect
 import random
+import hashlib
 
 from twisted.python import log
 from twisted.internet import task, defer, reactor, threads
@@ -94,12 +95,25 @@ class Query(JidSet):
     def __init__(self, query, last_id=0):
         super(Query, self).__init__()
         self.query = query
-        self.last_id = last_id
+        self.cache_key = self._compute_cache_key(query)
+        self.loop = None
 
+        protocol.mc.get(self.cache_key).addCallback(self._doStart)
+
+    def _compute_cache_key(self, query):
+        return hashlib.md5(query).hexdigest()
+
+    def _doStart(self, res):
+        if res[1]:
+            self.last_id = res[1]
+            log.msg("Loaded last ID for %s from memcache: %s"
+                     % (self.query, self.last_id))
+        else:
+            log.msg("No last ID for %s" % (self.query,))
+            self.last_id = 0
         r=random.Random()
         then = r.randint(1, min(60, self.loop_time / 2))
         log.msg("Starting %s in %ds" % (self.query, then))
-        self.loop = None
         reactor.callLater(then, self.start)
 
     def _sendMessages(self, something, results):
@@ -121,6 +135,10 @@ class Query(JidSet):
     def _reportError(self, e):
         log.msg("Error in search %s: %s" % (self.query, str(e)))
 
+    def _save_track_id(self, x, old_id):
+        if old_id != self.last_id:
+            protocol.mc.set(self.cache_key, str(self.last_id))
+
     def _do_search(self):
         log.msg("Searching %s" % self.query)
         params = {}
@@ -132,6 +150,7 @@ class Query(JidSet):
             ).addCallback(moodiness.moodiness.markSuccess
             ).addErrback(moodiness.moodiness.markFailure
             ).addCallback(self._sendMessages, results
+            ).addCallback(self._save_track_id, self.last_id
             ).addErrback(self._reportError)
 
     def start(self):
