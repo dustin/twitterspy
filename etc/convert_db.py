@@ -53,6 +53,15 @@ def create_database():
     yield wfd
     print wfd.getResult()
 
+    doc="""
+{"language":"javascript","views":{"active":{"map":"function(doc) {\n  if(doc.doctype == 'User' && doc.active) {\n    emit(null, doc._id);\n  }\n}"}}}
+"""
+
+    d = couch.saveDoc(db.DB_NAME, doc, '_design/users')
+    wfd = defer.waitForDeferred(d)
+    yield wfd
+    print wfd.getResult()
+
     reactor.callLater(0, load_records)
 
 @defer.deferredGenerator

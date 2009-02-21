@@ -107,3 +107,10 @@ def get_top10(n=10):
     docd.addCallback(processResults)
     docd.addErrback(lambda e: d.errback(e))
     return d
+
+def get_active_users():
+    d = defer.Deferred()
+    docd = get_couch().openDoc(DB_NAME, "_view/users/active")
+    docd.addCallback(lambda res: d.callback([r['value'] for r in res['rows']]))
+    docd.addErrback(lambda e: d.errback(e))
+    return d
