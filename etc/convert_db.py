@@ -28,67 +28,37 @@ CUR=DB.cursor()
 def parse_timestamp(ts):
     return None
 
-@defer.deferredGenerator
-def create_database():
-    couch = db.get_couch()
-    d = couch.createDB(db.DB_NAME)
-    wfd = defer.waitForDeferred(d)
-    yield wfd
-    print wfd.getResult()
+def create(e, r):
+    print "Creating record for", r[0]
+    user = db.User()
+    user.jid = r[0]
+    user.username = r[1]
+    user.password = r[2]
+    user.active = bool(r[3])
+    user.status = r[4]
+    user.min_id = r[5]
+    user.language = r[6]
+    user.auto_post = bool(r[7])
+    user.friend_timeline_id = r[8]
+    user.direct_message_id = r[9]
+    user.created_at = parse_timestamp(r[10])
 
-    doc="""
-{"language":"javascript","views":{"counts":{"map":"function(doc) {\n  if(doc.doctype == 'User') {\n    emit(null, {users: 1, tracks: doc.tracks.length});\n  }\n}","reduce":"function(key, values) {\n  var result = {users: 0, tracks: 0};\n  values.forEach(function(p) {\n     result.users += p.users;\n     result.tracks += p.tracks;\n  });\n  return result;\n}"}}}
-"""
-    d = couch.saveDoc(db.DB_NAME, doc, '_design/counts')
-    wfd = defer.waitForDeferred(d)
-    yield wfd
-    print wfd.getResult()
+    for tr in CUR.execute(GET_TRACKS, [r[11]]).fetchall():
+        user.track(tr[0])
 
-    doc="""
-{"language":"javascript","views":{"query_counts":{"map":"function(doc) {\n  if(doc.doctype == 'User') {\n    doc.tracks.forEach(function(query) {\n      emit(query, 1);\n    });\n  }\n}","reduce":"function(key, values) {\n   return sum(values);\n}"}}}
-"""
-
-    d = couch.saveDoc(db.DB_NAME, doc, '_design/query_counts')
-    wfd = defer.waitForDeferred(d)
-    yield wfd
-    print wfd.getResult()
-
-    doc="""
-{"language":"javascript","views":{"active":{"map":"function(doc) {\n  if(doc.doctype == 'User' && doc.active) {\n    emit(null, doc._id);\n  }\n}"}}}
-"""
-
-    d = couch.saveDoc(db.DB_NAME, doc, '_design/users')
-    wfd = defer.waitForDeferred(d)
-    yield wfd
-    print wfd.getResult()
-
-    reactor.callLater(0, load_records)
+    return user.save()
 
 @defer.deferredGenerator
 def load_records():
+    couch = db.get_couch()
+
     for r in CUR.execute(GET_USERS).fetchall():
-        user = db.User()
-        user.jid = r[0]
-        user.username = r[1]
-        user.password = r[2]
-        user.active = bool(r[3])
-        user.status = r[4]
-        user.min_id = r[5]
-        user.language = r[6]
-        user.auto_post = bool(r[7])
-        user.friend_timeline_id = r[8]
-        user.direct_message_id = r[9]
-        user.created_at = parse_timestamp(r[10])
-
-        for tr in CUR.execute(GET_TRACKS, [r[11]]).fetchall():
-            user.track(tr[0])
-
-        d = user.save()
+        d = couch.openDoc(db.DB_NAME, str(r[0]))
+        d.addErrback(create, r)
         wfd = defer.waitForDeferred(d)
         yield wfd
-        print "Did %s: %s" % (r[0], wfd.getResult())
 
     reactor.stop()
 
-reactor.callWhenRunning(create_database)
+reactor.callWhenRunning(load_records)
 reactor.run()
