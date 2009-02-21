@@ -97,7 +97,7 @@ def model_counts():
        {'users': n, 'tracks': m}
     """
     d = defer.Deferred()
-    docd = get_couch().openDoc(DB_NAME, "_view/counts/counts")
+    docd = get_couch().openView(DB_NAME, "counts", "counts")
     docd.addCallback(lambda r: d.callback(r['rows'][0]['value']))
     docd.addErrback(lambda e: d.errback(e))
 
@@ -107,8 +107,8 @@ def get_top10(n=10):
     """Returns a deferred whose callback will receive a list of at
     most `n` (number, 'tag') pairs sorted in reverse"""
     d = defer.Deferred()
-    docd = get_couch().openDoc(DB_NAME,
-                               "_view/query_counts/query_counts?group=true")
+    docd = get_couch().openView(DB_NAME, "query_counts", "query_counts",
+                                group="true")
     def processResults(resp):
         rows = sorted([(r['value'], r['key']) for r in resp['rows']],
                       reverse=True)
@@ -120,7 +120,7 @@ def get_top10(n=10):
 def get_active_users():
     """Returns a deferred whose callback will receive a list of active JIDs."""
     d = defer.Deferred()
-    docd = get_couch().openDoc(DB_NAME, "_view/users/active")
+    docd = get_couch().openView(DB_NAME, "users", "active")
     docd.addCallback(lambda res: d.callback([r['value'] for r in res['rows']]))
     docd.addErrback(lambda e: d.errback(e))
     return d
