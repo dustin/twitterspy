@@ -45,7 +45,7 @@ def create_database():
     print wfd.getResult()
 
     doc="""
-{"language":"javascript","views":{"query_counts":{"map":"function(doc) {\n  if(doc.doctype == 'User') {\n    doc.tracks.forEach(function(query) {\n      emit(query, doc._id);\n    });\n  }\n}","reduce":"function(key, values) {\n   return values.length;\n}"}}}
+{"language":"javascript","views":{"query_counts":{"map":"function(doc) {\n  if(doc.doctype == 'User') {\n    doc.tracks.forEach(function(query) {\n      emit(query, 1);\n    });\n  }\n}","reduce":"function(key, values) {\n   return sum(values);\n}"}}}
 """
 
     d = couch.saveDoc(db.DB_NAME, doc, '_design/query_counts')
