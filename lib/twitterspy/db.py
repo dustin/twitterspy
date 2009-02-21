@@ -52,6 +52,8 @@ class User(object):
     def to_doc(self):
         rv = dict(self.__dict__)
         rv['doctype'] = 'User'
+        for k in [k for k,v in rv.items() if not v]:
+            del rv[k]
         return rv
 
     @staticmethod
