@@ -519,15 +519,18 @@ class Top10Command(BaseCommand):
 select t.query, count(*) as watchers
   from tracks t join user_tracks ut on (t.id = ut.track_id)
   group by t.query
-  order by watchers desc, query
+  order by watchers desc, queryb
   limit 10
 """
-        rv=["Top 10 most tracked topics:"]
-        rv.append("")
-        # XXX:  FIX!
-        for row in models._engine.execute(query).fetchall():
-            rv.append("%s (%d watchers)" % (row[0], row[1]))
-        prot.send_plain(user.jid, "\n".join(rv))
+        def worked(top10):
+            rv=["Top 10 most tracked topics:"]
+            rv.append("")
+            rv.extend(["%s (%d watchers)" % (row[1], row[0]) for row in top10])
+            prot.send_plain(user.jid, "\n".join(rv))
+        def notWorked(e):
+            log.err(e)
+            prot.send_plain(user.jid, "Problem grabbing top10")
+        db.get_top10().addCallback(worked).addErrback(notWorked)
 
 class MoodCommand(BaseCommand):
 

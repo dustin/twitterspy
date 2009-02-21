@@ -95,3 +95,15 @@ def model_counts():
     docd.addErrback(lambda e: d.errback(e))
 
     return d
+
+def get_top10(n=10):
+    d = defer.Deferred()
+    docd = get_couch().openDoc(DB_NAME,
+                               "_view/query_counts/query_counts?group=true")
+    def processResults(resp):
+        rows = sorted([(r['value'], r['key']) for r in resp['rows']],
+                      reverse=True)
+        d.callback(rows[:n])
+    docd.addCallback(processResults)
+    docd.addErrback(lambda e: d.errback(e))
+    return d
