@@ -91,6 +91,11 @@ class User(object):
         return self.jid in config.ADMINS
 
 def model_counts():
+    """Returns a deferred whose callback will receive a dict of object
+    counts, e.g.
+
+       {'users': n, 'tracks': m}
+    """
     d = defer.Deferred()
     docd = get_couch().openDoc(DB_NAME, "_view/counts/counts")
     docd.addCallback(lambda r: d.callback(r['rows'][0]['value']))
@@ -99,6 +104,8 @@ def model_counts():
     return d
 
 def get_top10(n=10):
+    """Returns a deferred whose callback will receive a list of at
+    most `n` (number, 'tag') pairs sorted in reverse"""
     d = defer.Deferred()
     docd = get_couch().openDoc(DB_NAME,
                                "_view/query_counts/query_counts?group=true")
@@ -111,6 +118,7 @@ def get_top10(n=10):
     return d
 
 def get_active_users():
+    """Returns a deferred whose callback will receive a list of active JIDs."""
     d = defer.Deferred()
     docd = get_couch().openDoc(DB_NAME, "_view/users/active")
     docd.addCallback(lambda res: d.callback([r['value'] for r in res['rows']]))
