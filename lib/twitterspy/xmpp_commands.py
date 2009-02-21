@@ -572,12 +572,12 @@ class AdminUserStatusCommand(BaseStatusCommand):
     @admin_required
     @arg_required()
     def __call__(self, user, prot, args):
-        try:
-            # XXX:  FIX!
-            u=models.User.by_jid(args)
+        def worked(u):
             prot.send_plain(user.jid, self.get_user_status(u))
-        except Exception, e:
+        def notWorked(e):
+            log.err(e)
             prot.send_plain(user.jid, "Failed to load user: " + str(e))
+        db.User.by_jid(args).addCallback(worked).addErrback(notWorked)
 
 class AdminPingCommand(BaseCommand):
 
