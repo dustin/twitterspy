@@ -254,7 +254,7 @@ Type "help" to get started.
 
     def _set_status(self, u, status):
         u.status=status
-        u.save()
+        return u.save()
 
     def _find_and_set_status(self, jid, status):
         db.User.by_jid(jid).addCallback(self._set_status, 'unsubscribed')
