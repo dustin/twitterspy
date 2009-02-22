@@ -1,6 +1,6 @@
 [general]
 loop_sleep: 60
-db: sqlite:///twitterspy-test.sqlite3
+
 watch_freq: 1
 personal_freq: 3
 admins: you@example.com
