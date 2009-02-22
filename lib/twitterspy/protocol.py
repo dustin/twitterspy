@@ -257,7 +257,9 @@ Type "help" to get started.
         return u.save()
 
     def _find_and_set_status(self, jid, status):
-        db.User.by_jid(jid).addCallback(self._set_status, status)
+        def f():
+            db.User.by_jid(jid).addCallback(self._set_status, status)
+        scheduling.available_sem.run(f)
 
     def unsubscribedReceived(self, entity):
         log.msg("Unsubscribed received from %s" % (entity.userhost()))
