@@ -259,6 +259,8 @@ Type "help" to get started.
         return u.save()
 
     def _find_and_set_status(self, jid, status):
+        if status is None:
+            status = 'available'
         def f():
             db.User.by_jid(jid).addCallback(self._set_status, status)
         scheduling.available_sem.run(f)
