@@ -253,7 +253,7 @@ Type "help" to get started.
         db.model_counts().addCallback(send_noticies)
 
     def _set_status(self, u, status):
-        u.status='unsubscribed'
+        u.status=status
         u.save()
 
     def _find_and_set_status(self, jid, status):
