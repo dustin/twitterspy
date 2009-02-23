@@ -13,7 +13,7 @@ import config
 DB_NAME='twitterspy'
 
 def get_couch():
-    return paisley.CouchDB('localhost')
+    return paisley.CouchDB(config.CONF.get('db', 'host'))
 
 class User(object):
 
