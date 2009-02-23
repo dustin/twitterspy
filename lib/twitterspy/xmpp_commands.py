@@ -284,6 +284,7 @@ class TrackCommand(BaseCommand):
                 scheduling.queries.add(user.jid, args, 0)
             prot.send_plain(user.jid, rv)
         def notWorked(e):
+            log.err(e)
             prot.send_plain(user.jid, ":( Failed to save your tracks.  Try again.")
         user.save().addCallback(worked).addErrback(notWorked)
 
