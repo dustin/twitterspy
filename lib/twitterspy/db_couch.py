@@ -39,6 +39,8 @@ class User(db_base.BaseUser):
         rv['doctype'] = 'User'
         for k in [k for k,v in rv.items() if not v]:
             del rv[k]
+        # Don't need two copies of the jids.
+        del rv[jid]
         return rv
 
     @staticmethod
