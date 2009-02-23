@@ -44,5 +44,7 @@ def create_database():
     yield wfd
     print wfd.getResult()
 
+    reactor.stop()
+
 reactor.callWhenRunning(create_database)
 reactor.run()
