@@ -97,7 +97,7 @@ def initialize():
         log.msg("Performing compaction.")
         get_couch().post("/" + DB_NAME + '/_compact', '')
     loop = task.LoopingCall(periodic)
-    loop.start(3600)
+    loop.start(3600, now=False)
 
 def model_counts():
     """Returns a deferred whose callback will receive a dict of object
