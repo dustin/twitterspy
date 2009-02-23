@@ -31,6 +31,9 @@ class User(object):
         self._rev = None
         self.tracks = []
 
+    def __repr__(self):
+        return "<User %s with %d tracks>" % (self.jid, len(self.tracks))
+
     @staticmethod
     def from_doc(doc):
         user = User()
