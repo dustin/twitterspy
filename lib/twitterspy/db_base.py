@@ -1,6 +1,8 @@
 import time
 import base64
 
+import config
+
 class BaseUser(object):
 
     def __init__(self, jid=None):
