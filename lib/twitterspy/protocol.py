@@ -185,10 +185,13 @@ class TwitterspyPresenceProtocol(PresenceClientProtocol):
 
     _tracking=-1
     _users=-1
+    started = time.time()
+    connected = time.time()
 
     def connectionMade(self):
         self._tracking=-1
         self._users=-1
+        self._connected = time.time()
         self.update_presence()
 
         global presence_conn

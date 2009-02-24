@@ -552,6 +552,55 @@ class MoodCommand(BaseCommand):
                   % (scheduling.available_requests, scheduling.empty_resets))
         prot.send_plain(user.jid, "\n".join(rv))
 
+class UptimeCommand(BaseCommand):
+
+    def __init__(self):
+        super(UptimeCommand, self).__init__('uptime',
+                                            "Ask about twitterspy's uptime.")
+
+    def _pluralize(self, v, word):
+        if v == 1:
+            return str(v) + " " + word
+        else:
+            return str(v) + " " + word + "s"
+
+    def _ts(self, td):
+        rv = ""
+        if td.days > 0:
+            rv += self._pluralize(td.days, "day") + " "
+        secs = td.seconds
+        if secs >= 3600:
+            rv += self._pluralize(int(secs / 3600), "hr") + " "
+            secs = secs % 3600
+        if secs >= 60:
+            rv += self._pluralize(int(secs / 60), "min") + " "
+            secs = secs % 60
+        rv += self._pluralize(secs, "sec")
+        return rv
+
+    def __call__(self, user, prot, args):
+        time_format = "%Y/%m/%d %H:%M:%S"
+        now = datetime.datetime.utcfromtimestamp(time.time())
+
+        started = datetime.datetime.utcfromtimestamp(
+            protocol.presence_conn.started)
+        connected = datetime.datetime.utcfromtimestamp(
+            protocol.presence_conn.connected)
+
+        start_delta = now - started
+        conn_delta = now - connected
+
+        rv=[]
+        rv.append("Twitterspy Standard Time:  %s"
+                  % now.strftime(time_format))
+        rv.append("Started at %s (%s ago)"
+                  % (started.strftime(time_format), self._ts(start_delta)))
+        rv.append("Connected at %s (%s ago)"
+                  % (connected.strftime(time_format), self._ts(conn_delta)))
+
+        prot.send_plain(user.jid, "\n\n".join(rv))
+
+
 class AdminSubscribeCommand(BaseCommand):
 
     def __init__(self):
