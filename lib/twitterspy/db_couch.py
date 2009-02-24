@@ -40,7 +40,7 @@ class User(db_base.BaseUser):
         for k in [k for k,v in rv.items() if not v]:
             del rv[k]
         # Don't need two copies of the jids.
-        del rv[jid]
+        del rv['jid']
         return rv
 
     @staticmethod
