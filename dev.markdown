@@ -14,7 +14,6 @@ title: dustin/twitterspy @ GitHub -- developer page
 
 ## Dependencies
 * [Twisted][twisted] (names, web, words)
-* [SQLAlchemy][sqlalchemy]
 * [Memcached][memcached]
 
 ## Install
@@ -23,8 +22,53 @@ title: dustin/twitterspy @ GitHub -- developer page
 2. git submodule init &amp;&amp; git submodule update
 3. copy twitterspy.conf.sample to twitterspy.conf
 4. edit twitterspy.conf
-5. ./etc/create\_tables.py
-6. twistd -ny twitterspy.tac
+
+### DB Setup
+
+There are a couple database options.  Some basic instructions follow:
+
+#### CouchDB
+
+My twitterspy instance `twitterspy@jabber.org` runs on couchdb.  Setup
+is pretty straightforward.  Grab a version of [couchdb][couchdb] and
+edit `twitterspy.conf` to look like this:
+
+    [db]
+    type: couch
+    host: localhost
+
+`localhost` should obviously be replaced with the location of your
+couchdb server.
+
+After configuring up the db, run the following command to create your
+database:
+
+    ./etc/create_couch.py
+
+#### SQL
+
+If you'd like to use sqlite instead of couchdb for a more simple
+install, you can configure `twitterspy.conf` thusly:
+
+    [db]
+    type: sql
+    driver: sqlite3
+    args: ['/path/to/twitterspy.sqlite3']
+
+This would theoretically work with another SQL-based database, but
+it's only been tested in sqlite and there are most certainly bugs.
+
+**TODO**:  There's not currently a schema creation tool.  Probably should be.
+
+## Running
+
+Foreground execution:
+
+    twistd -ny twitterspy.tac
+
+Background execution:
+
+    twistd -y twitterspy.tac
 
 Do note that this service expects memcached to be running on localhost
 on whatever machine is running the bot.  memcached is used for
@@ -66,6 +110,6 @@ You can also clone the project with [git](http://git-scm.com/) by running:
 [1]:http://github.com/dustin/twitterspy/zipball/master
 [2]:http://github.com/dustin/twitterspy/tarball/master
 [twisted]:http://twistedmatrix.com/
-[sqlalchemy]:http://www.sqlalchemy.org/
 [memcached]:http://www.danga.com/memcached/
 [tsdeb]:http://www.davidbanes.com/2009/01/11/installing-twitterspy-on-debian-etch/
+[couchdb]:http://couchdb.apache.org/
