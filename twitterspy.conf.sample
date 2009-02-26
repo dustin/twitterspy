@@ -4,8 +4,11 @@ watch_freq: 1
 personal_freq: 3
 admins: you@example.com
 
+# See the documentation for db config options:
+# http://dustin.github.com/twitterspy/dev.html
 [db]
 type: couch
+host: localhost
 
 [xmpp]
 jid: twitterspy@example.com/bot
