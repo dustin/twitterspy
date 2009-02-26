@@ -106,6 +106,7 @@ You can download this project in either [zip][1] or [tar][2] formats.
 You can also clone the project with [git](http://git-scm.com/) by running:
 
     $ git clone git://github.com/dustin/twitterspy.git
+    $ cd twitterspy
     $ git submodule init
     $ git submodule update
 
