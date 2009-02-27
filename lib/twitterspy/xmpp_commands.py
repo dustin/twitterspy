@@ -148,7 +148,7 @@ class OnCommand(BaseCommand):
             scheduling.enable_user(user.jid)
             prot.send_plain(user.jid, "Enabled tracks.")
         def notWorked(e):
-            log.err()
+            log.err(e)
             prot.send_plain(user.jid, "Failed to enable.  Try again.")
         user.save().addCallback(worked).addErrback(notWorked)
 
