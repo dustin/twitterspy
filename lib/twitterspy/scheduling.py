@@ -101,7 +101,7 @@ class Query(JidSet):
         protocol.mc.get(self.cache_key).addCallback(self._doStart)
 
     def _compute_cache_key(self, query):
-        return hashlib.md5(query).hexdigest()
+        return hashlib.md5(unicode.encode(query, 'utf8')).hexdigest()
 
     def _doStart(self, res):
         if res[1]:
