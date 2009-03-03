@@ -1,6 +1,7 @@
 import re
 
 from twisted.internet import task, reactor, defer
+from twisted.python import log
 
 import longurl
 
@@ -32,20 +33,19 @@ class Expander(object):
             u, k = m.groups()
             def gotErr(e):
                 log.err(e)
-                rv.callback((plain, html))
+                reactor.callWhenRunning(rv.callback, (plain, html))
             def gotRes(res):
-                plainSub = plain.replace(u, "%s (from %s)" % (res, u))
+                plainSub = plain.replace(u, "%s (from %s)" % (res.url, u))
                 if html:
-                    htmlSub = html.replace(u, "%s" % (res,))
+                    htmlSub = html.replace(u, "%s" % (res.url,))
                 else:
                     htmlSub = None
-                rv.callback((plainSub, htmlSub))
+                log.msg("rewrote %s to %s" % (plain, plainSub))
+                reactor.callWhenRunning(rv.callback, (plainSub, htmlSub))
             self.lu.expand(u).addErrback(gotErr).addCallback(gotRes)
         else:
             # No match, immediately hand the message back.
-            def passThrough():
-                rv.callback((plain, html))
-            reactor.callWhenRunning(passThrough)
+            reactor.callWhenRunning(rv.callback, (plain, html))
 
         return rv
 

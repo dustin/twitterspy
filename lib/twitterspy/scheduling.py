@@ -8,6 +8,7 @@ from twisted.words.protocols.jabber.jid import JID
 
 import twitter
 import protocol
+import url_expansion
 
 import db
 import moodiness
@@ -86,7 +87,7 @@ class SearchCollector(object):
             p, h = t
             bisect.insort(self.results, (eid, p, h))
         d = url_expansion.expander.expand(plain, html).addCallback(saveResults)
-        deferreds.append(d)
+        self.deferreds.append(d)
 
 class JidSet(set):
 
@@ -131,7 +132,7 @@ class Query(JidSet):
                     for jid in self.bare_jids():
                         key = str(eid) + "@" + jid
                         conn.send_html_deduped(jid, plain, html, key)
-            dl = deferred.DeferredList(results.deferreds)
+            dl = defer.DeferredList(results.deferreds)
             dl.addCallback(send)
 
     def __call__(self):

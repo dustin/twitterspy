@@ -12,7 +12,7 @@ from twisted.python import log
 from twisted.words.xish import domish
 from twisted.words.protocols.jabber.jid import JID
 from twisted.web import client
-from twisted.internet import reactor, threads
+from twisted.internet import reactor, threads, defer
 from wokkel import ping
 from sqlalchemy.orm import exc
 
