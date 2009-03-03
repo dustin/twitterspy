@@ -4,3 +4,6 @@
 [submodule "lib/wokkel"]
 	path = lib/wokkel
 	url = git://github.com/dustin/wokkel.git
+[submodule "lib/twisted-longurl"]
+	path = lib/twisted-longurl
+	url = git://github.com/dustin/twisted-longurl
