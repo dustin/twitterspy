@@ -12,7 +12,10 @@ class Expander(object):
         self.regex = None
 
     def initialize(self):
-        self.lu.getServices().addCallback(self._registerServices)
+        def _e(e):
+            log.msg("Error loading expansion rules.  Trying again in 5s")
+            reactor.callLater(5, self.initialize)
+        self.lu.getServices().addCallback(self._registerServices).addErrback(_e)
 
     def _registerServices(self, svcs):
         domains = set()
