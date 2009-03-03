@@ -21,6 +21,7 @@ from twitterspy import protocol
 from twitterspy import xmpp_ping
 from twitterspy import scheduling
 from twitterspy import moodiness
+from twitterspy import url_expansion
 
 # Set the user agent for twitter
 twitter.Twitter.agent = "twitterspy"
@@ -57,3 +58,5 @@ xmppclient.setServiceParent(application)
 task.LoopingCall(moodiness.moodiness).start(60, now=False)
 task.LoopingCall(scheduling.resetRequests).start(scheduling.REQUEST_PERIOD,
                                                  now=False)
+
+url_expansion.expander.initialize()
