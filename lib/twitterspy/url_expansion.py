@@ -31,7 +31,7 @@ class Expander(object):
     def expand(self, plain, html=None):
         rv = defer.Deferred()
 
-        m = self.regex.search(plain)
+        m = self.regex and self.regex.search(plain)
         if m:
             u, k = m.groups()
             def gotErr(e):
