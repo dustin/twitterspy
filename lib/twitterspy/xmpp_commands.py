@@ -174,17 +174,19 @@ class SearchCommand(BaseCommand):
 
     def _success(self, e, jid, prot, query, rv):
         log.msg("%d results found for %s" % (len(rv.results), query))
-        plain = []
-        html = []
-        for eid, p, h in rv.results:
-            plain.append(p)
-            html.append(h)
-        prot.send_html(jid, str(len(rv.results))
-                           + " results for " + query
-                           + "\n\n" + "\n\n".join(plain),
-                       str(len(rv.results)) + " results for "
-                           + query + "<br/>\n<br/>\n"
-                           + "<br/>\n<br/>\n".join(html))
+        def send(r):
+            plain = []
+            html = []
+            for eid, p, h in rv.results:
+                plain.append(p)
+                html.append(h)
+                prot.send_html(jid, str(len(rv.results))
+                               + " results for " + query
+                               + "\n\n" + "\n\n".join(plain),
+                               str(len(rv.results)) + " results for "
+                               + query + "<br/>\n<br/>\n"
+                               + "<br/>\n<br/>\n".join(html))
+        defer.DeferredList(rv.deferreds).addCallback(send)
 
     def _error(self, e, jid, prot):
         mood, good, lrr, percentage = moodiness.moodiness.current_mood()

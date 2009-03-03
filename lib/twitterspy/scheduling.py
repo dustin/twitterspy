@@ -71,6 +71,7 @@ class SearchCollector(object):
     def __init__(self, last_id=0):
         self.results=[]
         self.last_id = last_id
+        self.deferreds = []
 
     def gotResult(self, entry):
         eid = int(entry.id.split(':')[-1])
@@ -81,7 +82,11 @@ class SearchCollector(object):
                                        ).replace("&gt;", ">"
                                        ).replace('&amp;', '&')
         html="<a href='%s'>%s</a>: %s" % (entry.author.uri, u, hcontent)
-        bisect.insort(self.results, (eid, plain, html))
+        def saveResults(t):
+            p, h = t
+            bisect.insort(self.results, (eid, p, h))
+        d = url_expansion.expander.expand(plain, html).addCallback(saveResults)
+        deferreds.append(d)
 
 class JidSet(set):
 
@@ -120,11 +125,14 @@ class Query(JidSet):
         first_shot = self.last_id == 0
         self.last_id = results.last_id
         if not first_shot:
-            conn = protocol.current_conn
-            for eid, plain, html in results.results:
-                for jid in self.bare_jids():
-                    key = str(eid) + "@" + jid
-                    conn.send_html_deduped(jid, plain, html, key)
+            def send(r):
+                conn = protocol.current_conn
+                for eid, plain, html in results.results:
+                    for jid in self.bare_jids():
+                        key = str(eid) + "@" + jid
+                        conn.send_html_deduped(jid, plain, html, key)
+            dl = deferred.DeferredList(results.deferreds)
+            dl.addCallback(send)
 
     def __call__(self):
         # Don't bother if we're not connected...
