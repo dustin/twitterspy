@@ -1,8 +1,8 @@
 import sys
-sys.path.insert(0,"lib/twitty-twister/lib")
-sys.path.insert(0,"lib/wokkel")
+sys.path.insert(0, "lib/twitty-twister/lib")
+sys.path.insert(0, "lib/wokkel")
 sys.path.insert(0, 'lib/twisted-longurl/lib')
-sys.path.insert(0,"lib")
+sys.path.insert(0, "lib")
 
 import ConfigParser
 
