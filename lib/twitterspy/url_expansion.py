@@ -24,22 +24,27 @@ class Expander(object):
     def __fixup(self, d):
         return d.replace('.', r'\.')
 
-    def expand(self, msg):
+    def expand(self, plain, html=None):
         rv = defer.Deferred()
 
-        m = self.regex.search(msg)
+        m = self.regex.search(plain)
         if m:
             u, k = m.groups()
             def gotErr(e):
                 log.err(e)
-                rv.callback(msg)
+                rv.callback((plain, html))
             def gotRes(res):
-                rv.callback(msg.replace(u, "%s (from %s)" % (res, u)))
+                plainSub = plain.replace(u, "%s (from %s)" % (res, u))
+                if html:
+                    htmlSub = html.replace(u, "%s" % (res,))
+                else:
+                    htmlSub = None
+                rv.callback((plainSub, htmlSub))
             self.lu.expand(u).addErrback(gotErr).addCallback(gotRes)
         else:
             # No match, immediately hand the message back.
             def passThrough():
-                rv.callback(msg)
+                rv.callback((plain, html))
             reactor.callWhenRunning(passThrough)
 
         return rv
