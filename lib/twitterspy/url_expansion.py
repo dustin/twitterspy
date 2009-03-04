@@ -45,7 +45,7 @@ class Expander(object):
                     htmlSub = None
                 log.msg("rewrote %s to %s" % (plain, plainSub))
                 reactor.callWhenRunning(rv.callback, (plainSub, htmlSub))
-            self.lu.expand(u).addErrback(gotErr).addCallback(gotRes)
+            self.lu.expand(u).addCallback(gotRes).addErrback(gotErr)
         else:
             # No match, immediately hand the message back.
             reactor.callWhenRunning(rv.callback, (plain, html))
