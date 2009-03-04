@@ -86,7 +86,11 @@ class SearchCollector(object):
         def saveResults(t):
             p, h = t
             bisect.insort(self.results, (eid, p, h))
-        d = url_expansion.expander.expand(plain, html).addCallback(saveResults)
+        def errHandler(e):
+            log.err(e)
+            saveResults((plain, html))
+        d = url_expansion.expander.expand(plain, html).addBoth(
+            saveResults, errHandler)
         self.deferreds.append(d)
 
 class JidSet(set):
