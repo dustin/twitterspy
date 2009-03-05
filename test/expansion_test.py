@@ -85,6 +85,7 @@ class MatcherTest(unittest.TestCase):
         def v(r):
             self.assertEquals('test http://is.gd/whatever message', r[0])
             self.assertEquals(None, r[1])
+            self.flushLoggedErrors(RuntimeError)
         def h(e):
             self.fail("Error bubbled up.")
         d = self.expander.expand("test http://is.gd/whatever message")
