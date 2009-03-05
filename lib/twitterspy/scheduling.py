@@ -1,3 +1,4 @@
+import bisect
 import random
 import hashlib
 
