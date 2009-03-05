@@ -59,4 +59,4 @@ task.LoopingCall(moodiness.moodiness).start(60, now=False)
 task.LoopingCall(scheduling.resetRequests).start(scheduling.REQUEST_PERIOD,
                                                  now=False)
 
-url_expansion.expander.initialize()
+url_expansion.expander.loadServices()

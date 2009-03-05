@@ -11,10 +11,10 @@ class Expander(object):
         self.lu = longurl.LongUrl('twitterspy')
         self.regex = None
 
-    def initialize(self):
+    def loadServices(self):
         def _e(e):
             log.msg("Error loading expansion rules.  Trying again in 5s")
-            reactor.callLater(5, self.initialize)
+            reactor.callLater(5, self.loadServices)
         self.lu.getServices().addCallback(self._registerServices).addErrback(_e)
 
     def _registerServices(self, svcs):
