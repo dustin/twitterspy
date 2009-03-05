@@ -41,12 +41,17 @@ class Expander(object):
                 log.err(e)
                 reactor.callWhenRunning(rv.callback, (plain, html))
             def gotRes(res):
-                plainSub = plain.replace(u, "%s (from %s)" % (self._e(res.url), u))
-                if html:
-                    htmlSub = html.replace(u, "%s" % (self._e(res.url),))
+                # Sometimes, the expander returns its input.  That sucks.
+                if res.url == u:
+                    plainSub = plain
+                    htmlSub = html
                 else:
-                    htmlSub = None
-                log.msg("rewrote %s to %s" % (plain, plainSub))
+                    plainSub = plain.replace(u, "%s (from %s)" % (self._e(res.url), u))
+                    if html:
+                        htmlSub = html.replace(u, "%s" % (self._e(res.url),))
+                    else:
+                        htmlSub = None
+                        log.msg("rewrote %s to %s" % (plain, plainSub))
                 reactor.callWhenRunning(rv.callback, (plainSub, htmlSub))
             self.lu.expand(u).addCallback(gotRes).addErrback(gotErr)
         else:
