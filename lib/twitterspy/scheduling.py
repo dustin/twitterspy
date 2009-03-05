@@ -1,4 +1,3 @@
-import bisect
 import random
 import hashlib
 
@@ -8,11 +7,11 @@ from twisted.words.protocols.jabber.jid import JID
 
 import twitter
 import protocol
-import url_expansion
 
 import db
 import moodiness
 import config
+import search_collector
 
 search_semaphore = defer.DeferredSemaphore(tokens=5)
 private_semaphore = defer.DeferredSemaphore(tokens=20)
@@ -66,32 +65,6 @@ def resetRequests():
     if protocol.presence_conn:
         protocol.presence_conn.update_presence()
     log.msg("Available requests are reset to %d" % available_requests)
-
-class SearchCollector(object):
-
-    def __init__(self, last_id=0):
-        self.results=[]
-        self.last_id = last_id
-        self.deferreds = []
-
-    def gotResult(self, entry):
-        eid = int(entry.id.split(':')[-1])
-        self.last_id = max(self.last_id, eid)
-        u = entry.author.name.split(' ')[0]
-        plain=u + ": " + entry.title
-        hcontent=entry.content.replace("&lt;", "<"
-                                       ).replace("&gt;", ">"
-                                       ).replace('&amp;', '&')
-        html="<a href='%s'>%s</a>: %s" % (entry.author.uri, u, hcontent)
-        def saveResults(t):
-            p, h = t
-            bisect.insort(self.results, (eid, p, h))
-        def errHandler(e):
-            log.err(e)
-            saveResults((plain, html))
-        d = url_expansion.expander.expand(plain, html).addBoth(
-            saveResults, errHandler)
-        self.deferreds.append(d)
 
 class JidSet(set):
 
@@ -157,7 +130,7 @@ class Query(JidSet):
         params = {}
         if self.last_id > 0:
             params['since_id'] = str(self.last_id)
-        results=SearchCollector(self.last_id)
+        results=search_collector.SearchCollector(self.last_id)
         return getTwitterAPI().search(self.query, results.gotResult,
             params
             ).addCallback(moodiness.moodiness.markSuccess

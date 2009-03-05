@@ -21,6 +21,7 @@ import db
 import config
 import twitter
 import scheduling
+import search_collector
 import protocol
 import moodiness
 
@@ -205,7 +206,7 @@ class SearchCommand(BaseCommand):
         return e
 
     def _do_search(self, query, jid, prot):
-        rv = scheduling.SearchCollector()
+        rv = search_collector.SearchCollector()
         scheduling.getTwitterAPI().search(query, rv.gotResult, {'rpp': '3'}
             ).addCallback(moodiness.moodiness.markSuccess
             ).addErrback(moodiness.moodiness.markFailure
