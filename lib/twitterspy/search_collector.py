@@ -26,6 +26,6 @@ class SearchCollector(object):
         def errHandler(e):
             log.err(e)
             saveResults((plain, html))
-        d = url_expansion.expander.expand(plain, html).addBoth(
-            saveResults, errHandler)
+        d = url_expansion.expander.expand(plain, html).addCallback(
+            saveResults).addErrback(errHandler)
         self.deferreds.append(d)
