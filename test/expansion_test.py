@@ -79,6 +79,18 @@ class MatcherTest(unittest.TestCase):
         d.addCallback(v)
         return d
 
+    def testExpansionWithAmpersand(self):
+        self.expander.lu = FakeLongUrl(Result('Test Title', 'http://w/?a=1&b=2'))
+
+        d = self.expander.expand("test http://is.gd/whatever message")
+        def v(r):
+            self.assertEquals('test http://w/?a=1&amp;b=2 '
+                              '(from http://is.gd/whatever) message', r[0])
+            self.assertEquals(None, r[1])
+        d.addCallback(v)
+        return d
+
+
     def testFailedExpansion(self):
         self.expander.lu = FakeLongUrl(None)
 

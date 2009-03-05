@@ -28,6 +28,9 @@ class Expander(object):
     def __fixup(self, d):
         return d.replace('.', r'\.')
 
+    def _e(self, u):
+        return u.replace("&", "&amp;")
+
     def expand(self, plain, html=None):
         rv = defer.Deferred()
 
@@ -38,9 +41,9 @@ class Expander(object):
                 log.err(e)
                 reactor.callWhenRunning(rv.callback, (plain, html))
             def gotRes(res):
-                plainSub = plain.replace(u, "%s (from %s)" % (res.url, u))
+                plainSub = plain.replace(u, "%s (from %s)" % (self._e(res.url), u))
                 if html:
-                    htmlSub = html.replace(u, "%s" % (res.url,))
+                    htmlSub = html.replace(u, "%s" % (self._e(res.url),))
                 else:
                     htmlSub = None
                 log.msg("rewrote %s to %s" % (plain, plainSub))
