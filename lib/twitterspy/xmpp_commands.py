@@ -14,7 +14,6 @@ from twisted.words.protocols.jabber.jid import JID
 from twisted.web import client
 from twisted.internet import reactor, threads, defer
 from wokkel import ping
-from sqlalchemy.orm import exc
 
 import db
 
