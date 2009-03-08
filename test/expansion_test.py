@@ -31,11 +31,8 @@ class FakeHTTP(object):
     def getPage(self, *args, **kwargs):
         return self.d
 
-class Result(object):
-
-    def __init__(self, t, u):
-        self.title = t
-        self.url = u
+class Result(url_expansion.BasicUrl):
+    pass
 
 class FakeLongUrl(object):
 
@@ -55,6 +52,7 @@ class MatcherTest(unittest.TestCase):
 
     def setUp(self):
         self.expander = url_expansion.Expander()
+        self.expander.cache = False
         self.expander._registerServices({'is.gd':
                                              SimpleService('is.gd'),
                                          'bit.ly':

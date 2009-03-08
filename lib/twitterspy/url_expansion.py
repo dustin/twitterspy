@@ -5,7 +5,15 @@ from twisted.python import log
 
 import longurl
 
+class BasicUrl(object):
+
+    def __init__(self, title, url):
+        self.title = title
+        self.url = url
+
 class Expander(object):
+
+    cache = True
 
     def __init__(self):
         self.lu = longurl.LongUrl('twitterspy')
@@ -53,11 +61,40 @@ class Expander(object):
                         htmlSub = None
                         log.msg("rewrote %s to %s" % (plain, plainSub))
                 reactor.callWhenRunning(rv.callback, (plainSub, htmlSub))
-            self.lu.expand(u).addCallback(gotRes).addErrback(gotErr)
+            self._expand(u).addCallback(gotRes).addErrback(gotErr)
         else:
             # No match, immediately hand the message back.
             reactor.callWhenRunning(rv.callback, (plain, html))
 
         return rv
+
+    def _cached_lookup(self, u, mc):
+        rv = defer.Deferred()
+
+        def identity(ignored_param):
+            rv.callback(BasicUrl(None, u))
+
+        def mc_res(res):
+            if res[1]:
+                rv.callback(BasicUrl(None, res[1]))
+            else:
+                def save_res(lu_res):
+                    mc.set(u, lu_res.url.encode('utf-8'))
+                    rv.callback(BasicUrl(None, lu_res.url))
+                self.lu.expand(u).addErrback(identity).addCallback(save_res)
+
+        mc.get(u).addCallback(mc_res).addErrback(identity)
+
+        return rv
+
+    def _expand(self, u):
+        if self.cache:
+            import protocol
+            if protocol.mc:
+                return self._cached_lookup(u.encode('utf-8'), protocol.mc)
+            else:
+                return self.lu.expand(u)
+        else:
+            return self.lu.expand(u)
 
 expander = Expander()
