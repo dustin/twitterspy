@@ -59,6 +59,10 @@ task.LoopingCall(moodiness.moodiness).start(60, now=False)
 task.LoopingCall(scheduling.resetRequests).start(scheduling.REQUEST_PERIOD,
                                                  now=False)
 
-# Load the url expansion services now, and refresh it every seven days.
-task.LoopingCall(url_expansion.expander.loadServices).start(86400 * 7)
+# If the expansion services are loaded, expansion will take effect
+if (config.CONF.has_option('general', 'expand')
+    and config.CONF.getboolean('general', 'expand')):
+
+    # Load the url expansion services now, and refresh it every seven days.
+    task.LoopingCall(url_expansion.expander.loadServices).start(86400 * 7)
 
