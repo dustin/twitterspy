@@ -134,10 +134,7 @@ class TwitterspyMessageProtocol(MessageProtocol):
         key = string.translate(str(key), self.jidtrans)[0:128]
         def checkedSend(is_new, jid, body, html):
             if is_new:
-                log.msg("Sending %s" % key)
                 self.send_html(jid, body, html)
-            else:
-                log.msg("Skipping %s" % key)
         global mc
         mc.add(key, "x").addCallback(checkedSend, jid, body, html)
 
