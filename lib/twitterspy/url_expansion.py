@@ -54,11 +54,11 @@ class Expander(object):
                     plainSub = plain
                     htmlSub = html
                 else:
-                    plain = plain.encode('utf-8')
-                    plainSub = plain.replace(u, "%s (from %s)" % (self._e(res.url), u))
+                    plainSub = plain.encode('utf-8').replace(
+                        u, "%s (from %s)" % (self._e(res.url), u))
                     if html:
-                        html = html.encode('utf-8')
-                        htmlSub = html.replace(u, "%s" % (self._e(res.url),))
+                        htmlSub = html.encode('utf-8').replace(
+                            u, "%s" % (self._e(res.url),))
                     else:
                         htmlSub = None
                         log.msg("rewrote %s to %s" % (plain, plainSub))
