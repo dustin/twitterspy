@@ -79,8 +79,12 @@ class Expander(object):
                 rv.callback(BasicUrl(None, res[1]))
             else:
                 def save_res(lu_res):
-                    mc.set(u, lu_res.url.encode('utf-8'))
-                    rv.callback(BasicUrl(None, lu_res.url))
+                    if lu_res:
+                        mc.set(u, lu_res.url.encode('utf-8'))
+                        rv.callback(BasicUrl(None, lu_res.url))
+                    else:
+                        log.msg("No response found for %s" % u)
+                        rv.callback(BasicUrl(None, u))
                 self.lu.expand(u).addErrback(identity).addCallback(save_res)
 
         mc.get(u).addCallback(mc_res).addErrback(identity)
