@@ -91,6 +91,8 @@ class BaseStatusCommand(BaseCommand):
         rv.append("Jid:  %s" % user.jid)
         rv.append("Twitterspy status:  %s"
             % {True: 'Active', None: 'Inactive', False: 'Inactive'}[user.active])
+        rv.append("Autopost:  %s"
+                  % {True: 'on', None: 'off', False: 'off'}[user.auto_post])
         resources = scheduling.resources(user.jid)
         if resources:
             rv.append("I see you logged in with the following resources:")
