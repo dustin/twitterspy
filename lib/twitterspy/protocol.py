@@ -158,15 +158,15 @@ class TwitterspyMessageProtocol(MessageProtocol):
                 d=self.commands['post']
             elif a[0][0] == '@':
                 d=self.commands['post']
-                if d:
-                    d(user, self, unicode(msg.body).strip())
-                else:
-                    self.send_plain(msg['from'],
-                                    "No such command: %s\n"
-                                    "Send 'help' for known commands\n"
-                                    "If you intended to post your message, "
-                                    "please start your message with 'post', or see "
-                                    "'help autopost'" % a[0])
+            if d:
+                d(user, self, unicode(msg.body).strip())
+            else:
+                self.send_plain(msg['from'],
+                                "No such command: %s\n"
+                                "Send 'help' for known commands\n"
+                                "If you intended to post your message, "
+                                "please start your message with 'post', or see "
+                                "'help autopost'" % a[0])
 
     def __onMessage(self, msg):
         if msg["type"] == 'chat' and hasattr(msg, "body") and msg.body:
