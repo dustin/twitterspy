@@ -182,12 +182,12 @@ class SearchCommand(BaseCommand):
             for eid, p, h in rv.results:
                 plain.append(p)
                 html.append(h)
-                prot.send_html(jid, str(len(rv.results))
-                               + " results for " + query
-                               + "\n\n" + "\n\n".join(plain),
-                               str(len(rv.results)) + " results for "
-                               + query + "<br/>\n<br/>\n"
-                               + "<br/>\n<br/>\n".join(html))
+            prot.send_html(jid, str(len(rv.results))
+                           + " results for " + query
+                           + "\n\n" + "\n\n".join(plain),
+                           str(len(rv.results)) + " results for "
+                           + query + "<br/>\n<br/>\n"
+                           + "<br/>\n<br/>\n".join(html))
         defer.DeferredList(rv.deferreds).addCallback(send)
 
     def _error(self, e, jid, prot):
