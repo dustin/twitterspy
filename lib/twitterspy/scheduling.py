@@ -200,7 +200,8 @@ class UserStuff(JidSet):
         u = s.screen_name
         plain="[%s] %s: %s" % (type, u, entry.text)
         aurl = "https://twitter.com/" + u
-        html="[%s] <a href='%s'>%s</a>: %s" % (type, aurl, u, entry.text)
+        htype = '<b>' + type + '</b>'
+        html="[%s] <a href='%s'>%s</a>: %s" % (htype, aurl, u, entry.text)
         bisect.insort(results, (entry.id, plain, html))
 
     def _deliver_messages(self, whatever, messages):
