@@ -3,6 +3,7 @@ import re
 from twisted.internet import task, reactor, defer
 from twisted.python import log
 
+import cache
 import longurl
 
 class BasicUrl(object):
@@ -96,8 +97,8 @@ class Expander(object):
     def _expand(self, u):
         if self.cache:
             import protocol
-            if protocol.mc:
-                return self._cached_lookup(u.encode('utf-8'), protocol.mc)
+            if cache.mc:
+                return self._cached_lookup(u.encode('utf-8'), cache.mc)
             else:
                 return self.lu.expand(u)
         else:

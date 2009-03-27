@@ -16,6 +16,7 @@ from wokkel.disco import DiscoHandler
 import twitter
 
 from twitterspy import db
+from twitterspy import cache
 from twitterspy import config
 from twitterspy import protocol
 from twitterspy import xmpp_ping
@@ -56,6 +57,8 @@ def build_client(section):
 
     return xmppclient
 
+
+cache.connect()
 db.initialize()
 
 build_client('xmpp')

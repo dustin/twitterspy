@@ -9,7 +9,6 @@ from twisted.internet import protocol, reactor, threads
 from twisted.words.xish import domish
 from twisted.words.protocols.jabber.jid import JID
 from twisted.words.protocols.jabber.xmlstream import IQ
-from twisted.protocols import memcache
 
 from wokkel.xmppim import MessageProtocol, PresenceClientProtocol
 from wokkel.xmppim import AvailablePresence
@@ -17,28 +16,18 @@ from wokkel.xmppim import AvailablePresence
 import db
 import xmpp_commands
 import config
+import cache
 import scheduling
 import string
 
 current_conn = None
 presence_conn = None
-mc = None
-
-class MemcacheFactory(protocol.ReconnectingClientFactory):
-
-    def buildProtocol(self, addr):
-        global mc
-        self.resetDelay()
-        log.msg("Connected to memcached.")
-        mc = memcache.MemCacheProtocol()
-        return mc
 
 class TwitterspyMessageProtocol(MessageProtocol):
 
     def __init__(self):
         super(TwitterspyMessageProtocol, self).__init__()
         self._pubid = 1
-        self.__connectMemcached()
 
         goodChars=string.letters + string.digits + "/=,_+.-~@"
         self.jidtrans = self._buildGoodSet(goodChars)
@@ -67,10 +56,6 @@ class TwitterspyMessageProtocol(MessageProtocol):
 
         global current_conn
         current_conn = self
-
-    def __connectMemcached(self):
-        reactor.connectTCP('localhost', memcache.DEFAULT_PORT,
-            MemcacheFactory())
 
     def connectionLost(self, reason):
         log.msg("Disconnected!")
@@ -135,8 +120,7 @@ class TwitterspyMessageProtocol(MessageProtocol):
         def checkedSend(is_new, jid, body, html):
             if is_new:
                 self.send_html(jid, body, html)
-        global mc
-        mc.add(key, "x").addCallback(checkedSend, jid, body, html)
+        cache.mc.add(key, "x").addCallback(checkedSend, jid, body, html)
 
     def onError(self, msg):
         log.msg("Error received for %s: %s" % (msg['from'], msg.toXml()))

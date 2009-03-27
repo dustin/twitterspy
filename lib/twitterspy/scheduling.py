@@ -11,6 +11,7 @@ import protocol
 
 import db
 import moodiness
+import cache
 import config
 import search_collector
 
@@ -82,7 +83,7 @@ class Query(JidSet):
         self.cache_key = self._compute_cache_key(query)
         self.loop = None
 
-        protocol.mc.get(self.cache_key).addCallback(self._doStart)
+        cache.mc.get(self.cache_key).addCallback(self._doStart)
 
     def _compute_cache_key(self, query):
         return hashlib.md5(query.encode('utf-8')).hexdigest()
@@ -124,7 +125,7 @@ class Query(JidSet):
 
     def _save_track_id(self, x, old_id):
         if old_id != self.last_id:
-            protocol.mc.set(self.cache_key, str(self.last_id))
+            cache.mc.set(self.cache_key, str(self.last_id))
 
     def _do_search(self):
         log.msg("Searching %s" % self.query)
