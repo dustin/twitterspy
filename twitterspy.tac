@@ -28,32 +28,37 @@ twitter.Twitter.agent = "twitterspy"
 
 application = service.Application("twitterspy")
 
-host = None
-try:
-    host = config.CONF.get("xmpp", 'host')
-except ConfigParser.NoOptionError:
-    pass
+def build_client(section):
+    host = None
+    try:
+        host = config.CONF.get("xmpp", 'host')
+    except ConfigParser.NoOptionError:
+        pass
 
-xmppclient = XMPPClient(jid.internJID(config.SCREEN_NAME),
-    config.CONF.get('xmpp', 'pass'), host)
+    xmppclient = XMPPClient(jid.internJID(config.SCREEN_NAME),
+                            config.CONF.get('xmpp', 'pass'), host)
 
-xmppclient.logTraffic = False
+    xmppclient.logTraffic = False
+
+    # Stream handling protocols for twitterspy
+    protocols = [protocol.TwitterspyPresenceProtocol,
+                 protocol.TwitterspyMessageProtocol]
+
+    for p in protocols:
+        handler=p()
+        handler.setHandlerParent(xmppclient)
+
+    DiscoHandler().setHandlerParent(xmppclient)
+    VersionHandler('twitterspy', config.VERSION).setHandlerParent(xmppclient)
+    xmpp_ping.PingHandler().setHandlerParent(xmppclient)
+    KeepAlive().setHandlerParent(xmppclient)
+    xmppclient.setServiceParent(application)
+
+    return xmppclient
 
 db.initialize()
 
-# Stream handling protocols for twitterspy
-protocols = [protocol.TwitterspyPresenceProtocol,
-    protocol.TwitterspyMessageProtocol]
-
-for p in protocols:
-    handler=p()
-    handler.setHandlerParent(xmppclient)
-
-DiscoHandler().setHandlerParent(xmppclient)
-VersionHandler('twitterspy', config.VERSION).setHandlerParent(xmppclient)
-xmpp_ping.PingHandler().setHandlerParent(xmppclient)
-KeepAlive().setHandlerParent(xmppclient)
-xmppclient.setServiceParent(application)
+build_client('xmpp')
 
 task.LoopingCall(moodiness.moodiness).start(60, now=False)
 task.LoopingCall(scheduling.resetRequests).start(scheduling.REQUEST_PERIOD,
