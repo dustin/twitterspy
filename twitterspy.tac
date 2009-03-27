@@ -59,6 +59,10 @@ def build_client(section):
 db.initialize()
 
 build_client('xmpp')
+try:
+    build_client('xmpp_secondary')
+except ConfigParser.NoOptionError:
+    pass
 
 task.LoopingCall(moodiness.moodiness).start(60, now=False)
 task.LoopingCall(scheduling.resetRequests).start(scheduling.REQUEST_PERIOD,
