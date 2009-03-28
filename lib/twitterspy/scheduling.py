@@ -64,7 +64,7 @@ def resetRequests():
         admin_message(":-x Just got some more requests after running out.")
         reported_empty = False
     available_requests = MAX_REQUESTS
-    for conn in protocol.presence_conns:
+    for conn in protocol.presence_conns.values():
         conn.update_presence()
     log.msg("Available requests are reset to %d" % available_requests)
 
