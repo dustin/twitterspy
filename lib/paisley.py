@@ -10,6 +10,9 @@ import simplejson
 from urllib import urlencode
 
 from twisted.web.client import HTTPClientFactory
+from twisted.internet import defer
+
+from twitterspy import cache
 
 try:
     from base64 import b64encode
@@ -18,7 +21,6 @@ except ImportError:
 
     def b64encode(s):
         return "".join(base64.encodestring(s).split("\n"))
-
 
 try:
     from functools import partial
@@ -170,9 +172,24 @@ class CouchDB(object):
             uri += "?%s" % (urlencode({"attachment": attachment}),)
             # No parsing
             return  self.get(uri)
-        return self.get(uri
-            ).addCallback(self.parseResult)
 
+        rv = defer.Deferred()
+
+        def mc_res(res):
+            if res[1]:
+                rv.callback(self.parseResult(res[1]))
+            else:
+                d = self.get(uri)
+                def cf(s):
+                    cache.mc.set(uri, s)
+                    return s
+                d.addCallback(cf)
+                d.addCallback(lambda s: rv.callback(self.parseResult(s)))
+                d.addErrback(lambda e: rv.errback(e))
+
+        cache.mc.get(uri).addCallback(mc_res)
+
+        return rv
 
     def addAttachments(self, document, attachments):
         """
@@ -208,9 +225,12 @@ class CouchDB(object):
         if not isinstance(body, (str, unicode)):
             body = simplejson.dumps(body)
         if docId is not None:
-            d = self.put("/%s/%s" % (dbName, docId), body)
+            uri = "/%s/%s" % (dbName, docId)
+            cache.mc.delete(uri)
+            d = self.put(uri, body)
         else:
             d = self.post("/%s/" % (dbName,), body)
+
         return d.addCallback(self.parseResult)
 
 
