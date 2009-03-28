@@ -13,7 +13,11 @@ import db_base
 DB_NAME='twitterspy'
 
 def get_couch():
-    return paisley.CouchDB(config.CONF.get('db', 'host'))
+    try:
+        port = config.CONF.getint('db', 'port')
+    except:
+        port = 5984
+    return paisley.CouchDB(config.CONF.get('db', 'host'), port=port)
 
 class User(db_base.BaseUser):
 
