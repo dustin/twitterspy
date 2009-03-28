@@ -29,7 +29,7 @@ There are a couple database options.  Some basic instructions follow:
 
 #### CouchDB
 
-My twitterspy instance `twitterspy@jabber.org` runs on couchdb.  Setup
+My twitterspy instance `im@twitterspy.org` runs on couchdb.  Setup
 is pretty straightforward.  Grab a version of [couchdb][couchdb] and
 edit `twitterspy.conf` to look like this:
 

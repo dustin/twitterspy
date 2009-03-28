@@ -3,7 +3,7 @@ layout: default
 title: dustin/twitterspy @ GitHub
 ---
 
-IM `help` to [twitterspy@jabber.org](xmpp:twitterspy@jabber.org) to see what
+IM `help` to [im@twitterspy.org](xmpp:im@twitterspy.org) to see what
 you can do.
 
 ## Read All About It
