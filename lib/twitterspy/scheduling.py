@@ -17,7 +17,7 @@ import search_collector
 
 search_semaphore = defer.DeferredSemaphore(tokens=5)
 private_semaphore = defer.DeferredSemaphore(tokens=20)
-available_sem = defer.DeferredSemaphore(tokens=10)
+available_sem = defer.DeferredSemaphore(tokens=1)
 
 MAX_REQUESTS = 20000
 REQUEST_PERIOD = 3600
