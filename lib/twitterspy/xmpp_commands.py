@@ -542,7 +542,7 @@ class AdminServiceDistributionCommand(BaseCommand):
         def worked(dist):
             rv=["Service Distribution:"]
             rv.append("")
-            rv.extend(["%s:  %d" % (row[1], row[0]) for row in dist])
+            rv.extend(["%s:  %s" % (row[1], row[0]) for row in dist])
             prot.send_plain(user.jid, "\n".join(rv))
         def notWorked(e):
             log.err(e)
