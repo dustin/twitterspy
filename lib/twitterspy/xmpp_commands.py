@@ -521,13 +521,6 @@ class Top10Command(BaseCommand):
             'Get the top10 most common tracks.')
 
     def __call__(self, user, prot, args):
-        query="""
-select t.query, count(*) as watchers
-  from tracks t join user_tracks ut on (t.id = ut.track_id)
-  group by t.query
-  order by watchers desc, queryb
-  limit 10
-"""
         def worked(top10):
             rv=["Top 10 most tracked topics:"]
             rv.append("")
