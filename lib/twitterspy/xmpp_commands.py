@@ -531,6 +531,24 @@ class Top10Command(BaseCommand):
             prot.send_plain(user.jid, "Problem grabbing top10")
         db.get_top10().addCallback(worked).addErrback(notWorked)
 
+class AdminServiceDistributionCommand(BaseCommand):
+
+    def __init__(self):
+        super(AdminServiceDistributionCommand, self).__init__('adm_udist',
+            'Find out the distribution of jid/service counts.')
+
+    @admin_required
+    def __call__(self, user, prot, args):
+        def worked(dist):
+            rv=["Service Distribution:"]
+            rv.append("")
+            rv.extend(["%s:  %d" % (row[1], row[0]) for row in dist])
+            prot.send_plain(user.jid, "\n".join(rv))
+        def notWorked(e):
+            log.err(e)
+            prot.send_plain(user.jid, "Problem grabbing distribution")
+        db.get_service_distribution().addCallback(worked).addErrback(notWorked)
+
 class MoodCommand(BaseCommand):
 
     def __init__(self):

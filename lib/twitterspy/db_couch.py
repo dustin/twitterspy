@@ -97,3 +97,11 @@ def get_active_users():
     docd.addCallback(lambda res: d.callback([r['value'] for r in res['rows']]))
     docd.addErrback(lambda e: d.errback(e))
     return d
+
+def get_service_distribution():
+    """Returns a deferred whose callback will receive a list of jid -> count pairs"""
+    d = defer.Deferred()
+    docd = get_couch().openView(DB_NAME, "counts", "service", group='true')
+    docd.addCallback(lambda rv: d.callback([(r['key'], r['value']) for r in rv['rows']]))
+    docd.addErrback(lambda e: d.errback(e))
+    return d
