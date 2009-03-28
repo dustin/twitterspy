@@ -269,15 +269,22 @@ Type "help" to get started.
         db.model_counts().addCallback(send_noticies)
 
     def _set_status(self, u, status):
-        u.status=status
+        modified = False
+
         j = self.jid
         if (not u.service_jid) or (self.preferred and u.service_jid != j):
             u.service_jid = j
+            modified = True
+
+        if u.status != status:
+            u.status=status
+            modified = True
 
         global service_mapping
         service_mapping[u.jid] = u.service_jid
 
-        return u.save()
+        if modified:
+            return u.save()
 
     def _find_and_set_status(self, jid, status):
         if status is None:
