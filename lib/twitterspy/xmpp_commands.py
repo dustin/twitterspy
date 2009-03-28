@@ -588,9 +588,9 @@ class UptimeCommand(BaseCommand):
         now = datetime.datetime.utcfromtimestamp(time.time())
 
         started = datetime.datetime.utcfromtimestamp(
-            protocol.presence_conn.started)
+            protocol.presence_for(user.jid).started)
         connected = datetime.datetime.utcfromtimestamp(
-            protocol.presence_conn.connected)
+            protocol.presence_for(user.jid).connected)
 
         start_delta = now - started
         conn_delta = now - connected

@@ -308,6 +308,9 @@ Type "help" to get started.
 def conn_for(jid):
     return current_conns[service_mapping[jid]]
 
+def presence_for(jid):
+    return presence_conns[service_mapping[jid]]
+
 def send_html_deduped(jid, plain, html, key):
     conn_for(jid).send_html_deduped(jid, plain, html, key)
 
