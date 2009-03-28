@@ -246,7 +246,8 @@ class TwitterspyPresenceProtocol(PresenceClientProtocol):
         log.msg("Unavailable from %s" % entity.full())
         scheduling.unavailable_user(entity)
         self._find_and_set_status(entity.userhost(), 'offline')
-        del service_mapping[entity.userhost()]
+        # XXX: Can't safely do this yet.  :(  May need to go query scheduling.
+        # del service_mapping[entity.userhost()]
 
     def subscribedReceived(self, entity):
         log.msg("Subscribe received from %s" % (entity.userhost()))
