@@ -655,7 +655,7 @@ class AdminPingCommand(BaseCommand):
             'Ping a JID')
 
     def ping(self, prot, fromjid, tojid):
-        p = ping.Ping(prot.xmlstream, config.SCREEN_NAME, tojid)
+        p = ping.Ping(prot.xmlstream, protocol.default_conn.jid, tojid)
         d = p.send()
         log.msg("Sending ping %s" % p.toXml())
         def _gotPing(x):
