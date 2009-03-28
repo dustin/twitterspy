@@ -589,19 +589,22 @@ class UptimeCommand(BaseCommand):
 
         started = datetime.datetime.utcfromtimestamp(
             protocol.presence_for(user.jid).started)
-        connected = datetime.datetime.utcfromtimestamp(
-            protocol.presence_for(user.jid).connected)
+
+        conns = [(p.jid, p.connected) for p in protocol.presence_conns.values()]
 
         start_delta = now - started
-        conn_delta = now - connected
 
         rv=[]
         rv.append("Twitterspy Standard Time:  %s"
                   % now.strftime(time_format))
         rv.append("Started at %s (%s ago)"
                   % (started.strftime(time_format), self._ts(start_delta)))
-        rv.append("Connected at %s (%s ago)"
-                  % (connected.strftime(time_format), self._ts(conn_delta)))
+
+        for jid, contime in conns:
+            connected = datetime.datetime.utcfromtimestamp(contime)
+            conn_delta = now - connected
+            rv.append("Connected to %s at %s (%s ago)"
+                      % (jid, connected.strftime(time_format), self._ts(conn_delta)))
 
         prot.send_plain(user.jid, "\n\n".join(rv))
 
