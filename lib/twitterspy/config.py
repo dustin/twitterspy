@@ -10,7 +10,5 @@ import commands
 
 CONF=ConfigParser.ConfigParser()
 CONF.read('twitterspy.conf')
-SCREEN_NAME = CONF.get('xmpp', 'jid')
 VERSION=commands.getoutput("git describe").strip()
-
 ADMINS=CONF.get("general", "admins").split(' ')

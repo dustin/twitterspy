@@ -17,6 +17,7 @@ class BaseUser(object):
         self.direct_message_id = None
         self.created_at = time.time()
         self._rev = None
+        self.service_jid = None
         self.tracks = []
 
     def __repr__(self):

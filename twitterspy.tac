@@ -32,12 +32,13 @@ application = service.Application("twitterspy")
 def build_client(section):
     host = None
     try:
-        host = config.CONF.get("xmpp", 'host')
-    except ConfigParser.NoOptionError:
+        host = config.CONF.get(section, 'host')
+    except ConfigParser.NoSectionError:
         pass
 
-    xmppclient = XMPPClient(jid.internJID(config.SCREEN_NAME),
-                            config.CONF.get('xmpp', 'pass'), host)
+    j = jid.internJID(config.CONF.get(section, 'jid'))
+
+    xmppclient = XMPPClient(j, config.CONF.get(section, 'pass'), host)
 
     xmppclient.logTraffic = False
 
@@ -46,7 +47,7 @@ def build_client(section):
                  protocol.TwitterspyMessageProtocol]
 
     for p in protocols:
-        handler=p()
+        handler=p(j)
         handler.setHandlerParent(xmppclient)
 
     DiscoHandler().setHandlerParent(xmppclient)
@@ -64,7 +65,7 @@ db.initialize()
 build_client('xmpp')
 try:
     build_client('xmpp_secondary')
-except ConfigParser.NoOptionError:
+except ConfigParser.NoSectionError:
     pass
 
 task.LoopingCall(moodiness.moodiness).start(60, now=False)

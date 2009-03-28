@@ -43,8 +43,7 @@ class Moodiness(object):
             % (good, total, self.previous_good[0], self.previous_good[1]))
 
         log.msg(msg + " my mood is " + mood)
-        conn = protocol.current_conn
-        if conn:
+        for conn in protocol.current_conns.values():
             conn.publish_mood(mood, msg)
 
     def add(self, result):

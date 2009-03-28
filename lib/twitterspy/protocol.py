@@ -20,14 +20,24 @@ import cache
 import scheduling
 import string
 
-current_conn = None
-presence_conn = None
+current_conns = {}
+presence_conns = {}
+
+# This... could get big
+# user_jid -> service_jid
+service_mapping = {}
+
+default_conn = None
+default_presence = None
 
 class TwitterspyMessageProtocol(MessageProtocol):
 
-    def __init__(self):
+    def __init__(self, jid):
         super(TwitterspyMessageProtocol, self).__init__()
         self._pubid = 1
+        self.jid = jid.full()
+
+        self.preferred = self.jid == config.CONF.get("xmpp", "jid")
 
         goodChars=string.letters + string.digits + "/=,_+.-~@"
         self.jidtrans = self._buildGoodSet(goodChars)
@@ -54,13 +64,20 @@ class TwitterspyMessageProtocol(MessageProtocol):
 
         self._pubid = 1
 
-        global current_conn
-        current_conn = self
+        global current_conns, default_conn
+        current_conns[self.jid] = self
+        if self.preferred:
+            default_conn = self
 
     def connectionLost(self, reason):
         log.msg("Disconnected!")
-        global current_conn
-        current_conn = None
+
+        global current_conns, default_conn
+        del current_conns[self.jid]
+
+        if default_conn == self:
+            default_conn = None
+
         scheduling.disconnected()
 
     def _gen_id(self, prefix):
@@ -69,7 +86,7 @@ class TwitterspyMessageProtocol(MessageProtocol):
 
     def publish_mood(self, mood_str, text):
         iq = IQ(self.xmlstream, 'set')
-        iq['from'] = config.SCREEN_NAME
+        iq['from'] = self.jid
         pubsub = iq.addElement(('http://jabber.org/protocol/pubsub', 'pubsub'))
         moodpub = pubsub.addElement('publish')
         moodpub['node'] = 'http://jabber.org/protocol/mood'
@@ -90,7 +107,7 @@ class TwitterspyMessageProtocol(MessageProtocol):
 
         msg = domish.Element((None, "message"))
         msg["to"] = jid
-        msg["from"] = config.SCREEN_NAME
+        msg["from"] = self.jid
         msg.addElement(('jabber:x:event', 'x')).addElement("composing")
 
         self.send(msg)
@@ -98,7 +115,7 @@ class TwitterspyMessageProtocol(MessageProtocol):
     def send_plain(self, jid, content):
         msg = domish.Element((None, "message"))
         msg["to"] = jid
-        msg["from"] = config.SCREEN_NAME
+        msg["from"] = self.jid
         msg["type"] = 'chat'
         msg.addElement("body", content=content)
 
@@ -107,7 +124,7 @@ class TwitterspyMessageProtocol(MessageProtocol):
     def send_html(self, jid, body, html):
         msg = domish.Element((None, "message"))
         msg["to"] = jid
-        msg["from"] = config.SCREEN_NAME
+        msg["from"] = self.jid
         msg["type"] = 'chat'
         html = u"<html xmlns='http://jabber.org/protocol/xhtml-im'><body xmlns='http://www.w3.org/1999/xhtml'>"+unicode(html)+u"</body></html>"
         msg.addRawXml(u"<body>" + unicode(body) + u"</body>")
@@ -169,14 +186,22 @@ class TwitterspyPresenceProtocol(PresenceClientProtocol):
     started = time.time()
     connected = time.time()
 
+    def __init__(self, jid):
+        super(TwitterspyPresenceProtocol, self).__init__()
+        self.jid = jid.full()
+
+        self.preferred = self.jid == config.CONF.get("xmpp", "jid")
+
     def connectionMade(self):
         self._tracking=-1
         self._users=-1
         self.connected = time.time()
         self.update_presence()
 
-        global presence_conn
-        presence_conn = self
+        global presence_conns, default_presence
+        presence_conns[self.jid] = self
+        if self.preferred:
+            default_presence = self
 
     def update_presence(self):
         try:
@@ -216,9 +241,12 @@ class TwitterspyPresenceProtocol(PresenceClientProtocol):
         self._find_and_set_status(entity.userhost(), show)
 
     def unavailableReceived(self, entity, statuses=None):
+        global service_mapping
+
         log.msg("Unavailable from %s" % entity.full())
         scheduling.unavailable_user(entity)
         self._find_and_set_status(entity.userhost(), 'offline')
+        del service_mapping[entity.userhost()]
 
     def subscribedReceived(self, entity):
         log.msg("Subscribe received from %s" % (entity.userhost()))
@@ -229,17 +257,25 @@ your friends, make new ones, and more.
 
 Type "help" to get started.
 """
-        global current_conn
-        current_conn.send_plain(entity.full(), welcome_message)
+        global current_conns
+        conn = current_conns[self.jid]
+        conn.send_plain(entity.full(), welcome_message)
         def send_noticies(counts):
             cnt = counts['users']
             msg = "New subscriber: %s ( %d )" % (entity.userhost(), cnt)
             for a in config.ADMINS:
-                current_conn.send_plain(a, msg)
+                conn.send_plain(a, msg)
         db.model_counts().addCallback(send_noticies)
 
     def _set_status(self, u, status):
         u.status=status
+        j = self.jid
+        if (not u.service_jid) or (self.preferred and u.service_jid != j):
+            u.service_jid = j
+
+        global service_mapping
+        service_mapping[u.jid] = u.service_jid
+
         return u.save()
 
     def _find_and_set_status(self, jid, status):
@@ -267,3 +303,15 @@ Type "help" to get started.
         self.unsubscribe(entity)
         self.unsubscribed(entity)
         self.update_presence()
+
+def conn_for(jid):
+    return current_conns[service_mapping[jid]]
+
+def send_html_deduped(jid, plain, html, key):
+    conn_for(jid).send_html_deduped(jid, plain, html, key)
+
+def send_html(jid, plain, html):
+    conn_for(jid).send_html(jid, plain, html)
+
+def send_plain(jid, plain):
+    conn_for(jid).send_plain(jid, plain)

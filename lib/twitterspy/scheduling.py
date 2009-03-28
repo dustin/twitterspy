@@ -38,8 +38,8 @@ def getTwitterAPI(*args):
         if not reported_empty:
             admin_message(":-x Just ran out of requests for the hour.")
             reported_empty = True
-            if protocol.presence_conn:
-                protocol.presence_conn.update_presence()
+            for conn in protocol.presence_conns.values():
+                conn.update_presence()
         log.msg("Out of requests.  :(")
         # Return something that just generates deferreds that error.
         class ErrorGenerator(object):
@@ -55,7 +55,7 @@ def getTwitterAPI(*args):
 
 def admin_message(msg):
     for a in config.ADMINS:
-        protocol.current_conn.send_plain(a, msg);
+        protocol.send_plain(a, msg);
 
 def resetRequests():
     global available_requests, empty_resets, reported_empty
@@ -64,8 +64,8 @@ def resetRequests():
         admin_message(":-x Just got some more requests after running out.")
         reported_empty = False
     available_requests = MAX_REQUESTS
-    if protocol.presence_conn:
-        protocol.presence_conn.update_presence()
+    for conn in protocol.presence_conns:
+        conn.update_presence()
     log.msg("Available requests are reset to %d" % available_requests)
 
 class JidSet(set):
@@ -106,17 +106,16 @@ class Query(JidSet):
         self.last_id = results.last_id
         if not first_shot:
             def send(r):
-                conn = protocol.current_conn
                 for eid, plain, html in results.results:
                     for jid in self.bare_jids():
                         key = str(eid) + "@" + jid
-                        conn.send_html_deduped(jid, plain, html, key)
+                        protocol.send_html_deduped(jid, plain, html, key)
             dl = defer.DeferredList(results.deferreds)
             dl.addCallback(send)
 
     def __call__(self):
         # Don't bother if we're not connected...
-        if protocol.current_conn:
+        if protocol.current_conns:
             global search_semaphore
             search_semaphore.run(self._do_search)
 
@@ -206,11 +205,10 @@ class UserStuff(JidSet):
         bisect.insort(results, (entry.id, plain, html))
 
     def _deliver_messages(self, whatever, messages):
-        conn = protocol.current_conn
         for eid, plain, html in messages:
             for jid in self.bare_jids():
                 key = str(eid) + "@" + jid
-                conn.send_html_deduped(jid, plain, html, key)
+                protocol.send_html_deduped(jid, plain, html, key)
 
     def _gotDMResult(self, results):
         def f(entry):
@@ -238,7 +236,7 @@ class UserStuff(JidSet):
         return f
 
     def __call__(self):
-        if self.username and self.password and protocol.current_conn:
+        if self.username and self.password and protocol.current_conns:
             global private_semaphore
             private_semaphore.run(self._get_user_stuff)
 
