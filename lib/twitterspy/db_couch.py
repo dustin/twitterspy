@@ -29,6 +29,7 @@ class User(db_base.BaseUser):
         user.status = v.get('status')
         user.friend_timeline_id = v.get('friend_timeline_id')
         user.direct_message_id = v.get('direct_message_id')
+        user.service_jid = v.get('service_jid')
         user.created_at = v.get('created_at', time.time())
         user._rev = v.get('_rev')
         user.tracks = v.get('tracks', [])
