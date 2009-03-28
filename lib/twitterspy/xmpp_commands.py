@@ -619,7 +619,7 @@ class AdminSubscribeCommand(BaseCommand):
     @arg_required()
     def __call__(self, user, prot, args):
         prot.send_plain(user.jid, "Subscribing " + args)
-        protocol.presence_conn.subscribe(JID(args))
+        protocol.default_presence.subscribe(JID(args))
 
 class AdminUserStatusCommand(BaseStatusCommand):
 
