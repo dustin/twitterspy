@@ -232,22 +232,27 @@ class TwitterspyPresenceProtocol(PresenceClientProtocol):
     def availableReceived(self, entity, show=None, statuses=None, priority=0):
         log.msg("Available from %s (%s, %s, pri=%s)" % (
             entity.full(), show, statuses, priority))
-        if priority >= 0 and show not in ['xa', 'dnd']:
-            scheduling.available_user(entity)
-        else:
-            log.msg("Marking jid unavailable due to negative priority or "
-                "being somewhat unavailable.")
-            scheduling.unavailable_user(entity)
-        self._find_and_set_status(entity.userhost(), show)
+
+        def cb():
+            if priority >= 0 and show not in ['xa', 'dnd']:
+                scheduling.available_user(entity)
+            else:
+                log.msg("Marking jid unavailable due to negative priority or "
+                        "being somewhat unavailable.")
+                scheduling.unavailable_user(entity)
+        self._find_and_set_status(entity.userhost(), show, cb)
 
     def unavailableReceived(self, entity, statuses=None):
         global service_mapping
 
         log.msg("Unavailable from %s" % entity.full())
-        scheduling.unavailable_user(entity)
-        self._find_and_set_status(entity.userhost(), 'offline')
-        # XXX: Can't safely do this yet.  :(  May need to go query scheduling.
-        # del service_mapping[entity.userhost()]
+
+        def cb():
+            scheduling.unavailable_user(entity)
+            # XXX: Can't safely do this yet.  :(  May need to go query scheduling.
+            # del service_mapping[entity.userhost()]
+
+        self._find_and_set_status(entity.userhost(), 'offline', cb)
 
     def subscribedReceived(self, entity):
         log.msg("Subscribe received from %s" % (entity.userhost()))
@@ -268,7 +273,7 @@ Type "help" to get started.
                 conn.send_plain(a, msg)
         db.model_counts().addCallback(send_noticies)
 
-    def _set_status(self, u, status):
+    def _set_status(self, u, status, cb):
         modified = False
 
         j = self.jid
@@ -284,13 +289,15 @@ Type "help" to get started.
         service_mapping[u.jid] = u.service_jid
 
         if modified:
+            if cb:
+                cb()
             return u.save()
 
-    def _find_and_set_status(self, jid, status):
+    def _find_and_set_status(self, jid, status, cb=None):
         if status is None:
             status = 'available'
         def f():
-            db.User.by_jid(jid).addCallback(self._set_status, status)
+            db.User.by_jid(jid).addCallback(self._set_status, status, cb)
         scheduling.available_sem.run(f)
 
     def unsubscribedReceived(self, entity):
