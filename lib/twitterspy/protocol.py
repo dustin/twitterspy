@@ -265,12 +265,12 @@ Type "help" to get started.
         global current_conns
         conn = current_conns[self.jid]
         conn.send_plain(entity.full(), welcome_message)
-        def send_noticies(counts):
+        def send_notices(counts):
             cnt = counts['users']
             msg = "New subscriber: %s ( %d )" % (entity.userhost(), cnt)
             for a in config.ADMINS:
                 conn.send_plain(a, msg)
-        db.model_counts().addCallback(send_noticies)
+        db.model_counts().addCallback(send_notices)
 
     def _set_status(self, u, status, cb):
         modified = False
