@@ -184,7 +184,8 @@ class TwitterspyPresenceProtocol(PresenceClientProtocol):
     _tracking=-1
     _users=-1
     started = time.time()
-    connected = time.time()
+    connected = None
+    lost = None
 
     def __init__(self, jid):
         super(TwitterspyPresenceProtocol, self).__init__()
@@ -196,12 +197,17 @@ class TwitterspyPresenceProtocol(PresenceClientProtocol):
         self._tracking=-1
         self._users=-1
         self.connected = time.time()
+        self.lost = None
         self.update_presence()
 
         global presence_conns, default_presence
         presence_conns[self.jid] = self
         if self.preferred:
             default_presence = self
+
+    def connectionLost(self):
+        self.connected = None
+        self.lost = time.time()
 
     def update_presence(self):
         try:

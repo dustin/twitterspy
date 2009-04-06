@@ -601,7 +601,7 @@ class UptimeCommand(BaseCommand):
         started = datetime.datetime.utcfromtimestamp(
             protocol.presence_for(user.jid).started)
 
-        conns = [(p.jid, p.connected) for p in protocol.presence_conns.values()]
+        conns = [(p.jid, p.connected, p.lost) for p in protocol.presence_conns.values()]
 
         start_delta = now - started
 
@@ -611,12 +611,19 @@ class UptimeCommand(BaseCommand):
         rv.append("Started at %s (%s ago)"
                   % (started.strftime(time_format), self._ts(start_delta)))
 
-        for jid, contime in conns:
-            connected = datetime.datetime.utcfromtimestamp(contime)
-            conn_delta = now - connected
-            rv.append("Connected to %s at %s (%s ago)"
-                      % (jid, connected.strftime(time_format), self._ts(conn_delta)))
-
+        for jid, contime, losttime in conns:
+            if contime:
+                connected = datetime.datetime.utcfromtimestamp(contime)
+                conn_delta = now - connected
+                rv.append("Connected to %s at %s (%s ago)"
+                          % (jid, connected.strftime(time_format), self._ts(conn_delta)))
+            elif lost:
+                lost = datetime.datetime.utcfromtimestamp(losttime)
+                lost_delta = now - lost
+                rv.append("Lost connection to %s at %s (%s ago)"
+                          % (jid, lost.strftime(time_format), self._ts(lost_delta)))
+            else:
+                rv.append("Not currently, nor ever connected to %s" % jid)
         prot.send_plain(user.jid, "\n\n".join(rv))
 
 
