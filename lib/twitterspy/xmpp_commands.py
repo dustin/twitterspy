@@ -626,6 +626,21 @@ class UptimeCommand(BaseCommand):
                 rv.append("Not currently, nor ever connected to %s" % jid)
         prot.send_plain(user.jid, "\n\n".join(rv))
 
+class AdminHangupCommand(BaseCommand):
+
+    def __init__(self):
+        super(AdminHangupCommand, self).__init__('adm_hangup',
+                                                 'Disconnect an xmpp session.')
+
+    @admin_required
+    @arg_required()
+    def __call__(self, user, prot, args):
+        try:
+            conn = protocol.presence_conns[args]
+            prot.send_plain(user.jid, "Disconnecting %s" % args)
+            reactor.callWhenRunning(conn.xmlstream.transport.loseConnection)
+        except KeyError:
+            prot.send_plain(user.jid, "Could not find session %s" % args)
 
 class AdminSubscribeCommand(BaseCommand):
 
