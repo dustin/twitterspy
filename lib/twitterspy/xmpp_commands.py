@@ -594,14 +594,18 @@ class UptimeCommand(BaseCommand):
         rv += self._pluralize(secs, "sec")
         return rv
 
+    def _pluralize(self, n, w):
+        if n == 1:
+            return str(n) + " " + w
+        else:
+            return str(n) + " " + w + "s"
+
     def __call__(self, user, prot, args):
         time_format = "%Y/%m/%d %H:%M:%S"
         now = datetime.datetime.utcfromtimestamp(time.time())
 
         started = datetime.datetime.utcfromtimestamp(
             protocol.presence_for(user.jid).started)
-
-        conns = [(p.jid, p.connected, p.lost) for p in protocol.presence_conns.values()]
 
         start_delta = now - started
 
@@ -611,17 +615,21 @@ class UptimeCommand(BaseCommand):
         rv.append("Started at %s (%s ago)"
                   % (started.strftime(time_format), self._ts(start_delta)))
 
-        for jid, contime, losttime in conns:
-            if contime:
-                connected = datetime.datetime.utcfromtimestamp(contime)
+        for p in protocol.presence_conns.values():
+            if p.connected:
+                connected = datetime.datetime.utcfromtimestamp(p.connected)
                 conn_delta = now - connected
-                rv.append("Connected to %s at %s (%s ago)"
-                          % (jid, connected.strftime(time_format), self._ts(conn_delta)))
-            elif lost:
-                lost = datetime.datetime.utcfromtimestamp(losttime)
+                rv.append("Connected to %s at %s (%s ago, connected %s)"
+                          % (p.jid, connected.strftime(time_format),
+                             self._ts(conn_delta),
+                             self._pluralize(p.num_connections, "time")))
+            elif p.lost:
+                lost = datetime.datetime.utcfromtimestamp(p.lost)
                 lost_delta = now - lost
-                rv.append("Lost connection to %s at %s (%s ago)"
-                          % (jid, lost.strftime(time_format), self._ts(lost_delta)))
+                rv.append("Lost connection to %s at %s (%s ago, connected %s)"
+                          % (jid, lost.strftime(time_format),
+                             self._ts(lost_delta),
+                             self._pluralize(p.num_connections, "time")))
             else:
                 rv.append("Not currently, nor ever connected to %s" % jid)
         prot.send_plain(user.jid, "\n\n".join(rv))
