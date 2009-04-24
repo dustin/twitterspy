@@ -179,6 +179,9 @@ class QueryRegistry(object):
             for j in jids:
                 self.untracked(j, k)
 
+    def __len__(self):
+        return len(self.queries)
+
 class UserStuff(JidSet):
 
     loop_time = USER_FREQUENCY
@@ -298,6 +301,9 @@ class UserRegistry(object):
                 u.stop()
         else:
             log.msg("Couldn't find %s to set creds" % short_jid)
+
+    def __len__(self):
+        return len(self.users)
 
     def remove(self, short_jid, full_jid=None):
         q = self.users.get(short_jid)

@@ -731,6 +731,17 @@ class AdminBroadcastCommand(BaseCommand):
     def __call__(self, user, prot, args):
         db.get_active_users().addCallback(self._do_broadcast, prot, user.jid, args)
 
+class AdminUserPresenceCommand(BaseCommand):
+
+    def __init__(self):
+        super(AdminUserPresenceCommand, self).__init__('adm_userpresence',
+                                                       "Find out about user presence.")
+
+    @admin_required
+    def __call__(self, user, prot, args):
+        prot.send_plain(user.jid, "Watching %d active queries for %d active users."
+                        % (len(scheduling.queries), len(scheduling.users)))
+
 for __t in (t for t in globals().values() if isinstance(type, type(t))):
     if BaseCommand in __t.__mro__:
         try:
