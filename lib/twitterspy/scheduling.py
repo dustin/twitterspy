@@ -36,7 +36,6 @@ def getTwitterAPI(*args):
         return twitter.Twitter(*args)
     else:
         if not reported_empty:
-            admin_message(":-x Just ran out of requests for the hour.")
             reported_empty = True
             for conn in protocol.presence_conns.values():
                 conn.update_presence()
@@ -53,15 +52,10 @@ def getTwitterAPI(*args):
                 return error_generator
         return ErrorGenerator()
 
-def admin_message(msg):
-    for a in config.ADMINS:
-        protocol.send_plain(a, msg);
-
 def resetRequests():
     global available_requests, empty_resets, reported_empty
     if available_requests == 0:
         empty_resets += 1
-        admin_message(":-x Just got some more requests after running out.")
         reported_empty = False
     available_requests = MAX_REQUESTS
     for conn in protocol.presence_conns.values():
