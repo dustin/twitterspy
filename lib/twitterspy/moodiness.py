@@ -1,4 +1,4 @@
-from collections import deque
+from collections import deque, defaultdict
 import random
 
 from twisted.python import log
@@ -25,13 +25,19 @@ class Moodiness(object):
         if not self.recent_results:
             log.msg("Short-circuiting tally results since there aren't any.")
             return None, None, None, None
-        good = reduce(lambda x, y: x + 1 if y else x, self.recent_results)
+        good = reduce(lambda x, y: x + 1 if y is True else x, self.recent_results)
         total = len(self.recent_results)
         percentage = float(good) / float(total)
         choices=[v for a,v in self.MOOD_CHOICES if percentage >= a][0]
         mood=random.choice(choices)
 
         return mood, good, total, percentage
+
+    def result_counts(self):
+        rv = defaultdict(0)
+        for v in self.recent_results:
+            rv[v] += 1
+        rv
 
     def __call__(self):
         mood, good, total, percentage = self.current_mood()
@@ -57,7 +63,11 @@ class Moodiness(object):
 
     def markFailure(self, error):
         """Record that a search failed to complete successfully."""
-        self.add(False)
+        try:
+            erval = e.value.status
+        except AttributeError:
+            erval = False
+        self.add(erval)
         return error
 
 moodiness = Moodiness()

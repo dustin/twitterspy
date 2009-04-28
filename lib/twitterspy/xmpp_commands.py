@@ -568,6 +568,19 @@ class MoodCommand(BaseCommand):
                   % (scheduling.available_requests, scheduling.empty_resets))
         prot.send_plain(user.jid, "\n".join(rv))
 
+class MoodDetailCommand(BaseCommand):
+
+    def __init__(self):
+        super(MoodDetailCommand, self).__init__('mood_detail',
+                                                'Detailed mood info.')
+
+    def __call__(self, user, prot, args):
+        h = moodiness.moodiness.result_counts()
+        rv = ["Recent statuses from searches:\n"]
+        for s,c in sorted(h.items()):
+            rv.append("%s: %d" % (str(s), c))
+        prot.send_plain(user.jid, "\n".join(rv))
+
 class UptimeCommand(BaseCommand):
 
     def __init__(self):
