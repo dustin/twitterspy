@@ -19,7 +19,46 @@ def create_database():
     print wfd.getResult()
 
     doc="""
-{"language":"javascript","views":{"counts":{"map":"function(doc) {\n  if(doc.doctype == 'User') {\n    var cnt = 0;\n    if(doc.tracks) {\n        cnt = doc.tracks.length;\n    }\n    emit(null, {users: 1, tracks: cnt});\n  }\n}","reduce":"function(key, values) {\n  var result = {users: 0, tracks: 0};\n  values.forEach(function(p) {\n     result.users += p.users;\n     result.tracks += p.tracks;\n  });\n  return result;\n}"},"status":{"map":"function(doc) {\n  if(doc.doctype == 'User') {\n    emit(doc.status, 1);\n  }\n}","reduce":"function(k, v) {\n  return sum(v);\n}"}}}
+   {"language": "javascript",
+   "views": {
+       "counts": {
+           "map": "function(doc) {
+  if(doc.doctype == 'User') {
+    var cnt = 0;
+    if(doc.tracks) {
+        cnt = doc.tracks.length;
+    }
+    emit(null, {users: 1, tracks: cnt});
+  }
+}",
+           "reduce": "function(key, values) {
+  var result = {users: 0, tracks: 0};
+  values.forEach(function(p) {
+     result.users += p.users;
+     result.tracks += p.tracks;
+  });
+  return result;
+}"
+       },
+       "status": {
+           "map": "function(doc) {
+  if(doc.doctype == 'User') {
+    emit(doc.status, 1);
+  }
+}",
+           "reduce": "function(k, v) {
+  return sum(v);
+}"
+       },
+       "service": {
+           "map": "function(doc) {
+  emit(doc.service_jid, 1);
+}",
+           "reduce": "function(k, v) {
+  return sum(v);
+}"
+       }
+   }}
 """
     d = couch.saveDoc(db.DB_NAME, doc, '_design/counts')
     wfd = defer.waitForDeferred(d)
@@ -36,7 +75,23 @@ def create_database():
     print wfd.getResult()
 
     doc="""
-{"language":"javascript","views":{"active":{"map":"function(doc) {\n  if(doc.doctype == 'User' && doc.active) {\n    emit(null, doc._id);\n  }\n}"}}}
+   {"language": "javascript",
+   "views": {
+       "active": {
+           "map": "function(doc) {
+  if(doc.doctype == 'User' && doc.active) {
+    emit(null, doc._id);
+  }
+}"
+       },
+       "to_be_migrated": {
+           "map": "function(doc) {
+  if(doc.service_jid === 'twitterspy@jabber.org/bot') {
+    emit(doc.service_jid, null);
+  }
+}"
+       }
+   }}
 """
 
     d = couch.saveDoc(db.DB_NAME, doc, '_design/users')
