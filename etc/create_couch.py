@@ -5,7 +5,7 @@ sys.path.extend(["lib", "../lib"])
 
 from twisted.internet import reactor, defer
 
-from twitterspy import db
+from twitterspy import db, cache
 
 def parse_timestamp(ts):
     return None
@@ -46,5 +46,6 @@ def create_database():
 
     reactor.stop()
 
+reactor.callWhenRunning(cache.connect)
 reactor.callWhenRunning(create_database)
 reactor.run()
