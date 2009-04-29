@@ -231,7 +231,8 @@ class TWLoginCommand(BaseCommand):
         args = args.replace(">", "").replace("<", "")
         username, password=args.split(' ', 1)
         jid = user.jid
-        scheduling.getTwitterAPI(username, password).verify_credentials().addCallback(
+        scheduling.getTwitterAPI(username, password
+                                 ).direct_messages(lambda x: None).addCallback(
             self.__credsVerified, prot, jid, username, password, user).addErrback(
             self.__credsRefused, prot, jid)
 
