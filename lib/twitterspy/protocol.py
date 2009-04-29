@@ -211,6 +211,10 @@ class TwitterspyPresenceProtocol(PresenceClientProtocol):
         self.connected = None
         self.lost = time.time()
 
+    def presence_fallback(self, *stuff):
+        log.msg("Running presence fallback.")
+        self.available(None, None, {None: "Hi, everybody!"})
+
     def update_presence(self):
         try:
             if scheduling.available_requests > 0:
@@ -229,7 +233,7 @@ class TwitterspyPresenceProtocol(PresenceClientProtocol):
                 self.available(None, None, {None: status})
                 self._tracking = tracking
                 self._users = users
-        db.model_counts().addCallback(gotResult)
+        db.model_counts().addCallback(gotResult).addErrback(self.presence_fallback)
 
     def _update_presence_not_ready(self):
         status="Ran out of Twitter API requests."
