@@ -360,7 +360,9 @@ def _reset_all():
     users = UserRegistry()
 
 def connected():
-    _reset_all()
+    # _reset_all()
+    pass
 
 def disconnected():
-    _reset_all()
+    # _reset_all()
+    pass
