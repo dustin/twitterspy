@@ -25,7 +25,11 @@ class Moodiness(object):
         if not self.recent_results:
             log.msg("Short-circuiting tally results since there aren't any.")
             return None, None, None, None
-        good = reduce(lambda x, y: x + 1 if (y is True) else x, self.recent_results)
+        try:
+            good = reduce(lambda x, y: x + 1 if (y is True) else x, self.recent_results)
+        except TypeError:
+            log.msg("Error reducing:  %s" % str(self.recent_results))
+            raise
         total = len(self.recent_results)
         percentage = float(good) / float(total)
         choices=[v for a,v in self.MOOD_CHOICES if percentage >= a][0]
