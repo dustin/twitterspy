@@ -32,14 +32,10 @@ class FakeUrlExpander(object):
         self.expectations = set()
 
     def instantError(self, plain, html):
-        rv = defer.Deferred()
-        reactor.callWhenRunning(rv.errback, RuntimeError("failed " + plain))
-        return rv
+        return defer.fail(RuntimeError("failed " + plain))
 
     def instantSuccess(self, plain, html):
-        rv = defer.Deferred()
-        reactor.callWhenRunning(rv.callback, (plain + " m", html + " m"))
-        return rv
+        return defer.succeed((plain + " m", html + " m"))
 
     def expand(self, plain, html):
         if plain in self.expectations:

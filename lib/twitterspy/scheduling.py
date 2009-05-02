@@ -44,11 +44,8 @@ def getTwitterAPI(*args):
         class ErrorGenerator(object):
             def __getattr__(self, attr):
                 def error_generator(*args):
-                    d = defer.Deferred()
-                    reactor.callLater(0, d.errback,
-                        RuntimeError(
-                            "There are no more available twitter requests."))
-                    return d
+                    return defer.fail(
+                        "There are no more available twitter requests.")
                 return error_generator
         return ErrorGenerator()
 
