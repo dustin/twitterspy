@@ -21,6 +21,7 @@ class PingHandler(XMPPHandler):
     implements(IDisco)
 
     def connectionInitialized(self):
+        super(PingHandler, self).connectionInitialized()
         self.xmlstream.addObserver(PING, self.onPing)
 
     def sendPingResponse(self, iq):
