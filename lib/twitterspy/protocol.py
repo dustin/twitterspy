@@ -48,7 +48,7 @@ class TwitterspyMessageProtocol(MessageProtocol):
         rv=string.maketrans(badchars, badChar * len(badchars))
         return rv
 
-    def connectionMade(self):
+    def connectionInitialized(self):
         log.msg("Connected!")
 
         commands=xmpp_commands.all_commands
@@ -194,7 +194,7 @@ class TwitterspyPresenceProtocol(PresenceClientProtocol):
 
         self.preferred = self.jid == config.CONF.get("xmpp", "jid")
 
-    def connectionMade(self):
+    def connectionInitialized(self):
         self._tracking=-1
         self._users=-1
         self.connected = time.time()
