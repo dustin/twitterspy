@@ -459,6 +459,9 @@ class WatchFriendsCommand(BaseCommand):
         def f(entry):
             user.friend_timeline_id = entry.id
             def worked(stuff):
+                # Tell scheduling so the process may begin.
+                scheduling.users.set_creds(user.jid,
+                                           user.username, user.decoded_password)
                 prot.send_plain(user.jid, ":) Starting to watch friends.")
             def notWorked(e):
                 prot.send_plain(user.jid, ":( Error watching friends.  Try again.")
@@ -474,6 +477,8 @@ class WatchFriendsCommand(BaseCommand):
                 self._gotFriendStatus(user, prot), params={'count': '1'})
         elif args == 'off':
             user.friend_timeline_id = None
+            # Disable the privates search.
+            scheduling.users.set_creds(user.jid, None, None)
             def worked(stuff):
                 prot.send_plain(user.jid, ":) No longer watching your friends.")
             def notWorked(e):
