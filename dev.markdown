@@ -58,7 +58,9 @@ install, you can configure `twitterspy.conf` thusly:
 This would theoretically work with another SQL-based database, but
 it's only been tested in sqlite and there are most certainly bugs.
 
-**TODO**:  There's not currently a schema creation tool.  Probably should be.
+To bootstrap your schema, run the following command:
+
+    sqlite3 /path/to/twitterspy.sqlite3 < etc/schema.sql
 
 ## Running
 
