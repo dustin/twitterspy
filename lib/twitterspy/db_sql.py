@@ -31,28 +31,31 @@ class User(db_base.BaseUser):
         def load_user(txn):
             txn.execute("select active, auto_post, username, password, "
                         "friend_timeline_id, direct_message_id, created_at, "
-                        "status, id "
+                        "status, service_jid, id "
                         "from users where jid = ?", [jid])
             u = txn.fetchall()
             if u:
                 r = u[0]
+                log.msg("Loading from %s" % str(r))
                 user = User()
                 user.jid = jid
-                user.active = r[0] == '1'
-                user.auto_post = r[1] == '1'
+                user.active = maybe_int(r[0]) == 1
+                user.auto_post = maybe_int(r[1]) == 1
                 user.username = r[2]
                 user.username = r[3]
                 user.friend_timeline_id = maybe_int(r[4])
                 user.direct_message_id = maybe_int(r[5])
                 user.created_at = parse_time(r[6])
                 user.status = r[7]
-                user._id = r[8]
+                user.service_jid = r[8]
+                user._id = r[9]
 
                 txn.execute("""select query
 from tracks join user_tracks on (tracks.id = user_tracks.track_id)
 where user_tracks.user_id = ?""", [user._id])
                 user.tracks = [t[0] for t in txn.fetchall()]
 
+                log.msg("Loaded %s (%s)" % (user, user.active))
                 return user
             else:
                 return User(jid)
@@ -60,14 +63,18 @@ where user_tracks.user_id = ?""", [user._id])
 
     def _save_in_txn(self, txn):
 
+        active = 1 if self.active else 0
+
         if self._id == -1:
             txn.execute("insert into users("
                         "  jid, active, auto_post, username, password, status, "
-                        "  friend_timeline_id, direct_message_id, created_at) "
-                        " values(?, ?, ?, ?, ?, ?, ?, ?, current_timestamp)",
-                        [self.jid, self.active, self.auto_post, self.status,
+                        "  friend_timeline_id, direct_message_id, "
+                        "  service_jid, created_at )"
+                        " values(?, ?, ?, ?, ?, ?, ?, ?, ?, current_timestamp)",
+                        [self.jid, active, self.auto_post, self.status,
                          self.username, self.password,
-                         self.friend_timeline_id, self.direct_message_id])
+                         self.friend_timeline_id,
+                         self.direct_message_id, self.service_jid])
 
                 # sqlite specific...
             txn.execute("select last_insert_rowid()")
@@ -75,11 +82,13 @@ where user_tracks.user_id = ?""", [user._id])
         else:
             txn.execute("update users set active=?, auto_post=?, "
                         "  username=?, password=?, status=?, "
-                        "  friend_timeline_id=?, direct_message_id=? "
+                        "  friend_timeline_id=?, direct_message_id=?, "
+                        "  service_jid = ? "
                         " where id = ?",
-                        [self.active, self.auto_post,
+                        [active, self.auto_post,
                          self.username, self.password, self.status,
-                         self.friend_timeline_id, self.direct_message_id,
+                         self.friend_timeline_id,
+                         self.direct_message_id, self.service_jid,
                          self._id])
 
         # TODO:  Begin difficult process of synchronizing track lists
@@ -148,7 +157,7 @@ def get_top10(n=10):
     """Returns a deferred whose callback will receive a list of at
     most `n` (number, 'tag') pairs sorted in reverse"""
 
-    return DB_POOL.runQuery("""select t.query, count(*) as watchers
+    return DB_POOL.runQuery("""select count(*), t.query as watchers
  from tracks t join user_tracks ut on (t.id = ut.track_id)
  group by t.query
  order by watchers desc, query
