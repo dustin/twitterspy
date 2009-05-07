@@ -42,7 +42,7 @@ class User(db_base.BaseUser):
                 user.active = maybe_int(r[0]) == 1
                 user.auto_post = maybe_int(r[1]) == 1
                 user.username = r[2]
-                user.username = r[3]
+                user.password = r[3]
                 user.friend_timeline_id = maybe_int(r[4])
                 user.direct_message_id = maybe_int(r[5])
                 user.created_at = parse_time(r[6])
