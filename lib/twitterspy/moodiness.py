@@ -26,7 +26,7 @@ class Moodiness(object):
             log.msg("Short-circuiting tally results since there aren't any.")
             return None, None, None, None
         try:
-            good = reduce(lambda x, y: x + 1 if (y is True) else x, self.recent_results)
+            good = reduce(lambda x, y: x + 1 if (y is True) else x, self.recent_results, 0)
         except TypeError:
             log.msg("Error reducing:  %s" % str(self.recent_results))
             raise
