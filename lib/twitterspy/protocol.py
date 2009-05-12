@@ -256,14 +256,10 @@ class TwitterspyPresenceProtocol(PresenceClientProtocol):
         self._find_and_set_status(entity.userhost(), show)
 
     def unavailableReceived(self, entity, statuses=None):
-        global service_mapping
-
         log.msg("Unavailable from %s" % entity.full())
 
         def cb():
             scheduling.unavailable_user(entity)
-            # XXX: Can't safely do this yet.  :(  May need to go query scheduling.
-            # del service_mapping[entity.userhost()]
 
         self._find_and_set_status(entity.userhost(), 'offline', cb)
 
