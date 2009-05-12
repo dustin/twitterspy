@@ -296,6 +296,7 @@ Type "help" to get started.
 
         global service_mapping
         service_mapping[u.jid] = u.service_jid
+        log.msg("Service mapping for %s is %s" % (u.jid, u.service_jid))
 
         if modified:
             if cb:
