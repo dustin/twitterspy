@@ -253,7 +253,7 @@ class CouchDB(object):
         """
         Open a view of a document in a given database.
         """
-        uri = "/%s/_view/%s/%s" % (dbName, docId, viewId)
+        uri = "/%s/_design/%s/_view/%s" % (dbName, docId, viewId)
 
         if kwargs:
             uri += "?%s" % (urlencode(kwargs),)
