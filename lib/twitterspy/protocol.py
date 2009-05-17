@@ -283,6 +283,16 @@ Type "help" to get started.
         db.model_counts().addCallback(send_notices)
 
     def _set_status(self, u, status, cb):
+
+        # If we've got them on the preferred service, unsubscribe them
+        # from this one.
+        if not self.preferred and (u.service_jid and u.service_jid != self.jid):
+            log.msg("Unsubscribing %s from non-preferred service %s" % (
+                    u.jid, self.jid))
+            self.unsubscribe(JID(u.jid))
+            self.unsubscribed(JID(u.jid))
+            return
+
         modified = False
 
         j = self.jid
