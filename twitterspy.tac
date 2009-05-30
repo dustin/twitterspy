@@ -23,6 +23,7 @@ from twitterspy import xmpp_ping
 from twitterspy import scheduling
 from twitterspy import moodiness
 from twitterspy import url_expansion
+from twitterspy import adhoc_commands
 
 # Set the user agent for twitter
 twitter.Twitter.agent = "twitterspy"
@@ -53,6 +54,7 @@ def build_client(section):
     DiscoHandler().setHandlerParent(xmppclient)
     VersionHandler('twitterspy', config.VERSION).setHandlerParent(xmppclient)
     xmpp_ping.PingHandler().setHandlerParent(xmppclient)
+    adhoc_commands.AdHocHandler().setHandlerParent(xmppclient)
     KeepAlive().setHandlerParent(xmppclient)
     xmppclient.setServiceParent(application)
 
