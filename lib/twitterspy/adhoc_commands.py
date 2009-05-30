@@ -13,6 +13,7 @@ from wokkel.iwokkel import IDisco
 
 import db
 import protocol
+import scheduling
 
 NS_CMD = 'http://jabber.org/protocol/commands'
 CMD = generic.IQ_SET + '/command[@xmlns="' + NS_CMD + '"]'
@@ -65,6 +66,30 @@ class BaseCommand(object):
     def __call__(self, user, iq, cmd):
         # Will return success
         pass
+
+class TrackManagementCommand(BaseCommand):
+
+    def __init__(self):
+        super(TrackManagementCommand, self).__init__('tracks',
+                                                     'List and manage tracks')
+
+    def fillForm(self, user, iq, cmd, form):
+        form.instructions = ["Select the items you no longer wish to track."]
+        form.addField(data_form.Field(var='tracks', fieldType='list-multi',
+                                      options=(data_form.Option(v, v)
+                                               for v in sorted(user.tracks))))
+
+    @form_required
+    def __call__(self, user, iq, cmd, form):
+        vals = set(form.fields['tracks'].values)
+        log.msg("Removing:  %s" % vals)
+        user.tracks = list(set(user.tracks).difference(vals))
+
+        def worked(stuff):
+            for v in vals:
+                scheduling.queries.untracked(user.jid, v)
+
+        user.save().addCallback(worked)
 
 class TrackManagementCommand(BaseCommand):
 
