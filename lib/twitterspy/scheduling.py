@@ -235,7 +235,13 @@ class UserStuff(JidSet):
             private_semaphore.run(self._get_user_stuff)
 
     def _reportError(self, e):
-        log.msg("Error getting user data for %s: %s" % (self.short_jid, str(e)))
+        if e.value.status == 401:
+            log.msg("Error 401 getting user data for %s, disabling"
+                    % self.short_jid)
+            self.stop()
+        else:
+            log.msg("Error getting user data for %s: %s"
+                    % (self.short_jid, str(e)))
 
     def _get_user_stuff(self):
         log.msg("Getting privates for %s" % self.short_jid)
