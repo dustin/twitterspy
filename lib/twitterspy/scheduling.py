@@ -237,7 +237,7 @@ class UserStuff(JidSet):
 
     def _cleanup401s(self, e):
         e.trap(error.Error)
-        if e.value.status == 401:
+        if int(e.value.status) == 401:
             log.msg("Error 401 getting user data for %s, disabling"
                     % self.short_jid)
             self.stop()
