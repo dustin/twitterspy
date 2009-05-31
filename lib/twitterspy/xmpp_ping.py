@@ -26,13 +26,8 @@ class PingHandler(XMPPHandler, IQHandlerMixin):
         super(PingHandler, self).connectionInitialized()
         self.xmlstream.addObserver(PING, self.handleRequest)
 
-    def sendPingResponse(self, iq):
-        response = toResponse(iq, "result")
-        self.send(response)
-
     def onPing(self, iq):
         log.msg("Got ping from %s" % iq.getAttribute("from"))
-        self.sendPingResponse(iq)
 
     def getDiscoInfo(self, requestor, target, node):
         info = set()
