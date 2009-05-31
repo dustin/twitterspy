@@ -20,12 +20,12 @@ class SearchCollector(object):
                                        ).replace("&gt;", ">"
                                        ).replace('&amp;', '&')
         html="<a href='%s'>%s</a>: %s" % (entry.author.uri, u, hcontent)
+        def errHandler(e):
+            log.err(e)
+            return plain, html
         def saveResults(t):
             p, h = t
             bisect.insort(self.results, (eid, p, h))
-        def errHandler(e):
-            log.err(e)
-            saveResults((plain, html))
-        d = url_expansion.expander.expand(plain, html).addCallback(
-            saveResults).addErrback(errHandler)
+        d = url_expansion.expander.expand(plain, html).addErrback(
+            errHandler).addCallback(saveResults)
         self.deferreds.append(d)
