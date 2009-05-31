@@ -9,6 +9,7 @@ import ConfigParser
 from twisted.application import service
 from twisted.internet import task, reactor
 from twisted.words.protocols.jabber import jid
+from twisted.web import client
 from wokkel.client import XMPPClient
 from wokkel.generic import VersionHandler
 from wokkel.keepalive import KeepAlive
@@ -27,6 +28,8 @@ from twitterspy import adhoc_commands
 
 # Set the user agent for twitter
 twitter.Twitter.agent = "twitterspy"
+
+client.HTTPClientFactory.noisy = False
 
 application = service.Application("twitterspy")
 
