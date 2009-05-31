@@ -171,7 +171,7 @@ class TwitterspyMessageProtocol(MessageProtocol):
                                 "'help autopost'" % a[0])
 
     def __onMessage(self, msg):
-        if msg["type"] == 'chat' and hasattr(msg, "body") and msg.body:
+        if msg.getAttribute("type") == 'chat' and hasattr(msg, "body") and msg.body:
             self.typing_notification(msg['from'])
             a=unicode(msg.body).strip().split(None, 1)
             args = a[1] if len(a) > 1 else None
