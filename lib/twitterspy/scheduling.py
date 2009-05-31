@@ -5,6 +5,7 @@ import hashlib
 from twisted.python import log
 from twisted.internet import task, defer, reactor, threads
 from twisted.words.protocols.jabber.jid import JID
+from twisted.web import error
 
 import twitter
 import protocol
@@ -234,14 +235,17 @@ class UserStuff(JidSet):
             global private_semaphore
             private_semaphore.run(self._get_user_stuff)
 
-    def _reportError(self, e):
+    def _cleanup401s(self, e):
+        e.trap(error.Error)
         if e.value.status == 401:
             log.msg("Error 401 getting user data for %s, disabling"
                     % self.short_jid)
             self.stop()
         else:
-            log.msg("Error getting user data for %s: %s"
-                    % (self.short_jid, str(e)))
+            log.msg("Unknown http error:  %s: %s" % (e.value.status, str(e)))
+
+    def _reportError(self, e):
+        log.msg("Error getting user data for %s: %s" % (self.short_jid, str(e)))
 
     def _get_user_stuff(self):
         log.msg("Getting privates for %s" % self.short_jid)
@@ -253,7 +257,7 @@ class UserStuff(JidSet):
         tw.direct_messages(self._gotDMResult(dm_list), params).addCallback(
             self._maybe_update_prop('last_dm_id', 'direct_message_id')
             ).addCallback(self._deliver_messages, dm_list
-            ).addErrback(self._reportError)
+            ).addErrback(self._cleanup401s).addErrback(self._reportError)
 
         if self.last_friend_id is not None:
             friend_list=[]
@@ -262,7 +266,7 @@ class UserStuff(JidSet):
                     self._maybe_update_prop(
                         'last_friend_id', 'friend_timeline_id')
                 ).addCallback(self._deliver_messages, friend_list
-                ).addErrback(self._reportError)
+                ).addErrback(self._cleanup401s).addErrback(self._reportError)
 
     def start(self):
         log.msg("Starting %s" % self.short_jid)
