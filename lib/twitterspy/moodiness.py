@@ -54,7 +54,8 @@ class Moodiness(object):
 
         log.msg(msg + " my mood is " + mood)
         for conn in protocol.current_conns.values():
-            conn.publish_mood(mood, msg)
+            if conn.pubsub:
+                conn.publish_mood(mood, msg)
 
     def add(self, result):
         if len(self.recent_results) >= MAX_RESULTS:

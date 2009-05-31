@@ -32,6 +32,8 @@ default_presence = None
 
 class TwitterspyMessageProtocol(MessageProtocol):
 
+    pubsub = True
+
     def __init__(self, jid):
         super(TwitterspyMessageProtocol, self).__init__()
         self._pubid = 1
@@ -59,6 +61,8 @@ class TwitterspyMessageProtocol(MessageProtocol):
             for a in c.aliases:
                 self.commands[a] = c
         log.msg("Loaded commands: %s" % `sorted(commands.keys())`)
+
+        self.pubsub = True
 
         # Let the scheduler know we connected.
         scheduling.connected()
@@ -97,11 +101,14 @@ class TwitterspyMessageProtocol(MessageProtocol):
         mood.addElement('text').addContent(text)
         def _doLog(x):
             log.msg("Delivered mood: %s (%s)" % (mood_str, text))
-        d = iq.send()
-        d.addErrback(log.err)
-        d.addCallback(_doLog)
+        def _hasError(x):
+            log.err(x)
+            log.msg("Error delivering mood, disabling for %s." % self.jid)
+            self.pubsub = False
         log.msg("Delivering mood: %s" % iq.toXml())
-        self.send(iq)
+        d = iq.send()
+        d.addCallback(_doLog)
+        d.addErrback(_hasError)
 
     def typing_notification(self, jid):
         """Send a typing notification to the given jid."""
