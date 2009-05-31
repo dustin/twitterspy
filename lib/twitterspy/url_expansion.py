@@ -88,7 +88,7 @@ class Expander(object):
                     else:
                         log.msg("No response found for %s" % u)
                         rv.callback(BasicUrl(None, u))
-                self.lu.expand(u).addErrback(identity).addCallback(save_res)
+                self.lu.expand(u).addCallback(save_res).addErrback(identity)
 
         mc.get(u).addCallback(mc_res).addErrback(identity)
 
