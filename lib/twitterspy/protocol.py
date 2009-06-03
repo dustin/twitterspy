@@ -216,7 +216,7 @@ class TwitterspyPresenceProtocol(PresenceClientProtocol):
         if self.preferred:
             default_presence = self
 
-    def connectionLost(self):
+    def connectionLost(self, reason):
         self.connected = None
         self.lost = time.time()
 
