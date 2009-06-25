@@ -148,7 +148,7 @@ class OnCommand(BaseCommand):
     def __call__(self, user, prot, args):
         user.active=True
         def worked(stuff):
-            scheduling.enable_user(user.jid)
+            scheduling.available_user(JID(user.jid))
             prot.send_plain(user.jid, "Enabled tracks.")
         def notWorked(e):
             log.err(e)
@@ -162,7 +162,7 @@ class OffCommand(BaseCommand):
     def __call__(self, user, prot, args):
         user.active=False
         def worked(stuff):
-            scheduling.enable_user(user.jid)
+            scheduling.disable_user(user.jid)
             prot.send_plain(user.jid, "Disabled tracks.")
         def notWorked(e):
             log.err(e)
