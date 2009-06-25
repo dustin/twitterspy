@@ -69,8 +69,9 @@ class Query(JidSet):
 
     loop_time = QUERY_FREQUENCY
 
-    def __init__(self, query, last_id=0):
+    def __init__(self, query, last_id=0, getAPI=getTwitterAPI):
         super(Query, self).__init__()
+        self.getAPI = getAPI
         self.query = query
         self.cache_key = self._compute_cache_key(query)
         self.loop = None
@@ -124,7 +125,7 @@ class Query(JidSet):
         if self.last_id > 0:
             params['since_id'] = str(self.last_id)
         results=search_collector.SearchCollector(self.last_id)
-        return getTwitterAPI().search(self.query, results.gotResult,
+        return self.getAPI().search(self.query, results.gotResult,
             params
             ).addCallback(moodiness.moodiness.markSuccess
             ).addErrback(moodiness.moodiness.markFailure
@@ -144,13 +145,14 @@ class Query(JidSet):
 
 class QueryRegistry(object):
 
-    def __init__(self):
+    def __init__(self, getAPI=getTwitterAPI):
         self.queries = {}
+        self.getAPI = getAPI
 
     def add(self, user, query_str, last_id=0):
         log.msg("Adding %s: %s" % (user, query_str))
         if not self.queries.has_key(query_str):
-            self.queries[query_str] = Query(query_str, last_id)
+            self.queries[query_str] = Query(query_str, last_id, self.getAPI)
         self.queries[query_str].add(user)
 
     def untracked(self, user, query):
