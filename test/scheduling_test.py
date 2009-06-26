@@ -100,3 +100,17 @@ class QueryRegistryTest(unittest.TestCase):
         self.assertEquals(1, len(self.qr))
         self.assertEquals(1, self.stopped)
 
+class JidSetTest(unittest.TestCase):
+
+    def testIteration(self):
+        js = scheduling.JidSet()
+        js.add('dustin@localhost/r1')
+        js.add('dustin@localhost/r2')
+        js.add('dustin@elsewhere/r1')
+
+        self.assertEquals(3, len(js))
+
+        self.assertEquals(2, len(js.bare_jids()))
+
+        self.assertTrue('dustin@localhost', js.bare_jids())
+        self.assertTrue('dustin@elsewhere', js.bare_jids())
