@@ -20,6 +20,8 @@ import cache
 import scheduling
 import string
 
+CHATSTATE_NS = 'http://jabber.org/protocol/chatstates'
+
 current_conns = {}
 presence_conns = {}
 
@@ -116,12 +118,16 @@ class TwitterspyMessageProtocol(MessageProtocol):
         msg = domish.Element((None, "message"))
         msg["to"] = jid
         msg["from"] = self.jid
-        msg.addElement(('jabber:x:event', 'x')).addElement("composing")
-
+        msg.addElement((CHATSTATE_NS, 'composing'))
         self.send(msg)
 
-    def send_plain(self, jid, content):
+    def create_message(self):
         msg = domish.Element((None, "message"))
+        msg.addElement((CHATSTATE_NS, 'active'))
+        return msg
+
+    def send_plain(self, jid, content):
+        msg = self.create_message()
         msg["to"] = jid
         msg["from"] = self.jid
         msg["type"] = 'chat'
@@ -130,7 +136,7 @@ class TwitterspyMessageProtocol(MessageProtocol):
         self.send(msg)
 
     def send_html(self, jid, body, html):
-        msg = domish.Element((None, "message"))
+        msg = self.create_message()
         msg["to"] = jid
         msg["from"] = self.jid
         msg["type"] = 'chat'
