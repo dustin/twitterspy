@@ -158,10 +158,14 @@ class QueryRegistry(object):
     def untracked(self, user, query):
         q = self.queries.get(query)
         if q:
+            if user in q:
+                log.msg("Untracking %s from %s" % (query, user))
             q.discard(user)
             if not q:
                 q.stop()
                 del self.queries[query]
+        else:
+            log.msg("Query %s not found when untracking." % query)
 
     def remove(self, user):
         log.msg("Removing %s" % user)

@@ -302,11 +302,14 @@ class UnTrackCommand(BaseCommand):
 
     @arg_required()
     def __call__(self, user, prot, args):
+        log.msg("Untracking %s for %s" % (repr(args), user.jid))
         if user.untrack(args):
             def worked(stuff):
+                log.msg("Untrack %s for %s successful." % (repr(args), user.jid))
                 scheduling.queries.untracked(user.jid, args)
                 prot.send_plain(user.jid, "Stopped tracking %s" % args)
             def notWorked(e):
+                log.msg("Untrack %s for %s failed." % (repr(args), user.jid))
                 log.err(e)
                 prot.send_plain(user.jid, ":( Failed to save tracks. Try again")
             user.save().addCallback(worked).addErrback(notWorked)
