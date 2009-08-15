@@ -135,7 +135,11 @@ class Query(JidSet):
 
     def start(self):
         self.loop = task.LoopingCall(self)
-        self.loop.start(self.loop_time)
+        d = self.loop.start(self.loop_time)
+        d.addCallback(lambda x: log.msg("Search query for %s has been stopped: %s"
+                                        % (self.query, x)))
+        d.addErrback(lambda e: log.err("Search query for %s has errored:  %s"
+                                       % (self.query, e)))
 
     def stop(self):
         log.msg("Stopping query %s" % self.query)
