@@ -110,7 +110,9 @@ class Query(JidSet):
         # Don't bother if we're not connected...
         if protocol.current_conns:
             global search_semaphore
-            search_semaphore.run(self._do_search)
+            log.msg("Acquiring lock for %s" % self.query)
+            d = search_semaphore.run(self._do_search)
+            d.addBoth(lambda x: log.msg("Released lock for %s" % self.query))
         else:
             log.msg("No xmpp connection, so skipping search of %s" % self.query)
 
