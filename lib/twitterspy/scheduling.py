@@ -111,6 +111,8 @@ class Query(JidSet):
         if protocol.current_conns:
             global search_semaphore
             search_semaphore.run(self._do_search)
+        else:
+            log.msg("No xmpp connection, so skipping search of %s" % self.query)
 
     def _reportError(self, e):
         log.msg("Error in search %s: %s" % (self.query, str(e)))
