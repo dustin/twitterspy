@@ -294,7 +294,7 @@ class CouchDB(object):
         url = self.url_template % (uri,)
         kwargs["headers"] = {"Accept": "application/json"}
         if 'timeout' not in kwargs:
-            kwargs['timeout'] = 5
+            kwargs['timeout'] = 10
         factory = HTTPClientFactory(url, **kwargs)
         from twisted.internet import reactor
         reactor.connectTCP(self.host, self.port, factory)
