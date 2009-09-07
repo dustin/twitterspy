@@ -3,6 +3,8 @@ layout: default
 title: dustin/twitterspy @ GitHub
 ---
 
+<img alt="im@twitterspy.org" src="images/AddContact.png" />
+
 IM `help` to [im@twitterspy.org](xmpp:im@twitterspy.org) to see what
 you can do.
 
