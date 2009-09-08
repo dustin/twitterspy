@@ -8,7 +8,7 @@ title: HOWTO - Introduction - dustin/twitterspy @ GitHub
 The first thing you need to do is add
 [im@twitterspy.org](xmpp:im@twitterspy.org) to your roster:
 
-<img alt="im@twitterspy.org" src="../images/AddContact.png" />
+<img alt="im@twitterspy.org" src="images/AddContact.png" />
 
 ## Posting
 
