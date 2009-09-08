@@ -29,8 +29,11 @@ be a post:
 
     @dlsspy Look at me responding to a post.
 
+## Autopost
+
 Though it's not recommended, you can post without having to start
 every post with the `post` by enabling autopost using `autopost on`.
+
 Any text you enter that cannot be recognized as a command will be
 blasted to twitter.  Some people really like this.  Personally, I find
 it dangerous.
