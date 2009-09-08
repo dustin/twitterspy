@@ -30,6 +30,9 @@ available_requests = MAX_REQUESTS
 reported_empty = False
 empty_resets = 0
 
+locks_requested = 0
+locks_acquired = 0
+
 def getTwitterAPI(*args):
     global available_requests, reported_empty
     if available_requests > 0:
@@ -109,10 +112,16 @@ class Query(JidSet):
     def __call__(self):
         # Don't bother if we're not connected...
         if protocol.current_conns:
-            global search_semaphore
+            global search_semaphore, locks_requested
+            locks_requested += 1
             log.msg("Acquiring lock for %s" % self.query)
             d = search_semaphore.run(self._do_search)
-            d.addBoth(lambda x: log.msg("Released lock for %s" % self.query))
+            def _complete(x):
+                global locks_requested, locks_acquired
+                locks_requested -= 1
+                locks_acquired -= 1
+                log.msg("Released lock for %s" % self.query)
+            d.addBoth(_complete)
         else:
             log.msg("No xmpp connection, so skipping search of %s" % self.query)
 
@@ -124,6 +133,8 @@ class Query(JidSet):
             cache.mc.set(self.cache_key, str(self.last_id))
 
     def _do_search(self):
+        global locks_acquired
+        locks_acquired += 1
         log.msg("Searching %s" % self.query)
         params = {}
         if self.last_id > 0:

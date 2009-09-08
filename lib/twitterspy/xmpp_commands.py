@@ -575,6 +575,8 @@ class MoodCommand(BaseCommand):
         rv.append("I currently have %d API requests available, "
                   "and have run out %d times."
                   % (scheduling.available_requests, scheduling.empty_resets))
+        rv.append("Locks wanted: %d, locks held: %d"
+                  % (scheduling.locks_requested, scheduling.locks_acquired))
         prot.send_plain(user.jid, "\n".join(rv))
 
 class MoodDetailCommand(BaseCommand):
