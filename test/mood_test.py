@@ -9,7 +9,8 @@ from twisted import web
 
 sys.path.extend(['lib', '../lib',
                  'lib/twitterspy', '../lib/twitterspy',
-                 'lib/twitty-twister/lib', '../lib/twitty-twister',
+                 'lib/twitty-twister/twittytwister', '../lib/twitty-twister',
+                 'lib/twisted-longurl/lib', '../lib/twisted-longurl',
                  'lib/wokkel', '../lib/wokkel'])
 
 import moodiness

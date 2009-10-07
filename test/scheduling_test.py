@@ -8,7 +8,7 @@ sys.path.extend(['lib', '../lib',
                  'lib/twitterspy', '../lib/twitterspy',
                  'lib/wokkel/', '../lib/wokkel/',
                  'lib/twisted-longurl/lib', '../lib/twisted-longurl/lib/',
-                 'lib/twitty-twister/lib', '../lib/twitty-twister/lib'])
+                 'lib/twitty-twister/twittytwister', '../lib/twitty-twister/twittytwister'])
 
 import cache
 import scheduling
