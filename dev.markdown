@@ -15,6 +15,7 @@ title: dustin/twitterspy @ GitHub -- developer page
 ## Dependencies
 * [Twisted][twisted] (names, web, words)
 * [Memcached][memcached]
+* python-oauth (`easy_install oauth`)
 
 ## Install
 
