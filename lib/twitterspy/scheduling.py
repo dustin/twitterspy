@@ -39,8 +39,7 @@ def getTwitterAPI(*args):
     global available_requests, reported_empty
     if available_requests > 0:
         available_requests -= 1
-        args.update({'timeout': TIMEOUT})
-        return twitter.Twitter(*args)
+        return twitter.Twitter(*args, timeout=TIMEOUT)
     else:
         if not reported_empty:
             reported_empty = True
