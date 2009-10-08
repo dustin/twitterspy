@@ -26,6 +26,8 @@ REQUEST_PERIOD = 3600
 QUERY_FREQUENCY = 15 * 60
 USER_FREQUENCY = 3 * 60
 
+TIMEOUT=5
+
 available_requests = MAX_REQUESTS
 reported_empty = False
 empty_resets = 0
@@ -37,6 +39,7 @@ def getTwitterAPI(*args):
     global available_requests, reported_empty
     if available_requests > 0:
         available_requests -= 1
+        args.update({'timeout': TIMEOUT})
         return twitter.Twitter(*args)
     else:
         if not reported_empty:
