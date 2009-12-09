@@ -651,7 +651,7 @@ class UptimeCommand(BaseCommand):
                 lost = datetime.datetime.utcfromtimestamp(p.lost)
                 lost_delta = now - lost
                 rv.append("Lost connection to %s at %s (%s ago, connected %s)"
-                          % (jid, lost.strftime(time_format),
+                          % (p.jid, lost.strftime(time_format),
                              self._ts(lost_delta),
                              self._pluralize(p.num_connections, "time")))
             else:
