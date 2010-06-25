@@ -455,8 +455,10 @@ class AutopostCommand(BaseCommand):
 class WatchFriendsCommand(BaseCommand):
 
     def __init__(self):
-        super(WatchFriendsCommand, self).__init__('watch_friends',
-            "Enable or disable watching friends.", aliases=['watchfriends'])
+        super(WatchFriendsCommand, self).__init__(
+            'watch_friends',
+            "Enable or disable watching friends (watch_friends on|off)",
+            aliases=['watchfriends'])
 
     def _gotFriendStatus(self, user, prot):
         def f(entry):
