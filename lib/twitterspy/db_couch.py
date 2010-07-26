@@ -63,7 +63,11 @@ class User(db_base.BaseUser):
 def initialize():
     def periodic():
         log.msg("Performing compaction.")
-        get_couch().post("/" + DB_NAME + '/_compact', '')
+        def cb(x):
+            log.msg("Compaction result:  %s", repr(x))
+        headers = {'Content-Type': 'application/json'}
+        get_couch().post("/" + DB_NAME + '/_compact',
+                         '', headers=headers).addCallback(cb)
     loop = task.LoopingCall(periodic)
     loop.start(3600, now=False)
 

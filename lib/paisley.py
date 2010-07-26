@@ -292,7 +292,9 @@ class CouchDB(object):
         C{getPage}-like.
         """
         url = self.url_template % (uri,)
-        kwargs["headers"] = {"Accept": "application/json"}
+        if not kwargs['headers']:
+            kwargs['headers'] = {}
+        kwargs["headers"]["Accept"] = "application/json"
         if 'timeout' not in kwargs:
             kwargs['timeout'] = 10
         factory = HTTPClientFactory(url, **kwargs)
@@ -308,11 +310,13 @@ class CouchDB(object):
         return self._getPage(uri, method="GET")
 
 
-    def post(self, uri, body):
+    def post(self, uri, body, **kwargs):
         """
         Execute a C{POST} of C{body} at C{uri}.
         """
-        return self._getPage(uri, method="POST", postdata=body)
+        kwargs['postdata'] = body
+        kwargs['method'] = 'POST'
+        return self._getPage(uri, **kwargs)
 
 
     def put(self, uri, body):
