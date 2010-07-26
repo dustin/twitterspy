@@ -292,7 +292,7 @@ class CouchDB(object):
         C{getPage}-like.
         """
         url = self.url_template % (uri,)
-        if not kwargs['headers']:
+        if not 'headers' in kwargs:
             kwargs['headers'] = {}
         kwargs["headers"]["Accept"] = "application/json"
         if 'timeout' not in kwargs:
