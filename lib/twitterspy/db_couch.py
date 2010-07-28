@@ -61,24 +61,20 @@ class User(db_base.BaseUser):
         return get_couch().saveDoc(DB_NAME, self.to_doc(), str(self.jid))
 
 def initialize():
-    def cb(x):
-        log.msg("Compaction result:  %s", repr(x))
-
-    def compact():
-        log.msg("Performing compaction.")
+    def periodic(name, path):
+        log.msg("Performing %s." % name)
+        def cb(x):
+            log.msg("%s result:  %s" % (name, repr(x)))
         headers = {'Content-Type': 'application/json'}
-        get_couch().post("/" + DB_NAME + '/_compact',
+        get_couch().post("/" + DB_NAME + path,
                          '', headers=headers).addCallback(cb)
 
-    def view_cleanup():
-        get_couch().post("/" + DB_NAME + '/_view_cleanup',
-                         '', headers=headers).addCallback(cb)
-
-    compactLoop = task.LoopingCall(compact)
+    compactLoop = task.LoopingCall(periodic, 'compaction', '/_compact')
     compactLoop.start(3600, now=False)
 
-    viewCleanupLoop = task.LoopingCall(compact)
-    viewCleanupLoop.start(3600*3, now=False)
+    viewCleanLoop = task.LoopingCall(periodic, 'view cleanup',
+                                     '/_view_cleanup')
+    viewCleanLoop.start(3*3600, now=False)
 
 def model_counts():
     """Returns a deferred whose callback will receive a dict of object
