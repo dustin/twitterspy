@@ -176,7 +176,7 @@ class SearchCommand(BaseCommand):
             'Perform a search query (but do not track).')
 
     def _success(self, e, jid, prot, query, rv):
-        log.msg("%d results found for %s" % (len(rv.results), query))
+        # log.msg("%d results found for %s" % (len(rv.results), query))
         def send(r):
             plain = []
             html = []

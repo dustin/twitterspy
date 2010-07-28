@@ -89,14 +89,14 @@ class Query(JidSet):
     def _doStart(self, res):
         if res[1]:
             self.last_id = res[1]
-            log.msg("Loaded last ID for %s from memcache: %s"
-                     % (self.query, self.last_id))
+            # log.msg("Loaded last ID for %s from memcache: %s"
+            #         % (self.query, self.last_id))
         else:
             log.msg("No last ID for %s" % (self.query,))
             self.last_id = 0
         r=random.Random()
         then = r.randint(1, min(60, self.loop_time / 2))
-        log.msg("Starting %s in %ds" % (self.query, then))
+        # log.msg("Starting %s in %ds" % (self.query, then))
         reactor.callLater(then, self.start)
 
     def _sendMessages(self, something, results):
@@ -116,13 +116,13 @@ class Query(JidSet):
         if protocol.current_conns:
             global search_semaphore, locks_requested
             locks_requested += 1
-            log.msg("Acquiring lock for %s" % self.query)
+            # log.msg("Acquiring lock for %s" % self.query)
             d = search_semaphore.run(self._do_search)
             def _complete(x):
                 global locks_requested, locks_acquired
                 locks_requested -= 1
                 locks_acquired -= 1
-                log.msg("Released lock for %s" % self.query)
+                # log.msg("Released lock for %s" % self.query)
             d.addBoth(_complete)
         else:
             log.msg("No xmpp connection, so skipping search of %s" % self.query)
@@ -137,7 +137,7 @@ class Query(JidSet):
     def _do_search(self):
         global locks_acquired
         locks_acquired += 1
-        log.msg("Searching %s" % self.query)
+        # log.msg("Searching %s" % self.query)
         params = {}
         if self.last_id > 0:
             params['since_id'] = str(self.last_id)
@@ -171,7 +171,7 @@ class QueryRegistry(object):
         self.getAPI = getAPI
 
     def add(self, user, query_str, last_id=0):
-        log.msg("Adding %s: %s" % (user, query_str))
+        # log.msg("Adding %s: %s" % (user, query_str))
         if not self.queries.has_key(query_str):
             self.queries[query_str] = Query(query_str, last_id, self.getAPI)
         self.queries[query_str].add(user)
