@@ -128,7 +128,12 @@ class Query(JidSet):
             log.msg("No xmpp connection, so skipping search of %s" % self.query)
 
     def _reportError(self, e):
-        log.msg("Error in search %s: %s" % (self.query, str(e)))
+        if int(e.value.status) == 420:
+            global available_requests
+            available_requests = 0
+            log.msg("Twitter is reporting that we're out of stuff: " % str(e))
+        else:
+            log.msg("Error in search %s: %s" % (self.query, str(e)))
 
     def _save_track_id(self, x, old_id):
         if old_id != self.last_id:
