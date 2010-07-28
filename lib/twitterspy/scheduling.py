@@ -1,3 +1,4 @@
+import time
 import bisect
 import random
 import hashlib
@@ -32,12 +33,17 @@ available_requests = MAX_REQUESTS
 reported_empty = False
 empty_resets = 0
 
+suspended_until = 0
+
 locks_requested = 0
 locks_acquired = 0
 
 def getTwitterAPI(*args):
     global available_requests, reported_empty
-    if available_requests > 0:
+    now = time.time()
+    if suspended_until > now:
+        return ErrorGenerator()
+    elif available_requests > 0:
         available_requests -= 1
         return twitter.Twitter(*args)
     else:
@@ -130,7 +136,7 @@ class Query(JidSet):
     def _reportError(self, e):
         if int(e.value.status) == 420:
             global available_requests
-            available_requests = 0
+            suspended_until = time.time() + 5
             log.msg("Twitter is reporting that we're out of stuff: " % str(e))
         else:
             log.msg("Error in search %s: %s" % (self.query, str(e)))
